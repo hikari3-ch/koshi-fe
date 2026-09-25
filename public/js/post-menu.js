@@ -543,10 +543,6 @@ function createModal() {
           <div class="error-message" style="display: none; color: red; margin-bottom: 10px;"></div>
           <select id="report-category" style="margin-bottom: 10px; width: 100%;">
             <option value="">Select a category...</option>
-            <option value="spam">Spam</option>
-            <option value="illegal">Illegal content</option>
-            <option value="harassment">Harassment</option>
-            <option value="other">Other</option>
           </select>
           <textarea id="report-reason" placeholder="Enter reason (max 256 characters)" 
             maxlength="256" style="width: 100%; margin-bottom: 10px;"></textarea>
@@ -557,6 +553,14 @@ function createModal() {
     </div>
   `;
   document.body.appendChild(reportModal);
+
+  const categorySelect = reportModal.querySelector('#report-category');
+  (window.reportCategories || []).forEach((cat) => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    categorySelect.appendChild(opt);
+  });
 }
 
 function handleAction(action, dropdown) {
