@@ -1,0 +1,22 @@
+<% title = 'Range Bans'; %>
+<%- include('partials/board-nav') %>
+<p><a href="/mod/bans<%= boardUri ? '?board=' + boardUri : '' %>">Bans</a></p>
+<form id="range-ban-form">
+<% if (boardUri) { %><input type="hidden" name="boardUri" value="<%= boardUri %>"><% } else { %><input name="boardUri" placeholder="Board"><% } %>
+<input name="range" placeholder="e.g. 192.168" required>
+<input name="reason" placeholder="Reason" required>
+<input name="duration" value="5y">
+<button type="submit">Ban</button>
+</form>
+<table class="mod-table">
+<tr><th>Range</th><th>Board</th><th>Reason</th><th>By</th><th></th></tr>
+<% bans.forEach(b => { %>
+<tr>
+<td><%= b.displayTarget %></td>
+<td><% if (b.boardUri) { %>/<%= b.boardUri %>/<% } else { %>global<% } %></td>
+<td><%= b.reason %></td>
+<td><%= b.appliedBy || '' %></td>
+<td><button type="button" class="lift-ban" data-id="<%= b._id %>">Lift</button></td>
+</tr>
+<% }) %>
+</table>

@@ -1,0 +1,28 @@
+<% title = 'Mod'; %>
+<h1>Logged in as: <%= user.login %></h1>
+<fieldset class="reportFieldset">
+<legend>Status</legend>
+<p><a href="/mod/reports"><%= openReports %> reports</a> / <a href="/mod/bans/appeals"><%= appealedBans %> appeals</a> / <% if (boards.length) { %><a href="/mod/trash/<%= boards[0].boardUri %>"><%= trashCount %> trashed</a><% } else { %><%= trashCount %> trashed<% } %></p>
+<% if (isAdmin) { %>
+<p>Emergency <%= emergencyMode ? 'on' : 'off' %> <button type="button" id="emergency-toggle"><%= emergencyMode ? 'Off' : 'On' %></button></p>
+<% } %>
+</fieldset>
+<% if (canCreateBoard) { %>
+<fieldset class="reportFieldset">
+<legend>Create Board</legend>
+<form id="board-create-form">
+<p>URI: /<input name="boardUri" pattern="[a-z0-9]{1,16}" maxlength="16" required>/</p>
+<p>Name: <input name="boardName" maxlength="32" required></p>
+<p>Description: <input name="boardDescription" maxlength="128"></p>
+<button type="submit">Create Board</button>
+</form>
+</fieldset>
+<% } %>
+<fieldset class="reportFieldset">
+<legend>Boards</legend>
+<ul>
+<% boards.forEach(b => { %>
+<li><a href="/<%= b.boardUri %>/">/<%= b.boardUri %>/</a> / <a href="/mod/board/<%= b.boardUri %>">Mod</a> / <a href="/mod/board/<%= b.boardUri %>/settings">Settings</a> / <a href="/mod/trash/<%= b.boardUri %>">Trash</a></li>
+<% }) %>
+</ul>
+</fieldset>

@@ -1,0 +1,31 @@
+<% title = 'Global Staff'; %>
+<table class="mod-table">
+<tr><th>Login</th><th>Role</th><th></th></tr>
+<% staff.forEach(s => { %>
+<tr>
+<td><%= s.login %></td>
+<td><%= s.globalRole %></td>
+<td>
+<select class="set-role" data-login="<%= s.login %>">
+<option value="0"<%= s.globalRole == 0 ? ' selected' : '' %>>Root</option>
+<option value="1"<%= s.globalRole == 1 ? ' selected' : '' %>>Admin</option>
+<option value="2"<%= s.globalRole == 2 ? ' selected' : '' %>>Moderator</option>
+<option value="3"<%= s.globalRole == 3 ? ' selected' : '' %>>Janitor</option>
+<option value="4"<%= s.globalRole == 4 ? ' selected' : '' %>>User</option>
+</select>
+<button type="button" class="apply-role" data-login="<%= s.login %>">Set</button>
+</td>
+</tr>
+<% }) %>
+</table>
+<h2>Add account</h2>
+<form id="add-account-form">
+<input name="login" placeholder="Login" maxlength="16" required>
+<input name="password" type="password" placeholder="Password" required>
+<select name="globalRole">
+<% if (user.globalRole < 1) { %><option value="1">Admin</option><% } %>
+<% if (user.globalRole < 2) { %><option value="2">Moderator</option><% } %>
+<% if (user.globalRole < 3) { %><option value="3" selected>Janitor</option><% } %>
+</select>
+<button type="submit">Create</button>
+</form>

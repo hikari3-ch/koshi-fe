@@ -1,0 +1,18 @@
+<% title = 'Global Filters'; %>
+<form id="global-filter-form">
+<input name="originalTerm" placeholder="Term" required>
+<input name="replacementTerm" placeholder="Replacement" required>
+<label><input type="checkbox" name="caseInsensitive" value="1"> Case insensitive</label>
+<button type="submit">Add</button>
+</form>
+<table class="mod-table">
+<tr><th>Term</th><th>Replacement</th><th></th></tr>
+<% filters.forEach(f => { %>
+<tr>
+<td><%= f.originalTerm %><% if (f.caseInsensitive) { %> (i)<% } %></td>
+<td><%= f.replacementTerm %></td>
+<td><button type="button" class="delete-global-filter" data-id="<%= f._id %>">Delete</button></td>
+</tr>
+<% }) %>
+<% if (!filters.length) { %><tr><td colspan="3">None</td></tr><% } %>
+</table>

@@ -1,0 +1,191 @@
+<div id="quickReply">
+  <div id="quickReplyHeader">
+    <p>Quick Reply <button id="qr-close">×</button></p>
+  </div>
+  <div class="reply-form-container">
+    <form
+      action="/<%= boardUri %>/thread/<%= thread.threadId %>/reply"
+      class="reply-form"
+      method="POST"
+      enctype="multipart/form-data"
+      id="quick-reply-form"
+      data-max-files="<%= maxUploadFiles || 3 %>"
+      style="padding: 5px;"
+    >
+      <div class="qr-header">
+        <div style="margin-bottom: 2px;">
+          <input type="text" id="name-qr" name="name" placeholder="<%= anonymousName || 'Anonymous' %>" />
+        </div>
+        <div style="margin-bottom: 2px; padding: 5px 0">
+          Fortune <input type="checkbox" id="fortune-qr" name="fortune" value="true" /> <% if (isThread) { %> Sage
+          <input type="checkbox" id="sage-qr" name="sage" value="true" /> Nonoko <input type="checkbox" id="nonoko-qr" name="nonoko" value="true" />
+          <% } %>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 5px;">
+        <textarea required id="message-qr" name="message" rows="4" style="height: 9em;" class="qr-textarea"></textarea>
+        <p class="file-info" style="margin: 0;">Max comment length: <span id="qr-charCount">0</span>/4096</p>
+      </div>
+      <div style="margin-bottom: 5px; max-width: 100%;">
+        <details class="format-summary">
+          <summary class="format-summary">Styling</summary>
+          <button data-emote="[b][/b]" type="button">
+            <span><strong>Bold</strong></span>
+          </button>
+          <button data-emote="[i][/i]" type="button">
+            <span><em>Italics</em></span>
+          </button>
+          <button data-emote="[s][/s]" type="button">
+            <span>Strike</span>
+          </button>
+          <button data-emote="[spoiler][/spoiler]" type="button"><span class="spoiler">Spoiler</span></button>
+          <button data-emote="[moe][/moe]" type="button"><span class="moeText">Moe</span></button>
+          <button data-emote="[doom][/doom]" type="button"><span class="doomText">DOOM</span></button>
+          <button data-emote="[s1][/s1]" type="button"><span class="s1">Size 1</span></button>
+          <button data-emote="[s2][/s2]" type="button"><span class="s2">Size 2</span></button>
+          <button data-emote="[s3][/s3]" type="button"><span class="s3">Size 3</span></button>
+          <button data-emote="[s4][/s4]" type="button"><span class="s4">Size 4</span></button>
+          <button data-emote="[s5][/s5]" type="button"><span class="s5">Size 5</span></button>
+          <button data-emote="[s6][/s6]" type="button"><span class="s6">Size 6</span></button>
+          <button data-emote="[s7][/s7]" type="button"><span class="s7">Size 7</span></button>
+          <button data-emote="[red][/red]" type="button"><span class="c1">Red</span></button>
+          <button data-emote="[orange][/orange]" type="button"><span class="c2">Orange</span></button>
+          <button data-emote="[brown][/brown]" type="button"><span class="c3">Brown</span></button>
+          <button data-emote="[purple][/purple]" type="button"><span class="c4">Purple</span></button>
+          <button data-emote="[pink][/pink]" type="button"><span class="c5">Pink</span></button>
+          <button data-emote="[yellow][/yellow]" type="button"><span class="c6">Yellow</span></button>
+          <button data-emote="[green][/green]" type="button"><span class="c7">Green</span></button>
+          <button data-emote="[blue][/blue]" type="button"><span class="c8">Blue</span></button>
+          <button data-emote="[lightblue][/lightblue]" type="button"><span class="c9">Light Blue</span></button>
+          <button data-emote="[rainbow][/rainbow]" type="button"><span class="powerful">Rainbow</span></button>
+          <button data-emote="[code][/code]" type="button"><span>Codeblock</span></button>
+        </details>
+      </div>
+
+      <div id="qr-file-section"></div>
+
+      <div style="text-align: right; margin-top: 10px;">
+        <button class="new-thread-btn" type="submit">Submit Reply</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  #quickReply {
+    position: fixed;
+    left: calc(100vw - 326px);
+    top: 126px;
+    z-index: 9;
+    display: none;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-alt);
+    border-radius: 5px;
+    width: 315px;
+    min-height: 200px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  #quickReplyHeader {
+    border-top-left-radius: 10%;
+    border-top-right-radius: 10%;
+    padding: 2px 5px;
+    height: 20px;
+    line-height: 20px;
+    background-color: var(--post-color);
+    cursor: move;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: left;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #quickReplyHeader p {
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  #qr-close {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    height: 20px;
+  }
+
+  #qr-close:hover {
+    color: var(--link-color);
+  }
+
+  .show-quickreply {
+    display: block !important;
+    height: auto !important;
+  }
+
+  #quickReply .reply-form-container {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 5px;
+  }
+
+  #quickReply .qr-textarea,
+  #quickReply input[type="text"],
+  #quickReply textarea,
+  #quickReply #drop-zone,
+  #quickReply #standard-file-input input {
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  #quickReply .qr-textarea {
+    font-family: Arial, serif;
+    font-size: 13.5px;
+    background: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-alt);
+    resize: vertical;
+    overflow: auto;
+  }
+
+  #quickReply details {
+    max-width: 100%;
+  }
+
+  #quickReply details button {
+    max-width: 100%;
+  }
+
+  #qr-drop-zone {
+    border: 2px dashed var(--border-color);
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    margin-top: 5px;
+    font-size: 12px;
+    position: relative;
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  .post-label {
+    display: inline-block;
+    width: 60px;
+  }
+</style>
+
+<script src="/js/qr.js"></script>

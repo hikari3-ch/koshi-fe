@@ -1,0 +1,3 @@
+<% if (post.ipDisplay) { %>
+<p>Ip: <% if (showIp && post.ipRaw) { %><%= post.ipDisplay %><% } else { %><%= post.ipDisplay %><% } %><% if (post.asn) { %> /ASN <%= post.asn %><% } %><% if (post.bypassDisplay) { %> /Bypass <%= post.bypassDisplay %><% } %></p>
+<% } %>

@@ -1,0 +1,8 @@
+<a href="#" class="mod-edit-post" data-board="<%= boardUri %>" data-thread="<%= thread.threadId %>" data-post="<%= postId %>" data-thread-post="<%= isThread ? '1' : '0' %>">[Edit]</a>
+<% if (showIp && post.ipRaw) { %> /
+<a href="/mod/latest?ip=<%= encodeURIComponent(post.ipRaw) %>">[History]</a> /
+<a href="/mod/media?ip=<%= encodeURIComponent(post.ipRaw) %>">[File history]</a>
+<% if (globalStaff) { %> /
+<a href="/mod/offense?ip=<%= encodeURIComponent(post.ipRaw) %>">[Offense record]</a>
+<% } %>
+<% } %>

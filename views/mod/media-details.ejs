@@ -1,0 +1,14 @@
+<% title = 'Media'; %>
+<p><a href="/mod/media">Media</a></p>
+<% if (details) { %>
+<p>Identifier: <span class="hash"><%= details.identifier %></span></p>
+<p>Size: <%= details.sizeLabel %></p>
+<p>Uploaded: <%= new Date(details.uploadDate).toLocaleString() %></p>
+<h2>References</h2>
+<ul>
+<% details.references.forEach(r => { %>
+<li><a href="/mod/thread/<%= r.boardUri %>/<%= r.threadId %>">/<%= r.boardUri %>/<%= r.threadId %><% if (r.postId) { %>#<%= r.postId %><% } %></a></li>
+<% }) %>
+<% if (!details.references.length) { %><li>None</li><% } %>
+</ul>
+<% } else { %><p>Not found</p><% } %>

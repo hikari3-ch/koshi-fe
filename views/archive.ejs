@@ -1,0 +1,50 @@
+<% boardFooter = true; %>
+<% title = '/' + boardUri + '/ - Archive'; %>
+<% head = '<link rel="alternate" type="application/rss+xml" title="' + siteName + ' | ' + boardName + '" href="/' + boardUri + '/rss.xml" />'; %>
+<%- include('partials/banner') %>
+<%- include('partials/announcement') %>
+<div class="catalog-controls">
+  <span class="catalog-search">
+    <div class="catalog-sort">
+      <label>Sort by:
+        <select id="sort-select">
+          <option value="bump">Bump order</option>
+          <option value="threadId">Thread n°</option>
+          <option value="creation">Creation date</option>
+          <option value="reply">Reply count</option>
+        </select>
+      </label>
+      <div class="catalog-buttons">
+        <a href="/<%= boardUri %>/" class="small-button">Index</a>
+        <a href="/<%= boardUri %>/catalog" class="small-button">Catalog</a>
+        <a href="/<%= boardUri %>/rss.xml" title="RSS" class="feed-link"><img src="/img/feed.svg" alt="RSS" width="16" height="16" class="feed-icon"></a>
+      </div>
+    </div>
+    <input type="text" id="archive-search-input" placeholder="Search threads..." />
+  </span>
+</div>
+<table cellspacing="0" class="archive-table" id="thread-container">
+  <thead class="archive-header">
+    <tr>
+      <th class="archive-col-id">Thread n°</th>
+      <th class="archive-col-content">Subject and message</th>
+      <th class="archive-col-date">Creation date</th>
+      <th class="archive-col-expiration">Expiration date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% threads.forEach(thread => { %>
+    <tr class="archive-thread <%= thread.archiveExpirationDate === null ? '' : 'archive-thread-expiring' %>" data-id="<%= thread.threadId %>" data-replies="<%= thread.replyCount %>" data-bump="<%= thread.bumpDate %>" data-creation="<%= thread.createdAt %>" data-expiration="<%= thread.archiveExpirationDate %>">
+      <td class="archive-col-id"><a href="/<%= boardUri %>/archive/thread/<%= thread.threadId %>"><%= thread.threadId %></a></td>
+      <td class="archive-col-content">
+        <span class="archive-subject"><%- thread.subject ? thread.subject + ":" : "" %></span>
+        <span class="archive-message"><%- thread.message %></span>
+      </td>
+      <td class="archive-col-date"><span class="archived-thread-date"></span></td>
+      <td class="archive-col-expiration"><span class="archived-thread-expiration-date"></span></td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<script src="/js/archive.js"></script>

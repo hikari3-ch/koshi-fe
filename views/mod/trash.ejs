@@ -1,0 +1,13 @@
+<% title = 'Trash ' + boardUri; %>
+<h1>Trash /<%= boardUri %>/</h1>
+<%- include('partials/board-nav') %>
+<p><a href="/mod/board/<%= boardUri %>">Board</a></p>
+<button type="button" id="restore-selected">Restore</button>
+<h2>Threads</h2>
+<% threads.forEach(t => { %>
+<p><label><input type="checkbox" class="mod-select" value="<%= boardUri %>-<%= t.threadId %>"> <%= t.threadId %>: <%= t.subject || t.message?.slice(0,50) %></label></p>
+<% }) %>
+<h2>Posts</h2>
+<% posts.forEach(p => { %>
+<p><label><input type="checkbox" class="mod-select" value="<%= boardUri %>-<%= p.threadId %>-<%= p.postId %>"> #<%= p.postId %>: <%= p.message?.slice(0,50) %></label></p>
+<% }) %>

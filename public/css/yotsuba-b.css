@@ -1,0 +1,20 @@
+:root {
+  --background-color: #eef2ff;
+  --background-gradient: #d6daf0;
+  --header-highlight: #98e;
+  --text-color: #000;
+  --border-color: #aaa;
+  --border-alt: #b7c5d9;
+  --post-color: #d6daf0;
+  --marked-color: #d6bad0;
+  --marked-border-color: #ba9dbf;
+  --link-color: #34345c;
+  --hover-link-color: #d00;
+  --name-color: #117743;
+  --file-info-color: #34345c;
+  --input: #fff;
+  --subject-color: #0f0c5d;
+  --small-button: #d1d5ee;
+  --board-title-color: #af0a0f;
+  --button-background: #d6daf0;
+}

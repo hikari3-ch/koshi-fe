@@ -1,0 +1,68 @@
+<div class="preview-content">
+  <div class="post-info">
+    <% if (post.subject) { %>
+    <span class="subject"><%- post.subject %></span>
+    <% } %>
+    <% if (post.signedRole === 'Admin') { %>
+    <span title="This user is the site administrator" class="admin-name"><a target="_blank" href="https://syrno.net">syrno<span style="font-weight: normal;">!!zmOAdD</span></a> ## Admin <img src="/img/admin.png"></span>
+    <% } else if (post.signedRole === 'Global volunteer' || post.signedRole === 'Global Volunteer' || post.signedRole === 'Global Moderator' || post.signedRole === 'Moderator') { %>
+    <span title="This user is a site moderator" class="mod-name"><%- post.name %> ## Moderator <img src="/img/modicon.gif"></span>
+    <% } else { %>
+    <span class="name"><%- post.name || 'Anonymous' %></span>
+    <% } %>
+    <% if (post.creation) { %>
+    <%- include('../partials/time', { date: post.creation }) %>
+    <% } %>
+    <span>No.<%= post.postId || post.threadId %></span>
+  </div>
+  <% if (post.files && post.files.length > 0) { %>
+  <% if (post.files.length === 1) { %>
+  <span class="file-info">
+    <details open>
+      <summary>
+        <span class="hide-file-button"></span>
+        <% if (post.files[0].mime !== 'youtube/video') { %>
+        <a target="_blank" href="<%= post.files[0].path %>" class="file-link"><%= post.files[0].originalName %></a>
+        - <%= post.files[0].size ? (post.files[0].size / 1024).toFixed(2) : '0.00' %> KB
+        <% if (post.files[0].width && post.files[0].height) { %>(<%= post.files[0].width %>x<%= post.files[0].height %>)<% } %>
+        <a href="<%= post.files[0].path %>" download="<%= post.files[0].originalName %>" title="Download"><img src="/img/download.png" width="16" alt="Download"></a>
+        <% } else { %>
+        <a target="_blank" href="<%= post.files[0].path %>" class="file-link"><%= post.files[0].path %></a>
+        <% } %>
+      </summary>
+      <div class="image-container">
+        <a href="<%= post.files[0].path %>" class="media-toggle" data-mime="<%= post.files[0].mime || '' %>">
+          <img src="<%= post.files[0].thumb %>" alt="<%= post.files[0].originalName %>" class="thread-image" data-full="<%= post.files[0].path %>" data-thumb="<%= post.files[0].thumb %>">
+        </a>
+      </div>
+    </details>
+  </span>
+  <% } else { %>
+  <% post.files.forEach(function(file) { %>
+  <div class="op-upload-cell">
+    <span class="file-info">
+      <details open>
+        <summary>
+          <span class="hide-file-button"></span>
+          <% if (file.mime !== 'youtube/video') { %>
+          <a target="_blank" href="<%= file.path %>" class="file-link"><%= file.originalName %></a>
+          - <%= file.size ? (file.size / 1024).toFixed(2) : '0.00' %> KB
+          <% if (file.width && file.height) { %>(<%= file.width %>x<%= file.height %>)<% } %>
+          <a href="<%= file.path %>" download="<%= file.originalName %>" title="Download"><img src="/img/download.png" width="16" alt="Download"></a>
+          <% } else { %>
+          <a target="_blank" href="<%= file.path %>" class="file-link"><%= file.path %></a>
+          <% } %>
+        </summary>
+        <div class="image-container">
+          <a href="<%= file.path %>" class="media-toggle" data-mime="<%= file.mime || '' %>">
+            <img src="<%= file.thumb %>" alt="<%= file.originalName %>" class="reply-image" data-full="<%= file.path %>" data-thumb="<%= file.thumb %>">
+          </a>
+        </div>
+      </details>
+    </span>
+  </div>
+  <% }); %>
+  <% } %>
+  <% } %>
+  <div class="reply-content"><%- post.markdown || post.message %><% if (post.warningMessage) { %><%- include('../partials/warning-message', { message: post.warningMessage }) %><% } else if (post.banMessage) { %><div class="ban-message"><%- post.banMessage %> <img src="/img/ban.gif" width="60"></div><% } %><% if (post.poll) { %><% if (typeof post.poll === 'string') { %><%- post.poll %><% } else { %><%- include('poll', { poll: post.poll }) %><% } %><% } %></div>
+</div>

@@ -1,0 +1,41 @@
+:root {
+  --background-color: #ffffee;
+  --background-gradient: #fed6af;
+  --header-highlight: #ea8;
+  --text-color: #800000;
+  --border-color: #d9bfb7;
+  --border-alt: #d9bfb7;
+  --post-color: #f0e0d6;
+  --marked-color: #f0c0b0;
+  --marked-border-color: #d99f91;
+  --link-color: #00e;
+  --hover-link-color: red;
+  --name-color: #117743;
+  --file-info-color: #800000;
+  --input: #fff;
+  --subject-color: #cc1105;
+  --small-button: #fed6af;
+  --board-title-color: #af0a0f;
+  --button-background: #eeaa88;
+}
+
+.boxbar {
+  background: #fca;
+  color: #800;
+}
+
+.box-outer {
+  border: 1px solid #800;
+}
+
+.box-blue {
+  border-color: #000066 !important;
+}
+
+.box-green {
+  border-color: #006600 !important;
+}
+
+.stats-list {
+  color: #000;
+}

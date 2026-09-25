@@ -1,0 +1,13 @@
+<% title = 'Global Banners'; %>
+<form id="banner-upload-form" enctype="multipart/form-data">
+<input type="file" name="banner" accept="image/jpeg,image/png,image/gif,image/webp" required>
+<button type="submit">Upload</button>
+</form>
+<% banners.forEach(b => { %>
+<p>
+<img src="<%= b.filename %>" alt=""><br>
+<%= b.filename.replace('/.global/banners/', '') %>
+<button type="button" class="delete-banner" data-id="<%= b._id %>">Delete</button>
+</p>
+<% }) %>
+<% if (!banners.length) { %><p>None</p><% } %>

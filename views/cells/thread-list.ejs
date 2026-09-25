@@ -1,0 +1,45 @@
+<% if (threads && threads.length > 0) { %>
+  <% threads.forEach((thread, index) => { %>
+    <% const linkBoardUri = isOverboard ? thread.boardUri : boardUri %>
+    <article class="thread" id="<%= thread.threadId %>" data-board="<%= thread.boardUri %>">
+      <% if (boardUri === 'all') { %>
+        <div style="text-align: left">
+          <a style="font-weight: bold" href="/<%= thread.boardUri %>/">>>>/<%= thread.boardUri %>/ - <%= thread.boardName %></a>
+          <a class="hide-board-btn" data-board="<%= thread.boardUri %>" style="font-size: 12px; cursor: pointer">
+            (Hide threads from this board)
+          </a>
+        </div>
+      <% } %>
+      <%- include('op', { 
+        thread, 
+        boardUri: linkBoardUri,
+        isThread: false,
+        isArchive: thread.isArchived || false,
+        threadIndex: index,
+        totalThreads: threads.length,
+        threads: threads
+      }) %>
+      <div class="replies">
+        <% if (thread.replies && thread.replies.length > 0) { %>
+          <% 
+            const totalReplies = thread.postCount || thread.replies.length;
+            const lastFiveReplies = thread.replies.slice(-5);
+            const startingReplyNumber = totalReplies - lastFiveReplies.length + 1;
+          %>
+          <% lastFiveReplies.forEach((reply, index) => { %>
+            <%- include('reply', { 
+              reply, 
+              thread, 
+              boardUri: isOverboard ? thread.boardUri : boardUri,
+              replyNumber: startingReplyNumber + index,
+              isArchive: thread.isArchived || false
+            }) %>
+          <% }) %>
+        <% } %>
+      </div>
+    </article>
+    <hr>
+  <% }) %>
+<% } else { %>
+  <div class="no-results" style="text-align: center; padding: 20px;">No threads found</div>
+<% } %>

@@ -1,0 +1,130 @@
+<% title = 'Search' + (query ? ' - ' + query : ''); %>
+<% var s = searchOpts || {}; %>
+<% var fromVal = s.from ? s.from.toISOString().slice(0, 10) : ''; %>
+<% var toVal = s.to ? s.to.toISOString().slice(0, 10) : ''; %>
+<% var selectedBoards = s.boards || []; %>
+
+<div class="page-content search-page">
+  <div class="reply-form-container">
+  <form id="search-form" action="/search" method="GET">
+    <table id="postformTable">
+      <tbody>
+        <tr>
+          <td class="post-block"><label for="search-general">General</label></td>
+          <td class="postform-input-cell"><input type="text" id="search-general" name="general" value="<%= s.general || '' %>" class="input-text" autocomplete="off" /></td>
+        </tr>
+        <tr>
+          <td class="post-block"><label for="search-comment">Comment</label></td>
+          <td class="postform-input-cell"><input type="text" id="search-comment" name="comment" value="<%= s.comment || '' %>" class="input-text" autocomplete="off" /></td>
+        </tr>
+        <tr>
+          <td class="post-block"><label for="search-name">Name</label></td>
+          <td class="postform-input-cell"><input type="text" id="search-name" name="name" value="<%= s.name || '' %>" class="input-text" autocomplete="off" /></td>
+        </tr>
+        <tr>
+          <td class="post-block"><label for="search-subject">Subject</label></td>
+          <td class="postform-input-cell"><input type="text" id="search-subject" name="subject" value="<%= s.subject || '' %>" class="input-text" autocomplete="off" /></td>
+        </tr>
+        <tr>
+          <td class="post-block"><label for="search-filename">File name</label></td>
+          <td class="postform-input-cell"><input type="text" id="search-filename" name="filename" value="<%= s.filename || '' %>" class="input-text" autocomplete="off" /></td>
+        </tr>
+        <tr>
+          <td class="post-block"><label for="search-no">No.</label></td>
+          <td class="postform-input-cell"><input type="number" id="search-no" name="no" value="<%= s.no || '' %>" class="input-text" autocomplete="off" min="0" step="1" /></td>
+        </tr>
+        <tr>
+          <td class="post-block"><label for="search-from">From</label></td>
+          <td class="postform-input-cell"><input type="date" id="search-from" name="from" value="<%= fromVal %>" class="input-text" /></td>
+        </tr>
+        <tr>
+          <td class="post-block"><label for="search-to">To</label></td>
+          <td class="postform-input-cell"><input type="date" id="search-to" name="to" value="<%= toVal %>" class="input-text" /></td>
+        </tr>
+        <tr>
+          <td class="post-block">Match whole words</td>
+          <td class="postform-input-cell"><label><input type="checkbox" name="whole" value="1" <%= s.wholeWords || !hasActiveSearch ? 'checked' : '' %> /></label></td>
+        </tr>
+        <tr>
+          <td class="post-block">Only opening posts</td>
+          <td class="postform-input-cell"><label><input type="checkbox" name="op" value="1" <%= s.opOnly ? 'checked' : '' %> /></label></td>
+        </tr>
+        <tr>
+          <td class="post-block"><label for="search-match">Match mode</label></td>
+          <td class="postform-input-cell">
+            <select id="search-match" name="match" class="input-text">
+              <option value="and" <%= s.matchMode !== 'or' ? 'selected' : '' %>>All keywords (AND)</option>
+              <option value="or" <%= s.matchMode === 'or' ? 'selected' : '' %>>Any keyword (OR)</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td class="post-block"><label for="search-tag">Tag</label></td>
+          <td class="postform-input-cell">
+            <select id="search-tag" name="tag" class="input-text">
+              <option value="">All tags</option>
+              <% (searchTags || []).forEach(function(tag) { %>
+              <option value="<%= tag %>" <%= s.tag === String(tag).toLowerCase() ? 'selected' : '' %>><%= tag %></option>
+              <% }) %>
+            </select>
+          </td>
+        </tr>
+        <tr class="search-board-row">
+          <td class="post-block">
+            Boards<br>
+            <a href="#" id="search-unselect-boards">[Unselect all]</a>
+          </td>
+          <td class="postform-input-cell search-board-list">
+            <% if (navBoards.length) { navBoards.forEach(function(board) { %>
+            <label><input type="checkbox" class="search-board-cb" name="boards" value="<%= board.boardUri %>" <%= selectedBoards.length === 0 || selectedBoards.includes(board.boardUri) ? 'checked' : '' %> /> /<%= board.boardUri %>/</label>
+            <% }) } %>
+          </td>
+        </tr>
+        <tr>
+          <td class="post-block"></td>
+          <td class="postform-input-cell"><button type="submit" class="new-thread-btn">Search</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+  </div>
+  <script>
+    document.getElementById('search-unselect-boards')?.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.querySelectorAll('.search-board-cb').forEach(function (cb) { cb.checked = false; });
+    });
+  </script>
+
+  <% if (hasActiveSearch) { %>
+  <div class="search-header">
+    <% if (totalResults > 0) { %>
+    <p>Found <%= totalResults %> results</p>
+    <% } %>
+  </div>
+  <% if (totalResults === 0 || (results.threads.length === 0 && results.posts.length === 0)) { %>
+  <p class="search-empty">No results found.</p>
+  <% } else { %>
+  <% boardGroups.forEach(group => { %>
+  <fieldset class="search-board-group">
+    <legend><%= group.items.length %> results in <a href="/<%= group.boardUri %>/">/<%= group.boardUri %>/ - <%= group.boardName %></a></legend>
+    <div class="thread"><% group.items.forEach(item => {
+        const boardUri = group.boardUri;
+        const threadStub = { threadId: item.threadId };
+        const isArchive = item.isArchived;
+        const reply = item.type === 'thread' ? Object.assign({}, item, { postId: item.threadId }) : item;
+        if (group.isTextBoard) { %><%- include('cells/textreply', { boardUri, isArchive, reply, thread: threadStub, isSearchResult: true }) %><% } else { %><%- include('cells/reply', { boardUri, isArchive, reply, thread: threadStub, isSearchResult: true }) %><% }
+      }) %>
+    </div>
+  </fieldset>
+  <% }) %>
+  <% function searchPageHref(i) { return '/search?' + buildSearchPageUrl(i); } %>
+  <div class="pagelist" data-current-page="<%= page %>" data-total-pages="<%= totalPages %>">
+    <div class="prev"><a href="<%= searchPageHref(page > 1 ? page - 1 : 1) %>"><button <%= page <= 1 ? 'disabled' : '' %>>Previous</button></a></div>
+    <div class="pages">
+      <% for (let i = 1; i <= totalPages; i++) { %><% if (i === page) { %>[<strong><a href="<%= searchPageHref(i) %>"><%= i %></a></strong>] <% } else { %>[<a href="<%= searchPageHref(i) %>"><%= i %></a>] <% } %><% } %>
+    </div>
+    <div class="next"><a href="<%= searchPageHref(page < totalPages ? page + 1 : totalPages) %>"><button <%= page >= totalPages ? 'disabled' : '' %>>Next</button></a></div>
+  </div>
+  <% } %>
+  <% } %>
+</div>

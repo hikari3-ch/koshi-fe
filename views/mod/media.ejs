@@ -1,0 +1,43 @@
+<% title = fileHistory ? 'Files' : 'Media'; %>
+<% if (fileHistory) { %>
+<p><a href="/mod/bans">Bans</a></p>
+<table class="mod-table">
+<tr><th>File</th><th>Board</th><th>Thread</th><th>Post</th><th>Hash</th><th>Date</th></tr>
+<% files.forEach(f => { %>
+<tr>
+<td><a href="<%= f.path %>" target="_blank"><%= f.originalName || f.path %></a></td>
+<td>/<%= f.boardUri %>/</td>
+<td><%= f.threadId %></td>
+<td><%= f.postId || 'op' %></td>
+<td class="hash"><% if (f.sha256) { %><a href="/mod/media/details?identifier=<%= f.sha256 %>"><%= f.sha256 %></a><% } %></td>
+<td><%= f.creation ? new Date(f.creation).toLocaleString() : '' %></td>
+</tr>
+<% }) %>
+</table>
+<% } else { %>
+<form method="get">
+Search <input name="filter" value="<%= query.filter || '' %>">
+<label><input type="checkbox" name="orphaned" value="1" <%= query.orphaned ? 'checked' : '' %>> Orphaned</label>
+<button type="submit">Go</button>
+</form>
+<div class="mod-media">
+<% media.forEach(m => { %>
+<div>
+<label><input type="checkbox" class="media-select" value="<%= m.identifier %>"><img src="<%= m.thumb %>" onerror="this.src='/imageNotFound.webp'"></label>
+<%= m.references %> refs<br>
+<a href="<%= m.path %>" target="_blank"><%= m.identifier %></a><br>
+<a href="/mod/media/details?identifier=<%= m.identifier %>">Details</a>
+</div>
+<% }) %>
+</div>
+<% if (pages > 1) { %><p><% for (let p = 1; p <= pages; p++) { %><% if (p > 1) { %> / <% } %><a href="/mod/media?page=<%= p %><% if (query.filter) { %>&filter=<%= encodeURIComponent(query.filter) %><% } %><% if (query.orphaned) { %>&orphaned=1<% } %>"><%= p %></a><% } %></p><% } %>
+<h2>Delete</h2>
+<form id="media-mass-delete-form">
+<textarea name="identifiers" rows="3" placeholder="SHA256"></textarea>
+<% if (canBanDeleted) { %>
+<input name="reason" placeholder="Ban reason">
+<label><input type="checkbox" name="ban" value="1"> Ban deleted</label>
+<% } %>
+<button type="submit">Delete</button>
+</form>
+<% } %>

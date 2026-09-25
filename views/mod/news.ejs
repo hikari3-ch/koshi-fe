@@ -1,0 +1,31 @@
+<% title = 'News'; %>
+<h2>Posts</h2>
+<% if (newsPosts.length) { %>
+<table class="mod-table">
+<tr><th>#</th><th>Title</th><th>Date</th><th></th></tr>
+<% newsPosts.forEach(n => { %>
+<tr>
+<td><%= n.newsId %></td>
+<td><%= n.title %></td>
+<td><%= new Date(n.date).toLocaleString() %></td>
+<td><a href="/mod/news?edit=<%= n.newsId %>">Edit</a> / <a href="/news#<%= n.newsId %>" target="_blank">View</a></td>
+</tr>
+<% }) %>
+</table>
+<% } else { %><p>None</p><% } %>
+<h2><%= isNew ? 'New' : 'Edit #' + editPost.newsId %></h2>
+<% if (!isNew && !editPost) { %>
+<p>Not found</p>
+<% } else { %>
+<form id="<%= isNew ? 'news-create-form' : 'news-edit-form' %>">
+<% if (!isNew && editPost) { %><input type="hidden" name="newsId" value="<%= editPost.newsId %>"><% } %>
+<input name="title" placeholder="Title" value="<%= editPost ? editPost.title : '' %>" required>
+<input name="author" placeholder="Author" value="<%= editPost ? editPost.author : user.login %>" required>
+<input name="authorEmail" type="email" placeholder="Email" value="<%= editPost ? editPost.authorEmail : (user.email || '') %>" required>
+<input name="image" placeholder="Image URL" value="<%= editPost && editPost.image ? editPost.image : '' %>">
+<input name="date" type="datetime-local" value="<%= editPost ? new Date(editPost.date).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16) %>">
+<textarea name="contents" placeholder="Contents" required><%= editPost ? editPost.contents : '' %></textarea>
+<button type="submit"><%= isNew ? 'Create' : 'Save' %></button>
+<% if (!isNew && editPost) { %><button type="button" id="news-delete-btn" data-id="<%= editPost.newsId %>">Delete</button><% } %>
+</form>
+<% } %>

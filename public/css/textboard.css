@@ -1,0 +1,153 @@
+.outerbox {
+  background: var(--background-gradient);
+  border: 1px outset var(--border-alt);
+  clear: both;
+  margin: 1em 2.5%;
+  padding: 7px;
+}
+
+.innerbox {
+  border: 1px inset var(--border-alt);
+  padding: 6px;
+}
+
+.innerbox h1 {
+  font-size: 1.5em;
+  font-weight: normal;
+  margin: 0;
+}
+
+.innerbox h2 {
+  font-size: 1.2em;
+  font-weight: normal;
+  margin: 0;
+}
+
+.innerbox ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.innerbox li {
+  display: inline-block;
+}
+
+.textthread {
+  background: var(--post-color);
+  border: 1px outset var(--border-alt);
+  clear: both;
+  margin: 0 2.5% 2em;
+  padding: 7px;
+  position: relative;
+}
+
+.textthread h2 {
+  border: 1px inset var(--border-alt);
+  border-bottom: none;
+  font-weight: bold;
+  margin: 0 0 -1px;
+  padding: 0.3em 0 0 0.3em;
+}
+
+.textthread h2 a,
+.textthreadpage h2 a {
+  color: var(--subject-color);
+}
+
+.textthread h2 a:hover,
+.textthreadpage h2 a:hover {
+  text-decoration: underline;
+}
+
+.textreplies {
+  border: 1px inset var(--border-alt);
+  border-top: none;
+  clear: both;
+  margin: 0;
+  padding: 3px;
+}
+
+.textreplies .op {
+  display: block;
+  overflow: visible;
+}
+
+.textreplies .reply {
+  background: none;
+  border: none;
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.textreplies .post {
+  margin: 0;
+}
+
+.textreplies .post-quote + .reply {
+  overflow: hidden;
+}
+
+.textthreadpage h2 {
+  font-weight: bold;
+  margin: 0 0 -1px;
+}
+
+.thread-nav {
+  float: right;
+  margin-right: 10px;
+}
+
+.thread-nav-link {
+  color: var(--link-color) !important;
+}
+
+.post-quote {
+  float: left;
+  font-size: small;
+  margin-right: 3px;
+}
+
+.textreplies .reply-number {
+  font-size: 11px;
+}
+
+.textreplies .thread-content,
+.textreplies .reply-content {
+  padding: 0 3px 2px;
+  white-space: pre-line;
+}
+
+.textreplies .thread-content p,
+.textreplies .reply-content p {
+  margin: 0;
+}
+
+.textreplies .post-info {
+  line-height: 1.35;
+  padding: 0 3px 2px;
+}
+
+.textreplies .backlinks:empty {
+  display: none;
+}
+
+.page-content {
+  margin: 10px 2.5%;
+}
+
+.reply-form-container {
+  margin-left: 0;
+}
+
+table .head {
+  background: var(--header-highlight);
+  font-weight: bold;
+}
+
+table .line0,
+table .line1 {
+  background: var(--post-color);
+}

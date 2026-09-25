@@ -1,0 +1,13 @@
+<% title = 'Appeals'; %>
+<%- include('partials/board-nav') %>
+<p><a href="/mod/bans<%= boardUri ? '?board=' + boardUri : '' %>">Bans</a></p>
+<% bans.forEach((b, i) => { %>
+<% if (i) { %><hr><% } %>
+<p>
+<%= b.reason %><br>
+<%= b.appeal %><br>
+<%= b.expiration ? new Date(b.expiration).toLocaleString() : 'perm' %><br>
+<button type="button" class="appeal-action" data-id="<%= b._id %>" data-action="accept">Accept</button>
+<button type="button" class="appeal-action" data-id="<%= b._id %>" data-action="deny">Deny</button>
+</p>
+<% }) %>

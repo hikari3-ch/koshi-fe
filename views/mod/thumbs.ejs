@@ -1,0 +1,21 @@
+<% title = 'MIME thumbs'; %>
+<p>Custom thumbnails used when a file of that MIME has no generated thumb.</p>
+<form id="thumb-form" enctype="multipart/form-data">
+<input name="mime" placeholder="audio/mpeg" required>
+<input type="file" name="files" accept="image/jpeg,image/png,image/gif,image/webp" required>
+<button type="submit">Add</button>
+</form>
+<% if (thumbs.length) { %>
+<table class="mod-table">
+<tr><th>Thumb</th><th>MIME</th><th></th></tr>
+<% thumbs.forEach(t => { %>
+<tr>
+<td><img src="<%= t.thumb || '/.global/mimeThumbs/' + t._id %>" alt="" height="64"></td>
+<td><%= t.mime %></td>
+<td><button type="button" class="delete-thumb" data-id="<%= t._id %>">Delete</button></td>
+</tr>
+<% }) %>
+</table>
+<% } else { %>
+<p>None</p>
+<% } %>

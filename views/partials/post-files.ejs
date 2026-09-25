@@ -1,0 +1,21 @@
+<% if (files && files.length > 0) { %>
+<% var visibleFiles = files.filter(function(file) {
+  if (file.mime !== 'tegaki/replay') return true;
+  return !files.some(function(f) {
+    return f.originalName && file.originalName && f.originalName.slice(0, -3) === file.originalName.slice(0, -4);
+  });
+}); %>
+<% if (visibleFiles.length === 1) { %>
+<span class="file-info">
+  <%- include('./post-file', { file: visibleFiles[0], fileIndex: files.indexOf(visibleFiles[0]), files, imageClass, maxWidth, maxHeight, boardUri, threadId, postId, modView }) %>
+</span>
+<% } else { %>
+<% visibleFiles.forEach(function(file) { %>
+<div class="op-upload-cell">
+  <span class="file-info">
+    <%- include('./post-file', { file, fileIndex: files.indexOf(file), files, imageClass, maxWidth, maxHeight, boardUri, threadId, postId, modView }) %>
+  </span>
+</div>
+<% }); %>
+<% } %>
+<% } %>

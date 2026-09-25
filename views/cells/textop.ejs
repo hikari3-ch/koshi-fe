@@ -1,0 +1,57 @@
+<div class="op" data-post-id="<%= thread.threadId %>" data-board="<%= boardUri %>" data-thread-id="<%= thread.threadId %>" data-pinned="<%= thread.pinned ? 1 : 0 %>" data-locked="<%= thread.locked ? 1 : 0 %>" data-autosage="<%= thread.autoSage ? 1 : 0 %>" data-cyclic="<%= thread.cyclic ? 1 : 0 %>"<% if (locals.replyNumber != null) { %> data-reply-number="<%= replyNumber %>"<% } %>>
+    <div class="thread-header">
+      <div class="post-info">
+        <% if (locals.replyNumber != null) { %><span class="reply-number" title="Reply #<%= replyNumber %>"><%= replyNumber %></span> <% } %>
+        <% if (!locals.isSearchResult) { %><input type="checkbox" class="<%= modView ? 'mod-select' : 'post-checkbox' %>" <% if (modView) { %>value="<%= boardUri %>-<%= thread.threadId %>"<% } else { %>name="posts" form="delete-form" value="<%= thread.threadId %>-true"<% } %>><% } %>
+        Name: 
+        <% if (thread.signedRole === "Admin") { %>
+          <span title="This user is the site administrator" class="admin-name"><a target="_blank" href="https://syrno.net">syrno<span style="font-weight: normal;">!!zmOAdD</span></a> ## Admin <img src="/img/admin.png"></span>
+        <% } else if (thread.signedRole === "Global volunteer" || thread.signedRole === "Global Volunteer" || thread.signedRole === "Global Moderator" || thread.signedRole === "Moderator") { %>
+          <span title="This user is a site moderator" class="mod-name"><%- thread.name %> ## Moderator <img src="/img/modicon.gif"></span>
+          <% } else { %>
+          <span class="name" data-post-id="<%= thread.threadId %>" data-board="<%= boardUri %>"><%- thread.name %></span>
+          <% } %>
+        <%- include('../partials/time', { date: thread.creation }) %>
+        <a class="linkQuote" title="Link to this post" href="/<%= boardUri %>/<%= locals.isArchive ? 'archive/' : '' %>thread/<%= thread.threadId %>#<%= thread.threadId %>">No.</a> <a class="linkQuote" title="Reply to this post" href="/<%= boardUri %>/<%= locals.isArchive ? 'archive/' : '' %>thread/<%= thread.threadId %>#q<%= thread.threadId %>"><%= thread.threadId %></a>
+        <% if (modView) { %>
+        <%- include('/mod/partials/post-links', { boardUri, thread, postId: thread.threadId, isThread: true, post: thread, showIp, globalStaff }) %>
+        <% } %>
+        <% if (thread.pinned) { %>
+            <span title="Sticky"><img src="/img/sticky.gif"></span>
+          <% } %>
+          <% if (thread.locked) { %>
+            <span title="Locked"><img src="/img/locked.gif"></span>
+          <% } %>
+          <% if (thread.autoSage) { %>
+            <span title="Bumplocked">⚓</span>
+          <% } %>
+        <div class="backlinks"></div>
+        <% if (modView) { %>
+        <%- include('/mod/partials/staff-info', { post: thread, showIp }) %>
+        <% } %>
+      </div>
+    </div>
+    <div class="thread-content"><%- thread.markdown %>
+      <% if (thread.warningMessage) { %>
+      <%- include('../partials/warning-message', { message: thread.warningMessage }) %>
+      <% } else if (thread.banMessage) { %>
+        <div class="ban-message">
+          <%- thread.banMessage %> <img src="/img/ban.gif" width="60">
+        </div>
+      <% } %>
+    </div>
+    <% if (!isThread) { %>
+    <div class="thread-footer" data-thread-id="<%= thread.threadId %>">
+      <% if (thread.totalReplies > 5) { %>
+        <span class="omitted-posts" style="font-size: small;">
+            <%= thread.totalReplies - 5 %> posts 
+            <% if (thread.omittedImages > 0) { %>
+              and <%= thread.omittedImages %> image<%= thread.omittedImages !== 1 ? 's' : '' %>
+            <% } %>
+            omitted.
+          Click <a href="/<%= boardUri %>/thread/<%= thread.threadId %>">title</a> to view.
+        </span>
+      <% } %>
+    </div>
+    <% } %>
+  </div>

@@ -1,0 +1,80 @@
+<% boardFooter = true; %>
+<% title = '/' + boardUri + '/ - ' + (thread.subject || thread.message); %>
+<% styles = ['/css/tegaki.css', 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css']; %>
+<%- include('partials/banner') %>
+<hr class="above-post-form">
+<% if (modView) { %>
+<%- include('/mod/partials/thread-toolbar', { user, roleLabel, boardUri, thread }) %>
+<% } %>
+<%- include('partials/announcement') %>
+<% if (boardMessage) { %>
+<hr>
+<div style="text-align: center"><%- boardMessage %></div>
+<% } %>
+<% if (!modView) { %>
+<div class="reply-form-container">
+  <% if (thread.locked) { %>
+  <h3 style="margin-top: 0">This Thread is locked and you cannot reply.</h3>
+  <img src="/img/lock.webp" width="330" />
+  <% } else { %>
+  <form action="/<%= boardUri %>/thread/<%= thread.threadId %>/reply" class="reply-form" id="reply-form" method="POST" enctype="multipart/form-data" data-max-files="<%= maxUploadFiles %>">
+    <%- include('partials/post-form') %>
+  </form>
+  <noscript><a href="/styling">Styling</a></noscript>
+  <% } %>
+</div>
+<% } %>
+<hr>
+<% if (!modView) { %>[<a href="#" id="gallery-btn">Gallery</a>] <% } %>[<a href="/<%= boardUri %>/">Return</a>] [<a href="/<%= boardUri %>/catalog">Catalog</a>] [<a href="#bottom">Bottom</a>] [<a href="#">Top</a>]
+<hr>
+<div class="thread" id="<%= thread.threadId %>">
+<%- include('cells/op', { thread, boardUri, isThread: true, modView, showIp, globalStaff }) %>
+<div class="replies" id="replies">
+  <% posts.forEach((post, index) => { %>
+  <%- include('cells/reply', { reply: post, thread, boardUri, replyNumber: index + 1, modView, showIp, globalStaff }) %>
+  <% }) %>
+</div>
+</div>
+<hr>
+<% if (!modView) { %>[<a href="#" id="gallery-btn">Gallery</a>] <% } %>[<a href="/<%= boardUri %>/">Return</a>] [<a href="/<%= boardUri %>/catalog">Catalog</a>] [<a href="#">Top</a>]
+<span class="summary">There are <%= thread.totalReplies + 1 %> posts made by <%= thread.uniquePosters %> people with <%= thread.totalFiles %> files.</span>
+<hr>
+<% if (!modView) { %>
+<span id="countdown" class="thread-refresh-controls">
+  <input type="button" id="thread-refresh-btn" value="Refresh">
+  <label><input type="checkbox" id="thread-auto-refresh" checked> Auto <span id="thread-refresh-label"></span></label>
+</span>
+<form id="delete-form" action="/api/delete-posts" method="POST" style="float: right;margin-top: 10px;margin-right: 10px;">
+  Delete post:
+  [ <input type="checkbox" id="file-only" name="fileOnly" value="true"> File only ]
+  <input type="password" id="delete-password" name="password" style="width: 50px;">
+  <button type="submit">Delete</button>
+</form>
+<div style="clear: both"></div>
+<% } %>
+<hr>
+<% if (modView) { %>
+<%- include('/mod/partials/panels') %>
+<% } %>
+<% if (!modView) { %>
+<%- include('partials/quick-reply') %>
+<% } %>
+
+<script src="/js/tegaki.js"></script>
+<script src="/js/tegaki.min.js"></script>
+<script src="/js/tegaki-replay.js"></script>
+<script src="/js/qr.js"></script>
+<script src="/js/thread.js"></script>
+<script src="/js/quote.js"></script>
+<script src="/js/delete-form.js"></script>
+<script src="/js/upload.js"></script>
+<script src="/js/expansion.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/you.js"></script>
+<% if (modView) { %>
+<script>
+  window.modBoardUri = '<%= boardUri %>';
+  window.modThreadId = <%= thread.threadId %>;
+</script>
+<script src="/js/mod.js"></script>
+<% } %>

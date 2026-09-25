@@ -1,0 +1,100 @@
+<% boardFooter = true; %>
+<% title = '/' + boardUri + '/ - ' + boardName; %>
+<% styles = ['/css/textboard.css', '/css/tegaki.css', 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css']; %>
+<% head = '<link rel="alternate" type="application/rss+xml" title="' + siteName + ' | ' + boardName + '" href="/' + boardUri + '/rss.xml" />'; %>
+<noscript><style>.js-only { display: block !important; }</style></noscript>
+      <% if (modView) { %>
+      <%- include('/mod/partials/board-toolbar', { user, roleLabel, boardUri }) %>
+      <% } %>
+      <div class="outerbox top">
+        <div class="innerbox">
+          <h1>/<%= boardUri %>/ - <%- boardName %></h1>
+          <h2><%- boardDescription %></h2>
+        </div>
+      </div>
+        <% if (topThreads && topThreads.length > 0) { %>
+        <div class="outerbox">
+        <div class="innerbox">
+        <ul>
+          <% topThreads.forEach((thread, index) => { %>
+            <li><a href="/<%= boardUri %>/thread/<%= thread.threadId %>"><%= index + 1 %>:</a> <a href="#<%= thread.threadId %>"><%- thread.subject || 'No title' %> (<%= thread.postCount || 1 %>)</a></li>
+          <% }) %>
+        </ul>
+        <div style="text-align: right; margin-top: 5px; font-weight: bold;"><a style="margin-right: 5px;" href="#postform">New thread</a> <a href="/<%= boardUri %>/subback">All threads</a></div>
+        </div>
+        <% } %>
+        </div>
+      <%- include('partials/announcement') %>
+      <% if (boardMessage) { %>
+      <hr>
+      <div style="text-align: center">
+            <%- boardMessage %>
+      </div>
+      <% } %>
+      <div id="thread-container">
+        <div class="threads">
+          <% threads.forEach((thread, index) => { %>
+            <article class="textthread" id="<%= thread.threadId %>">
+              <h2><span style="font-size: 14px;">【<%= index + 1 %>:<%= (thread.postCount || (thread.replies ? thread.replies.length : 0)) + 1 %>】</span><a href="/<%= boardUri %>/thread/<%= thread.threadId %>"><%- thread.subject || 'No title' %> (<%= thread.postCount || 1 %>)</a>
+                  <span class="thread-nav">
+                    <a title="Go to post form" class="thread-nav-link" href="#postform">■</a>
+                    <% if (index > 0) { %><a title="Go to above thread" class="thread-nav-link" href="#<%= threads[index - 1].threadId %>">▲</a><% } %><% if (index < threads.length - 1) { %><a title="Go to below thread" class="thread-nav-link" href="#<%= threads[index + 1].threadId %>">▼</a><% } %>
+                  </span>
+              </h2>
+              <div class="textreplies">
+              <%- include('cells/textop', { 
+                thread, 
+                boardUri, 
+                replyNumber: 1,
+                threadOrder: index + 1,
+                replyCount: (thread.postCount || (thread.replies ? thread.replies.length : 0)) + 1,
+                modView,
+                showIp,
+                globalStaff
+              }) %>
+              
+                <% 
+                  const totalReplies = thread.postCount || thread.replies.length;
+                  const lastFiveReplies = thread.replies.slice(-5);
+                  const startingReplyNumber = totalReplies - lastFiveReplies.length + 2; // Start from 2 since OP is 1
+                %>
+                <% lastFiveReplies.forEach((reply, index) => { %>
+                  <%- include('cells/textreply', { reply, thread, boardUri, replyNumber: startingReplyNumber + index, modView, showIp, globalStaff }) %>
+                <% }) %>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+      </div>
+      <% if (!modView) { %>
+      <div class="page-content">
+        <div class="reply-form-container" id="postform">
+          <h3 style="margin-top: 0">Submit New Thread</h3>
+          <form id="post-form" data-requires-file="false" action="/<%= boardUri %>/thread" style="margin-top: 10px; width: 400px" method="POST" enctype="multipart/form-data">
+            <%- include('partials/post-form-text') %>
+          </form>
+          <noscript>
+            <a href="/styling">Styling</a>
+          </noscript>
+        </div>
+          <form id="delete-form" action="/api/delete-posts" method="POST" style="float: right;margin-bottom: 10px;margin-right: 10px;">
+            Delete post: 
+            <input type="password" id="delete-password" name="password" style="width: 50px;">
+          <button type="submit">Delete</button>
+        </form>
+      </div>
+      <% } %>
+      <% if (modView) { %>
+      <%- include('/mod/partials/panels') %>
+      <% } %>
+
+<script src="/js/delete-form.js"></script>
+<script src="/js/quote.js"></script>
+<script src="/js/you.js"></script>
+<script src="/js/board.js"></script>
+<% if (modView) { %>
+<script>
+  window.modBoardUri = '<%= boardUri %>';
+</script>
+<script src="/js/mod.js"></script>
+<% } %>

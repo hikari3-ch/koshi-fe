@@ -1,0 +1,49 @@
+<% boardFooter = true; %>
+<% title = '/' + boardUri + '/ - Catalog'; %>
+<% head = '<link rel="alternate" type="application/rss+xml" title="' + siteName + ' | ' + boardName + '" href="/' + boardUri + '/rss.xml" />'; %>
+<%- include('partials/banner') %>
+<%- include('partials/announcement') %>
+<% if (boardMessage) { %>
+<hr>
+<div style="text-align: center"><%- boardMessage %></div>
+<% } %>
+<div class="catalog-controls">
+  <span class="catalog-search">
+    <div class="catalog-sort">
+      <label>Sort by:
+        <select id="sort-select">
+          <option value="bump">Bump order</option>
+          <option value="reply">Reply count</option>
+          <option value="creation">Creation date</option>
+        </select>
+      </label>
+      <div class="catalog-buttons">
+        <a href="/<%= boardUri %>/" class="small-button">Index</a>
+        <a href="/<%= boardUri %>/archive" class="small-button">Archive</a>
+        <a href="/<%= boardUri %>/rss.xml" title="RSS" class="feed-link"><img src="/img/feed.svg" alt="RSS" width="16" height="16" class="feed-icon"></a>
+      </div>
+    </div>
+    <input type="text" id="catalog-search-input" placeholder="Search threads..." />
+  </span>
+</div>
+<div class="catalog-threads" id="thread-container">
+  <% threads.forEach(thread => { %>
+  <article class="catalog-thread" id="<%= thread.threadId %>" data-replies="<%= thread.replyCount %>" data-bump="<%= thread.bumpDate %>" data-creation="<%= thread.createdAt %>" data-pinned="<%= thread.pinned || false %>">
+    <% var catalogFile = thread.files && thread.files.find(function(f) { return f.mime !== 'tegaki/replay'; }); %>
+    <% if (catalogFile) { %>
+    <div class="catalog-file">
+      <a href="/<%= boardUri %>/thread/<%= thread.threadId %>" class="media-toggle" data-mime="<%= catalogFile.mime %>"<% if (catalogFile.width && catalogFile.height) { %> data-file-width="<%= catalogFile.width %>" data-file-height="<%= catalogFile.height %>"<% } %>>
+        <img src="<%= catalogFile.thumb %>" alt="<%= catalogFile.originalName %>" class="catalog-image" data-full="<%= catalogFile.path %>" data-thumb="<%= catalogFile.thumb %>" />
+      </a>
+    </div>
+    <% } %>
+    <div class="catalog-content">
+      <div class="thread-stats">R: <span class="reply-count"><%= thread.replyCount %></span> / F: <span class="image-count"><%= thread.imageCount %></span></div>
+      <% if (thread.subject) { %><div class="thread-subject"><%- thread.subject %></div><% } %>
+      <div class="thread-text"><%- thread.markdown %></div>
+    </div>
+  </article>
+  <% }) %>
+</div>
+
+<script src="/js/catalog.js"></script>

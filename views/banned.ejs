@@ -1,0 +1,36 @@
+<% title = 'b&'; %>
+<div class="box-layout">
+  <div class="box-outer top-box" style="display: flow-root;">
+    <div class="boxbar"><h2>You are banned! ;_;</h2></div>
+    <div class="boxcontent">
+      <img src="/img/gtfo.webp" style="float: right;" width="400">
+      You have been banned from <b><%= ban.boardUri %></b> for the following reason:
+      <br><br>
+      <b><%= ban.reason %></b>
+      <br><br>
+      This ban will expire on <b><%= ban.expiration %></b>.
+      <br><br>
+      You can appeal this ban by submitting an appeal below.
+      <br><br>
+      <% if (ban.appealed) { %>
+      <% if (ban.appealDenied) { %>
+      <div class="appeal-status denied"><p><b>Your appeal has been reviewed and denied.</b></p></div>
+      <% } else { %>
+      <div class="appeal-status pending"><p><b>Your appeal has been submitted and is pending review.</b></p></div>
+      <% } %>
+      <% } else if (ban.canAppeal) { %>
+      <div class="appeal-form">
+        <h3>Submit an Appeal</h3>
+        <p>You may submit an appeal to have your ban reviewed by a moderator. Please explain why you believe this ban should be lifted.</p>
+        <form action="/appeal" method="POST">
+          <input type="hidden" name="banId" value="<%= ban.id %>">
+          <textarea name="appealText" maxlength="512" rows="5" placeholder="Enter plea here (max 512 characters)" required style="width: 255px;"></textarea>
+          <button type="submit">Submit Appeal</button>
+        </form>
+      </div>
+      <% } else { %>
+      <div class="appeal-status"><p><b>This ban cannot be appealed.</b></p></div>
+      <% } %>
+    </div>
+  </div>
+</div>

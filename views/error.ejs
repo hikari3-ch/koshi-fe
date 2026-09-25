@@ -1,0 +1,14 @@
+<% title = 'Server Error - 500'; %>
+<% head = '<style>.error-details { font-size: 28px; color: red; margin: 1rem 0; font-weight: bold; }</style>'; %>
+<% title = 'Server Error - 500'; %>
+<div class="box-layout">
+<div class="box-outer top-box">
+  <div class="boxbar"><h2>Server Error - 500</h2></div>
+  <div class="boxcontent" style="text-align: center;">
+    <img src="/img/b0rk.jpg" width="404">
+    <div class="error-details">
+      <% if (error && error.message) { %><%= error.message %><% } else { %>Something went wrong on our end. Please try again later.<% } %>
+    </div>
+  </div>
+</div>
+</div>

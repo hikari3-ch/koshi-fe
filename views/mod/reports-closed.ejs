@@ -1,0 +1,16 @@
+<% title = 'Closed'; %>
+<%- include('partials/board-nav') %>
+<p><a href="/mod/reports<%= boardUri ? '?board=' + boardUri : '' %>">Open</a></p>
+<table class="mod-table">
+<tr><th>Board</th><th>Thread</th><th>Post</th><th>Reason</th><th>Closed</th><th>By</th></tr>
+<% reports.forEach(r => { %>
+<tr>
+<td>/<%= r.boardUri %>/</td>
+<td><%= r.threadId %></td>
+<td><%= r.postId || 'op' %></td>
+<td><%= r.reason %></td>
+<td><%= new Date(r.closing).toLocaleString() %></td>
+<td><%= r.closedBy %></td>
+</tr>
+<% }) %>
+</table>

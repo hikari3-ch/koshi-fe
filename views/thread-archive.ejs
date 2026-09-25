@@ -1,0 +1,31 @@
+<% boardFooter = true; %>
+<% title = '/' + boardUri + '/ - ' + (thread.subject || thread.message); %>
+<% styles = ['/css/tegaki.css', 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css']; %>
+<%- include('partials/banner') %>
+<%- include('partials/announcement') %>
+<hr class="above-post-form">
+<div class="page-nav">
+  [<a href="#" id="gallery-btn">Gallery</a>] [<a href="/<%= boardUri %>/archive">Return</a>] [<a href="/<%= boardUri %>/catalog">Catalog</a>] [<a href="#bottom">Bottom</a>]
+  <span class="archived-warning">This Thread is archived and you cannot reply.</span>
+</div>
+<div class="thread" id="<%= thread.threadId %>">
+  <%- include('cells/op', { thread, boardUri, isThread: true, isArchive: true }) %>
+  <div class="replies">
+    <% posts.forEach((post, index) => { %>
+    <%- include('cells/reply', { reply: post, thread, boardUri, replyNumber: index + 1, isArchive: true }) %>
+    <% }) %>
+  </div>
+</div>
+<div class="page-nav" id="bottom">
+  [<a href="#" id="gallery-btn">Gallery</a>] [<a href="/<%= boardUri %>/archive">Return</a>] [<a href="/<%= boardUri %>/catalog">Catalog</a>] [<a href="#">Top</a>]
+  <span class="summary">There are <%= thread.totalReplies + 1 %> posts made by <%= thread.uniquePosters %> people with <%= thread.totalFiles %> files.</span>
+</div>
+<%- include('partials/quick-reply') %>
+
+<script src="/js/tegaki.js"></script>
+<script src="/js/tegaki.min.js"></script>
+<script src="/js/tegaki-replay.js"></script>
+<script src="/js/qr.js"></script>
+<script src="/js/expansion.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/thread.js"></script>

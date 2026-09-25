@@ -1,0 +1,18 @@
+<div id="divControls" class="mod-thread-controls">
+<fieldset id="settingsFieldset" class="reportFieldset">
+<legend>Thread Settings</legend>
+<label><input type="checkbox" id="set-pinned" <%= thread.pinned ? 'checked' : '' %>> Pin</label>
+<label><input type="checkbox" id="set-locked" <%= thread.locked ? 'checked' : '' %>> Lock</label>
+<label><input type="checkbox" id="set-cyclic" <%= thread.cyclic ? 'checked' : '' %>> Cyclic</label>
+<button type="button" id="mod-save-settings">Save</button>
+</fieldset>
+</div>
+<div id="boardContentLinks" class="mod-board-links">
+<span>[</span>
+<a href="/mod">Mod</a>
+<span>/</span>
+<a href="/mod/board/<%= boardUri %>">Board</a>
+<span>/</span>
+<a href="/<%= boardUri %>/thread/<%= thread.threadId %>">Public</a>
+<span>]</span>
+</div>

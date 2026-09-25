@@ -1,0 +1,49 @@
+<% if (locals.poll) { %>
+<div class="poll-wrapper">
+<div class="poll-container" data-poll-id="<%= poll._id %>">
+  <div class="poll-header">
+    <h4><%= poll.question %></h4>
+    <small>
+      Expires: <%= new Date(poll.expiresAt).toLocaleDateString() %>
+    </small>
+  </div>
+  
+  <div class="poll-options">
+    <% 
+    const totalVotes = poll.options.reduce((sum, opt) => sum + opt.voteCount, 0);
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#D4A5A5', '#9B59B6', '#3498DB', '#E67E22', '#1ABC9C'];
+    poll.options.forEach((option, index) => {
+      const percentage = totalVotes > 0 ? (option.voteCount / totalVotes * 100).toFixed(1) : 0;
+      const color = colors[index % colors.length];
+    %>
+      <div class="poll-option">
+        <label class="option-label">
+          <input 
+            type="radio" 
+            name="poll_vote_<%= poll._id %>" 
+            value="<%= index %>"
+            <% if (new Date() > poll.expiresAt) { %>disabled<% } %>
+          >
+          <span class="option-text"><%= option.text %></span>
+        </label>
+        <div class="poll-bar-container">
+          <div class="poll-bar" style="width: <%= percentage %>%; background-color: <%= color %>"></div>
+          <span class="poll-stats">
+            <%= option.voteCount %> votes (<%= percentage %>%)
+          </span>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+  
+  <div class="poll-footer">
+    <% if (new Date() <= poll.expiresAt) { %>
+      <button class="vote-button edit-profile-btn">Vote</button>
+    <% } else { %>
+      <span class="poll-expired">Poll has expired</span>
+    <% } %>
+    <span class="total-votes">Total votes: <%= totalVotes %></span>
+  </div>
+</div>
+</div>
+<% } %>

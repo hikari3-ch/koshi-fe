@@ -1,0 +1,79 @@
+<% boardFooter = true; %>
+<% title = '/' + boardUri + '/ - ' + boardName; %>
+<% head = '<link rel="alternate" type="application/rss+xml" title="' + siteName + ' | ' + boardName + '" href="/' + boardUri + '/rss.xml" />'; %>
+<% styles = ['/css/tegaki.css', 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css']; %>
+<noscript><style>.js-only { display: block !important; }</style></noscript>
+<%- include('partials/banner') %>
+<hr class="above-post-form">
+<% if (modView) { %>
+<%- include('/mod/partials/board-toolbar', { user, roleLabel, boardUri }) %>
+<% } %>
+<% if (!modView) { %>
+<div class="reply-form-container" id="post-form-container">
+  <form id="post-form" action="/<%= boardUri %>/thread" method="POST" enctype="multipart/form-data" data-max-files="<%= maxUploadFiles %>">
+    <%- include('partials/post-form') %>
+  </form>
+</div>
+<% } %>
+<%- include('partials/announcement') %>
+<% if (boardMessage) { %>
+<hr>
+<div style="text-align: center"><%- boardMessage %></div>
+<% } %>
+<hr>
+<input type="text" id="search-op" placeholder="Search OP"> [<a href="/<%= boardUri %>/catalog">Catalog</a>] [<a href="/<%= boardUri %>/archive">Archive</a>]<% if (modUser) { %> [<a href="/mod/board/<%= boardUri %>">Moderate</a>]<% } %> <a href="/<%= boardUri %>/rss.xml" title="RSS" class="feed-link"><img src="/img/feed.svg" alt="RSS" width="16" height="16" class="feed-icon"></a>
+<hr>
+<div id="thread-container">
+  <div class="threads">
+    <% threads.forEach((thread, index) => { %>
+    <div class="thread" id="<%= thread.threadId %>">
+      <%- include('cells/op', { thread, boardUri, threadIndex: index, totalThreads: threads.length, threads, modView, showIp, globalStaff }) %>
+      <div class="replies">
+        <% const totalReplies = thread.postCount || thread.replies.length; const lastFiveReplies = thread.replies.slice(-5); const startingReplyNumber = totalReplies - lastFiveReplies.length + 1; %>
+        <% lastFiveReplies.forEach((reply, index) => { %>
+        <%- include('cells/reply', { reply, thread, boardUri, replyNumber: startingReplyNumber + index, modView, showIp, globalStaff }) %>
+        <% }) %>
+      </div>
+    </div>
+    <hr>
+    <% }) %>
+  </div>
+</div>
+<div style="clear: both"></div>
+<% function pageHref(i) { return modView ? (i === 1 ? '/mod/board/' + boardUri : '/mod/board/' + boardUri + '/' + i) : ('/' + boardUri + '/' + (i === 1 ? '' : i)); } %>
+<div class="pagelist" data-current-page="<%= page %>" data-total-pages="<%= totalPages %>">
+  <div class="prev"><a href="<%= pageHref(page > 1 ? page - 1 : 1) %>"><button <%= page <= 1 ? 'disabled' : '' %>>Previous</button></a></div>
+  <div class="pages">
+    <% for (let i = 1; i <= totalPages; i++) { %><% if (i === page) { %>[<strong><a href="<%= pageHref(i) %>"><%= i %></a></strong>] <% } else { %>[<a href="<%= pageHref(i) %>"><%= i %></a>] <% } %><% } %>
+  </div>
+  <div class="next"><a href="<%= pageHref(page < totalPages ? page + 1 : totalPages) %>"><button <%= page >= totalPages ? 'disabled' : '' %>>Next</button></a></div>
+  <div class="pages catalog-link"><a href="/<%= boardUri %>/catalog">Catalog</a></div>
+</div>
+<div style="clear: both"></div>
+<% if (!modView) { %>
+<form id="delete-form" action="/api/delete-posts" method="POST" style="float: right;margin-top: 10px;margin-right: 10px;">
+  Delete post:
+  [ <input type="checkbox" id="file-only" name="fileOnly" value="true"> File only ]
+  <input type="password" id="delete-password" name="password" style="width: 50px;">
+  <button type="submit">Delete</button>
+</form>
+<div style="clear: both"></div>
+<% } %>
+<% if (modView) { %>
+<%- include('/mod/partials/panels') %>
+<% } %>
+<script src="/js/tegaki.js" defer></script>
+<script src="/js/tegaki.min.js" defer></script>
+<script src="/js/tegaki-replay.js" defer></script>
+<script src="/js/delete-form.js" defer></script>
+<script src="/js/upload.js" defer></script>
+<script src="/js/expansion.js" defer></script>
+<script src="/js/quote.js" defer></script>
+<script src="/js/you.js" defer></script>
+<script src="/js/board.js" defer></script>
+<% if (modView) { %>
+<script>
+  window.modBoardUri = '<%= boardUri %>';
+</script>
+<script src="/js/mod.js"></script>
+<% } %>

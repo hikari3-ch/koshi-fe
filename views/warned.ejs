@@ -1,0 +1,23 @@
+<% title = 'Warning'; %>
+<div class="box-layout">
+  <div class="box-outer top-box" style="display: flow-root;">
+    <div class="boxbar"><h2>You have been warned</h2></div>
+    <div class="boxcontent">
+      <% if (warning.message) { %>
+      <%- include('partials/warning-message', { message: warning.message }) %>
+      <br>
+      <% } %>
+      You have received a warning<% if (warning.boardUri !== 'all boards') { %> on <b>/<%= warning.boardUri %>/</b><% } %> for the following reason:
+      <br><br>
+      <b><%= warning.reason %></b>
+      <br><br>
+      Acknowledge this warning to continue posting.
+      <br><br>
+      <form action="/warned/dismiss" method="POST">
+        <input type="hidden" name="banId" value="<%= warning.id %>">
+        <input type="hidden" name="returnUrl" value="<%= returnUrl %>">
+        <button type="submit">I understand</button>
+      </form>
+    </div>
+  </div>
+</div>

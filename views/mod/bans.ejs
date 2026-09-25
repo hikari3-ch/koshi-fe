@@ -1,0 +1,35 @@
+<% title = 'Bans'; %>
+<h1>Bans</h1>
+<%- include('partials/board-nav') %>
+<% if (!boardUri) { %>
+<form method="get">
+<input name="board" placeholder="Board" value="">
+<button type="submit">View</button>
+</form>
+<% } %>
+<p>
+<% if (boardUri) { %><a href="/mod/bans?board=<%= boardUri %>">Bans</a> / <% } else { %><a href="/mod/bans">Global</a> / <% } %>
+<a href="/mod/bans/appeals<%= boardUri ? '?board=' + boardUri : '' %>">Appeals</a> /
+<a href="/mod/bans/range<%= boardUri ? '?board=' + boardUri : '' %>">Range</a> /
+<a href="/mod/bans/hash<%= boardUri ? '?board=' + boardUri : '' %>">Hash</a> /
+<a href="/mod/bans/asn<%= boardUri ? '?board=' + boardUri : '' %>">ASN</a>
+</p>
+<% bans.forEach((b, i) => { %>
+<% if (i) { %><hr><% } %>
+<p<%= b.expired ? ' class="expired"' : '' %>>
+<%= b.idStr %><br>
+<%= b.displayTarget %><br>
+<% if (b.hasIp) { %><a href="/mod/latest?banId=<%= b.idStr %>">Posts</a> / <a href="/mod/offense?banId=<%= b.idStr %>">Offenses</a> / <a href="/mod/media?banId=<%= b.idStr %>">Files</a><br><% } %>
+<%= b.appliedBy || '' %><% if (b.isWarning) { %> /Warning<% } %><% if (b.reason) { %> /<%= b.reason %><% } %><% if (b.boardUri) { %> /<%= b.boardUri %>/<% } %> /<%= b.expiration ? new Date(b.expiration).toLocaleString() : 'perm' %>
+<button type="button" class="lift-ban" data-id="<%= b._id %>">Lift</button>
+</p>
+<% }) %>
+<% if (!bans.length) { %><p>None</p><% } %>
+<% if (showIp) { %>
+<h2>Mass ban</h2>
+<form id="mass-ban-form">
+<textarea name="ips" rows="4" placeholder="IPs"></textarea>
+<input name="reason" placeholder="Reason">
+<button type="submit">Ban</button>
+</form>
+<% } %>

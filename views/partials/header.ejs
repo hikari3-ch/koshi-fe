@@ -1,0 +1,20 @@
+<noscript><style>.no-js { display: none; }</style></noscript>
+<header class="header">
+  <nav class="board-list">
+    [
+    <% if (navBoards.length) { navBoards.forEach(function(board, i) { %>
+    <a href="/<%= board.boardUri %>/"><%= board.boardUri %></a><% if (i < navBoards.length - 1) { %> /<% } %>
+    <% }); } %>
+    ] [ <a href="/all">all</a> ]
+  </nav>
+  <div class="navtopright">
+    <form class="header-search-form" action="/search" method="GET">
+      <input type="text" name="general" class="header-search-input inputtext" placeholder="Search…" autocomplete="off" value="<%= locals.searchOpts && searchOpts.general ? searchOpts.general : '' %>" />
+      <button type="submit" class="header-search-btn">Search</button>
+    </form>
+    [<a href="/">Home</a>]
+    [<a href="#" id="watch-list-btn" class="watch-list-btn">Thread Watcher</a>]
+    [<a href="#" id="settings-btn" class="settings-btn">Settings</a>]
+    [<a href="/mod">Moderation</a>]
+  </div>
+</header>

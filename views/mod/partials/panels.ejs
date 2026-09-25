@@ -1,0 +1,40 @@
+<div id="divMod" class="contentAction mod-actions-form">
+<fieldset class="reportFieldset">
+<legend>Ban</legend>
+<label>
+Ban duration (Defaults to 5 years):
+<input type="text" id="mod-ban-duration" value="5y">
+</label>
+<label>
+Ban Message
+<input type="text" id="mod-ban-message">
+</label>
+<label>
+Ban Reason
+<input type="text" id="mod-ban-reason">
+</label>
+<label>
+Ban type:
+<select id="mod-ban-type">
+<option value="">IP/Bypass ban</option>
+<option value="1">Range ban (1/2 octets)</option>
+<option value="2">Range ban (3/4 octets)</option>
+<option value="3">ASN ban</option>
+<option value="4">Ip/Bypass warning</option>
+</select>
+</label>
+<label><input type="checkbox" id="mod-ban-non-bypass"> Non-Bypassable</label>
+<label><input type="checkbox" id="mod-ban-global"> Global</label>
+<button type="button" id="mod-ban">Ban</button>
+<button type="button" id="mod-ban-delete">Ban and delete</button>
+</fieldset>
+<fieldset class="reportFieldset">
+<legend>Misc</legend>
+<label><input type="checkbox" id="mod-ip-delete-confirm"> Confirm ip deletion</label>
+<% if (showIp) { %>
+<button type="button" id="mod-ip-delete-board">Delete by ip/bypass on this board</button>
+<button type="button" id="mod-ip-delete-thread">Delete by ip/bypass on this thread</button>
+<% } %>
+<button type="button" id="mod-spoil-files">Spoil Files</button>
+</fieldset>
+</div>

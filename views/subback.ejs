@@ -1,0 +1,33 @@
+<% boardFooter = true; %>
+<% title = '/' + boardUri + '/ - All Threads - ' + boardName; %>
+<% styles = ['/css/textboard.css']; %>
+<%- include('partials/announcement') %>
+<p style="padding: 5px;padding-bottom: 0px;"><b>Navigation:</b> <a href="/<%= boardUri %>/">Return</a></p>
+<table style="padding: 5px;">
+  <thead>
+    <tr class="head">
+      <th>Num</th>
+      <th>Title</th>
+      <th>Posts</th>
+      <th>Last post</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% threads.forEach((thread, index) => { %>
+    <tr class="line<%= index % 2 %>">
+      <td align="right"><%= index + 1 %>:</td>
+      <td><a href="/<%= boardUri %>/thread/<%= thread.threadId %>" rel="nofollow"><%- thread.subject || 'No title' %></a></td>
+      <td align="right"><a href="/<%= boardUri %>/thread/<%= thread.threadId %>"><%= thread.postCount || 1 %></a></td>
+      <td>
+        <% const lastReplyDate = new Date(thread.lastReplyTime || thread.creation);
+        const year = lastReplyDate.getFullYear();
+        const month = String(lastReplyDate.getMonth() + 1).padStart(2, '0');
+        const day = String(lastReplyDate.getDate()).padStart(2, '0');
+        const hours = String(lastReplyDate.getHours()).padStart(2, '0');
+        const minutes = String(lastReplyDate.getMinutes()).padStart(2, '0'); %>
+        <%= year %>/<%= month %>/<%= day %> <%= hours %>:<%= minutes %>
+      </td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>

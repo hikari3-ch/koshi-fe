@@ -1,0 +1,13 @@
+<div class="threads">
+  <% threads.forEach(thread => { %>
+  <article class="thread" id="<%= thread.threadId %>">
+    <%- include('op', { thread, boardUri, isThread: false }) %>
+    <div class="replies">
+      <% thread.replies.slice(-5).forEach(reply => { %>
+      <%- include('reply', { reply, thread, boardUri }) %>
+      <% }) %>
+    </div>
+  </article>
+  <hr />
+  <% }) %>
+</div>

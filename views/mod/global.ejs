@@ -1,0 +1,35 @@
+<% title = 'Global Management'; %>
+<hr>
+<p>
+<a href="/mod/global/filters">Global filters</a><br>
+<a href="/mod/global/banners">Global banners</a><br>
+<a href="/mod/global/staff">Global staff</a><br>
+<a href="/mod/news">News</a><br>
+<a href="/mod/bans">Bans</a><br>
+<a href="/mod/bans/range">Range bans</a><br>
+<a href="/mod/bans/asn">ASN bans</a><br>
+<a href="/mod/bans/hash">Hash bans</a><br>
+<a href="/mod/bans/appeals">Appealed bans</a><br>
+<a href="/mod/reports">Open reports</a><br>
+<a href="/mod/reports/closed">Closed reports</a><br>
+<a href="/mod/media">Media management</a><br>
+<a href="/mod/thumbs">Custom thumbs</a>
+</p>
+<form id="site-announcement-form">
+<p>Site announcement (HTML, shown sitewide):</p>
+<p><textarea name="announcement" rows="6" cols="60" maxlength="10000"><%= announcement || '' %></textarea></p>
+<p>Max Length: 10000</p>
+<p><button type="submit">Save announcement</button></p>
+</form>
+<form id="clear-ip-role-form">
+<p>
+Unhashed IPs visible to
+<select name="clearIpMinRole">
+<option value="0"<%= Number(clearIpMinRole) === 0 ? ' selected' : '' %>>Root</option>
+<option value="1"<%= Number(clearIpMinRole) === 1 ? ' selected' : '' %>>Admin and above</option>
+<option value="2"<%= Number(clearIpMinRole) === 2 ? ' selected' : '' %>>Moderator and above</option>
+<option value="3"<%= Number(clearIpMinRole) === 3 ? ' selected' : '' %>>Janitor and above</option>
+</select>
+<button type="submit">Save</button>
+</p>
+</form>

@@ -1,0 +1,4 @@
+# Tegaki - Oekaki-style painter app
+# https://github.com/desuwa/tegaki
+public/js/tegaki.* linguist-vendored
+public/css/tegaki.css linguist-vendored

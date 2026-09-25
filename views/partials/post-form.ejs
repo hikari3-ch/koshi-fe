@@ -1,0 +1,172 @@
+<script>
+  function updateTextareaValueFromURL() {
+    const textarea = document.getElementById('message');
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#q')) {
+      const id = hash.substring(2);
+      textarea.value = `>>${id}\n`;
+    }
+  }
+  window.onload = updateTextareaValueFromURL;
+  window.onhashchange = updateTextareaValueFromURL;
+</script>
+
+<table id="postformTable">
+  <tbody>
+    <tr>
+      <td class="post-block"><label for="name">Name</label></td>
+      <td class="postform-input-cell">
+        <input type="text" id="name" name="name" class="input-text" placeholder="<%= anonymousName %>" />
+      </td>
+    </tr>
+    <tr>
+      <td class="post-block"><label>Options</label></td>
+      <td class="postform-input-cell">
+        <label>Fortune <input type="checkbox" id="fortune" name="fortune" value="true" /></label>
+        <% if (isThread) { %>
+        <label>Sage <input type="checkbox" id="sage" name="sage" value="true" /></label>
+        <label>Nonoko <input type="checkbox" id="nonoko" name="nonoko" value="true" /></label>
+        <button class="new-thread-btn" type="submit">New reply</button>
+        <% } %>
+      </td>
+    </tr>
+    <% if (!isThread) { %>
+    <tr>
+      <td class="post-block"><label for="subject">Subject</label></td>
+      <td class="postform-input-cell">
+        <input type="text" id="subject" name="subject" class="input-text" />
+        <button class="new-thread-btn" type="submit">New thread</button>
+      </td>
+    </tr>
+    <% } %>
+    <tr>
+      <td class="post-block">
+        <label for="message">Comment</label>
+      </td>
+      <td class="postform-input-cell">
+        <textarea id="message" name="message" class="input-text" rows="5"></textarea>
+        <p class="file-info no-js" style="margin: 0;">Max comment length: <span id="charCount">0</span>/4096</p>
+        <% var youtubeOk = locals.youtubeAllowed !== false; %>
+        <% var pollsOk = locals.pollsAllowed !== false; %>
+        <% var tegakiOk = locals.tegakiAllowed !== false; %>
+        <div class="js-only comment-block-extra">
+          <% if (youtubeOk) { %>
+          <details id="youtube-details">
+            <summary class="format-summary" title="YouTube">YT</summary>
+            <input type="text" id="youtube-url" name="youtube-url" placeholder="Paste YouTube URL here" style="width: 98%;" />
+          </details>
+          <% } %>
+          <% if (pollsOk) { %>
+          <details id="poll-details" class="poll-details">
+            <summary class="format-summary">Poll</summary>
+            <div style="padding: 10px;">
+              <input type="text" autocomplete="off" name="poll_question" placeholder="Poll question" style="width: 98%; margin-bottom: 5px;" />
+              <div id="poll-options">
+                <input type="text" autocomplete="off" name="poll_options[]" placeholder="Option 1" style="width: 90%; margin-bottom: 5px;" />
+                <input type="text" autocomplete="off" name="poll_options[]" placeholder="Option 2" style="width: 90%; margin-bottom: 5px;" />
+              </div>
+              <button type="button" id="add-option" style="margin-bottom: 5px;">+ Add Option</button>
+              <div style="margin-top: 5px;">
+                <label>Poll duration:
+                  <select name="poll_duration">
+                    <option value="1">1 day</option>
+                    <option value="3">3 days</option>
+                    <option value="7">1 week</option>
+                    <option value="30">1 month</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </details>
+          <% } %>
+          <% if (tegakiOk) { %>
+          <button type="button" id="tegaki-btn" title="Tegaki" class="form-button">Tegaki</button>
+          <% } %>
+          <details class="formatting-details">
+            <summary class="format-summary">Styling</summary>
+          <button data-emote="[b][/b]" type="button"><span><strong>Bold</strong></span></button>
+          <button data-emote="[i][/i]" type="button"><span><em>Italics</em></span></button>
+          <button data-emote="[s][/s]" type="button"><span><s>Strike</s></span></button>
+          <button data-emote="[spoiler][/spoiler]" type="button"><span class="spoiler">Spoiler</span></button>
+          <button data-emote="[moe][/moe]" type="button"><span class="moeText">Moe</span></button>
+          <button data-emote="[doom][/doom]" type="button"><span class="doomText">DOOM</span></button>
+          <button data-emote="[s1][/s1]" type="button"><span class="s1">Size 1</span></button>
+          <button data-emote="[s2][/s2]" type="button"><span class="s2">Size 2</span></button>
+          <button data-emote="[s3][/s3]" type="button"><span class="s3">Size 3</span></button>
+          <button data-emote="[s4][/s4]" type="button"><span class="s4">Size 4</span></button>
+          <button data-emote="[s5][/s5]" type="button"><span class="s5">Size 5</span></button>
+          <button data-emote="[s6][/s6]" type="button"><span class="s6">Size 6</span></button>
+          <button data-emote="[s7][/s7]" type="button"><span class="s7">Size 7</span></button>
+          <button data-emote="[red][/red]" type="button"><span class="c1">Red</span></button>
+          <button data-emote="[orange][/orange]" type="button"><span class="c2">Orange</span></button>
+          <button data-emote="[brown][/brown]" type="button"><span class="c3">Brown</span></button>
+          <button data-emote="[purple][/purple]" type="button"><span class="c4">Purple</span></button>
+          <button data-emote="[pink][/pink]" type="button"><span class="c5">Pink</span></button>
+          <button data-emote="[yellow][/yellow]" type="button"><span class="c6">Yellow</span></button>
+          <button data-emote="[green][/green]" type="button"><span class="c7">Green</span></button>
+          <button data-emote="[blue][/blue]" type="button"><span class="c8">Blue</span></button>
+          <button data-emote="[lightblue][/lightblue]" type="button"><span class="c9">Light Blue</span></button>
+          <button data-emote="[rainbow][/rainbow]" type="button"><span class="powerful">Rainbow</span></button>
+          <button data-emote="[code][/code]" type="button"><span>Codeblock</span></button>
+          </details>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td class="post-block"><label for="standard-image">File</label></td>
+      <td class="postform-input-cell">
+        <div id="drop-zone">
+          Drag files here to upload or <br />click here to select them, or paste an image
+          <input type="file" id="image" name="image" accept="image/*,video/*" style="display: none;" />
+        </div>
+        <div id="standard-file-input">
+          <input type="file" id="standard-image" name="image" accept="image/*,video/*" />
+        </div>
+        <div id="preview-container" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;"></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="post-block"><label for="post-password">Password</label></td>
+      <td class="postform-input-cell">
+        <input type="password" id="post-password" name="post-password" class="input-text" /><span id="delPasswordInfo"> (for deletion)</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<a class="js-only" style="display: none" href="/styling">Styling</a>
+
+<script src="/js/markdown-btn.js"></script>
+<script>
+  document.getElementById('message').addEventListener('input', function () {
+    document.getElementById('charCount').textContent = this.value.length;
+  });
+</script>
+<% if (tegakiOk) { %>
+<script src="/js/tegaki-post.js"></script>
+<% } %>
+<% if (pollsOk) { %>
+<script src="/js/poll-handler.js"></script>
+<% } %>
+<% if (youtubeOk) { %>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const youtubeDetails = document.getElementById('youtube-details');
+    const fileInput = document.getElementById('image');
+    const dropZone = document.getElementById('drop-zone');
+    if (youtubeDetails) {
+      youtubeDetails.addEventListener('toggle', function () {
+        if (youtubeDetails.open) {
+          dropZone.style.opacity = '0.5';
+          fileInput.disabled = true;
+        } else {
+          dropZone.style.opacity = '1';
+          fileInput.disabled = false;
+          document.getElementById('youtube-url').value = '';
+        }
+      });
+    }
+    const standardFileInput = document.getElementById('standard-file-input');
+    if (standardFileInput) standardFileInput.style.display = 'none';
+  });
+</script>
+<% } %>

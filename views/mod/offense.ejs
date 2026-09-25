@@ -1,0 +1,35 @@
+<% title = 'Offense Record'; %>
+<form method="get">
+<% if (showIp) { %>
+<input name="ip" value="<%= ip %>" placeholder="IP">
+<% } %>
+<input name="banId" value="<%= banId || '' %>" placeholder="Ban ID">
+<button type="submit">Lookup</button>
+</form>
+<% if (offenses.length) { %>
+<table class="mod-table">
+<tr><th>Date</th><th>Reason</th><th>Mod</th><th>Global</th><th>Expires</th></tr>
+<% offenses.forEach(o => { %>
+<tr>
+<td><%= o.date ? new Date(o.date).toLocaleString() : '' %></td>
+<td><%= o.reason || '' %></td>
+<td><%= o.mod || '' %></td>
+<td><%= o.global ? 'yes' : '' %></td>
+<td><%= o.expiration ? new Date(o.expiration).toLocaleString() : '' %></td>
+</tr>
+<% }) %>
+</table>
+<% } else if (ip || banId) { %><p>None</p><% } %>
+<% if (asnBans.length) { %>
+<h2>ASN bans</h2>
+<table class="mod-table">
+<tr><th>ASN</th><th>Reason</th><th>Expires</th></tr>
+<% asnBans.forEach(b => { %>
+<tr>
+<td><%= b.asn %></td>
+<td><%= b.reason %></td>
+<td><%= b.expiration ? new Date(b.expiration).toLocaleString() : 'perm' %></td>
+</tr>
+<% }) %>
+</table>
+<% } %>

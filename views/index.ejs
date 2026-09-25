@@ -1,0 +1,90 @@
+<% title = siteName; %>
+<div class="box-layout">
+<%- include('partials/banner', { title: siteName, boardUri: false }) %>
+<%- include('partials/announcement') %>
+<% if (latestNews) { %>
+<div class="box-outer top-box">
+  <div class="boxcontent" style="text-align: center;">
+    <p>Current news:</p>
+    <h1><a href="/news"><span style="text-transform: uppercase;"><%= latestNews.title %></span></a></h1>
+    <p>by <a href="mailto:<%= latestNews.authorEmail %>"><%= latestNews.author %></a> - <%= new Date(latestNews.date).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' }) %> @ <%= new Date(latestNews.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) %> (UTC)</p>
+  </div>
+</div>
+<% } %>
+<% if (activeThreads.length > 0) { %>
+<div class="box-outer top-box">
+  <div class="boxbar"><h2>Active Threads</h2></div>
+  <div class="boxcontent">
+    <div id="c-threads">
+      <% activeThreads.slice(0, 8).forEach(thread => { %>
+      <div class="c-thread active-thread" data-last-bump="<%= new Date(thread.lastBump).getTime() %>">
+        <div class="c-board"><%= thread.boardName %></div>
+        <% if (thread.files && thread.files.length > 0) { %>
+        <a href="/<%= thread.boardUri %>/thread/<%= thread.threadId %>" class="boardlink active-thread-img">
+          <img alt="" class="c-thumb" src="<%= thread.files[0].thumb %>">
+        </a>
+        <% } %>
+        <div class="c-teaser"><% if (thread.subject) { %><b><%- thread.subject %></b>: <% } %><%- thread.message %></div>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+</div>
+<% } %>
+<table>
+  <tr>
+    <td class="left-col">
+      <% if (pinnedThreads && pinnedThreads.length > 0) { %>
+      <div class="box-outer box-green">
+        <div class="boxbar"><h2>Featured Threads</h2></div>
+        <div class="boxcontent">
+        
+          <% pinnedThreads.slice(0, 3).forEach(thread => { %>
+          <a class="featured-thread" href="/<%= thread.boardUri %>/thread/<%= thread.threadId %>">
+            <% if (thread.files && thread.files.length > 0) { %>
+            <img src="<%= thread.files[0].thumb %>" alt="" class="featured-thumb">
+            <% } %>
+            <span class="featured-info">
+              <span class="featured-title"><%- thread.subject || 'No subject' %></span>
+              <span class="featured-teaser"><%- thread.message %></span>
+              <span class="featured-board">/<%= thread.boardUri %>/ - <%= thread.boardName %></span>
+            </span>
+          </a>
+          <% }) %>
+        </div>
+      </div>
+      <% } %>
+      <div class="box-outer box-green">
+        <div class="boxbar"><h2>Recent Images</h2></div>
+        <div class="boxcontent images-list image-box-content">
+          <% latestImages.slice(0, 9).forEach(image => { %>
+          <a href="/<%= image.boardUri %>/thread/<%= image.threadId %><%= !image.isThread ? '#' + image.postId : '' %>" class="image-link image-item" data-creation="<%= new Date(image.creation).getTime() %>">
+            <img src="<%= image.thumb %>" alt="" loading="lazy">
+          </a>
+          <% }) %>
+        </div>
+      </div>
+    </td>
+    <td class="right-col">
+      <div class="box-outer box-blue">
+        <div class="boxbar"><h2>Latest Posts</h2></div>
+        <div class="boxcontent posts-list">
+          <% latestPosts.forEach(post => { %>
+          <a class="latest-post" href="/<%= post.boardUri %>/thread/<%= post.threadId %><%= !post.isThread ? '#' + post.postId : '' %>">
+            <span class="latest-link">>>/<%= post.boardUri %>/<%= post.postId || post.threadId %></span> <span class="latest-text"><%- post.message || 'No message' %></span>
+          </a>
+          <% }) %>
+        </div>
+      </div>
+      <div class="box-outer box-blue">
+        <div class="boxbar"><h2>Stats</h2></div>
+        <div class="boxcontent stats-list">
+          <div>Total Posts: <%= siteStats.totalPosts.toLocaleString() %></div>
+          <div>Unique IPs: <%= siteStats.totalUniquePosters.toLocaleString() %></div>
+          <div>Active Content: <%= siteStats.totalMediaSize %> GB</div>
+        </div>
+      </div>
+    </td>
+  </tr>
+</table>
+</div>

@@ -1,0 +1,18 @@
+<% title = 'Logs'; %>
+<table class="mod-table">
+<tr><th>Time</th><th>User</th><th>Type</th><th>Board</th><th>Description</th></tr>
+<% logs.forEach(log => { %>
+<tr>
+<td><%= new Date(log.time).toLocaleString() %></td>
+<td><%= log.user %></td>
+<td><%= log.type %></td>
+<td><% if (log.boardUri) { %>/<%= log.boardUri %>/<% } else { %>-<% } %></td>
+<td><%= log.description %></td>
+</tr>
+<% }) %>
+</table>
+<p>
+<% if (currentPage > 1) { %><a href="?page=<%= currentPage - 1 %>">Prev</a><% } %>
+<% if (currentPage > 1 && currentPage < totalPages) { %> / <% } %>
+<% if (currentPage < totalPages) { %><a href="?page=<%= currentPage + 1 %>">Next</a><% } %>
+</p>

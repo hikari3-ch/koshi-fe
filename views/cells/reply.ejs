@@ -1,0 +1,41 @@
+<div class="post-container reply-container" id="pc<%= reply.postId %>">
+<div class="side-arrows" id="sa<%= reply.postId %>"><% if (!modView) { %>&gt;&gt;<% } %></div>
+<div class="post reply" id="p<%= reply.postId %>" data-post-id="<%= reply.postId %>" data-thread-id="<%= thread.threadId %>" data-board="<%= boardUri %>">
+<div class="post-info" id="pi<%= reply.postId %>">
+  <% if (!locals.isSearchResult) { %><input type="checkbox" class="<%= modView ? 'mod-select' : 'post-checkbox' %>" <% if (modView) { %>value="<%= boardUri %>-<%= thread.threadId %>-<%= reply.postId %>"<% } else { %>name="posts" form="delete-form" value="<%= reply.postId %>-false"<% } %>><% } %>
+  <span class="name-block">
+    <% if (reply.signedRole === 'Admin' || reply.signedRole === 'Root') { %>
+    <span title="This user is the site administrator" class="admin-name name"><%- reply.name %> ## Admin <img src="/img/adminicon.gif"></span>
+    <% } else if (reply.signedRole === 'Global volunteer' || reply.signedRole === 'Global Volunteer' || reply.signedRole === 'Global Moderator' || reply.signedRole === 'Moderator') { %>
+    <span title="This user is a site moderator" class="mod-name name"><%- reply.name %> ## Moderator <img src="/img/modicon.gif"></span>
+    <% } else { %>
+    <span class="name" data-post-id="<%= reply.postId %>" data-board="<%= boardUri %>" data-thread-id="<%= thread.threadId %>"><%- reply.name %></span>
+    <% } %>
+  </span>
+  <%- include('../partials/time', { date: reply.creation }) %>&nbsp;
+  <span class="post-num">
+    <a class="linkQuote" title="Link to this post" href="/<%= boardUri %>/<%= locals.isArchive ? 'archive/' : '' %>thread/<%= thread.threadId %>#<%= reply.postId %>">No.</a><a class="linkQuote" title="Reply to this post" href="/<%= boardUri %>/<%= locals.isArchive ? 'archive/' : '' %>thread/<%= thread.threadId %>#q<%= reply.postId %>"><%= reply.postId %></a>
+  </span>
+  <% if (modView) { %>
+  <%- include('/mod/partials/post-links', { boardUri, thread, postId: reply.postId, isThread: false, post: reply, showIp, globalStaff }) %>
+  <% } %>
+  <div class="backlinks"></div>
+  <% if (modView) { %>
+  <%- include('/mod/partials/staff-info', { post: reply, showIp }) %>
+  <% } %>
+</div>
+<% if (reply.files && reply.files.length > 0) { %>
+<%- include('../partials/post-files', { files: reply.files, imageClass: 'reply-image', maxWidth: 150, maxHeight: 170, boardUri, threadId: thread.threadId, postId: reply.postId, modView }) %>
+<% } %>
+<% const regExp = /<a\s+[^>]*href=["'](?:https?:\/\/(?:www\.)?youtube\.com\/watch\?v=|https?:\/\/youtu\.be\/)([a-zA-Z0-9_-]{11})["'][^>]*>.*?<\/a>/gi; const boardLinkRegex = /href=["']\/([\w-]+)\/res\/(\d+)\.html(?:#(\d+))?["']/gi; let parsedMSG = reply.markdown.replace(regExp, function(match, videoId) { let embedStr = '<details class="embed-container"><summary><a href="https://youtu.be/' + videoId + '">https://youtu.be/' + videoId + ' </a><span class="format-summary">[Embed]</span></summary>'; embedStr += '<iframe style="margin-top: 3px" src="https://www.youtube.com/embed/' + videoId + '" frameborder="0"'; embedStr += ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"'; embedStr += ' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></details>'; return embedStr; }); parsedMSG = parsedMSG.replace(boardLinkRegex, function(match, board, threadId, post) { const archivePrefix = locals.isArchive ? 'archive/' : ''; return 'href="/' + board + '/' + archivePrefix + 'thread/' + threadId + (post ? '#'+post : '') + '"'; }); if (locals.isArchive) { parsedMSG = parsedMSG.replace(/href=["']\/([\w-]+)\/thread\/(\d+)(?:#(\d+))?["']/gi, function(match, board, threadId, postId) { return 'href="/' + board + '/archive/thread/' + threadId + (postId ? '#'+postId : '') + '"'; }); } %>
+<blockquote class="reply-content" id="m<%= reply.postId %>"><%- parsedMSG %></blockquote>
+<% if (reply.warningMessage) { %>
+<%- include('../partials/warning-message', { message: reply.warningMessage }) %>
+<% } else if (reply.banMessage) { %>
+<div class="ban-message"><%- reply.banMessage %> <img src="/img/ban.gif" width="60"></div>
+<% } %>
+<% if (reply.poll) { %>
+<%- include('poll', { poll: reply.poll }) %>
+<% } %>
+</div>
+</div>

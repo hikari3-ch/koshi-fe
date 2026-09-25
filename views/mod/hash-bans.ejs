@@ -1,0 +1,18 @@
+<% title = 'Hash Bans'; %>
+<%- include('partials/board-nav') %>
+<p><a href="/mod/bans<%= boardUri ? '?board=' + boardUri : '' %>">Bans</a></p>
+<form id="hash-ban-form">
+<% if (boardUri) { %><input type="hidden" name="boardUri" value="<%= boardUri %>"><% } else { %><input name="boardUri" placeholder="Board"><% } %>
+<input name="sha256" placeholder="SHA256" required>
+<button type="submit">Ban</button>
+</form>
+<table class="mod-table">
+<tr><th>SHA256</th><th>Board</th><th></th></tr>
+<% bans.forEach(b => { %>
+<tr>
+<td class="hash"><%= b.sha256 %></td>
+<td><% if (b.boardUri) { %>/<%= b.boardUri %>/<% } else { %>global<% } %></td>
+<td><button type="button" class="lift-hash-ban" data-sha="<%= b.sha256 %>" data-board="<%= b.boardUri || '' %>">Lift</button></td>
+</tr>
+<% }) %>
+</table>

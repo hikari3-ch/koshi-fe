@@ -1,0 +1,19 @@
+<% if (board && stats) { %>
+<p>
+<a href="/mod">Dashboard</a> /
+<a href="/<%= boardUri %>/"><%= board.preferredLanguage || 'en-us' %> - <%= board.boardName %> (Index)</a> /
+<a href="/mod/trash/<%= boardUri %>">Trash Bin (<%= stats.trashCount %>)</a>
+</p>
+<p>
+<a href="/mod/bans?board=<%= boardUri %>">Bans</a> /
+<a href="/mod/bans/range?board=<%= boardUri %>">Bans Range</a> /
+<a href="/mod/bans/asn?board=<%= boardUri %>">Bans ASN</a> /
+<a href="/mod/bans/hash?board=<%= boardUri %>">Bans Hash</a> /
+<a href="/mod/bans/appeals?board=<%= boardUri %>">Bans Appeals (<%= stats.appealedBans %>)</a>
+</p>
+<p>
+<a href="/mod/reports/closed?board=<%= boardUri %>">Reports Closed</a> /
+<a href="/mod/reports?board=<%= boardUri %>">Reports Open (<%= stats.openReports %>)</a> /
+<a href="/mod/board/<%= boardUri %>/settings">Board Settings</a>
+</p>
+<% } %>

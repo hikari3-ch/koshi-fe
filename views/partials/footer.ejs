@@ -1,0 +1,25 @@
+<footer id="footer">
+  <% if (boardFooter) { %>
+    <nav class="board-list footer-board-list">
+      [
+      <% if (navBoards.length) { navBoards.forEach(function(board, i) { %>
+      <a href="/<%= board.boardUri %>/"><%= board.boardUri %></a><% if (i < navBoards.length - 1) { %> /<% } %>
+      <% }); } %>
+      ]
+    </nav>
+  <% } %>
+    <div class="footer-nav-tools">
+      [<a href="#" class="watch-list-btn">Thread Watcher</a>]
+      <% if (boardFooter) { %>
+      [<a href="#" class="settings-btn">Settings</a>]
+      [<a href="/mod">Moderation</a>]
+      <% } %>
+    </div>
+    <% if (boardFooter) { %>
+      <div class="footer-text">The stories and information posted here are artistic works of fiction and falsehood.<br />Only a fool would take anything posted here as fact.</div>
+    <% } %>
+    <div id="footer-links">
+      <a href="/faq">FAQ</a> • <a href="/rules">Rules</a> • <a href="/news">News</a><br>
+      - <a href="https://github.com/koshi-chan/koshi">koshi</a> -
+    </div>
+</footer>

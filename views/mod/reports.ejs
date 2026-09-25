@@ -1,0 +1,24 @@
+<% title = 'Reports'; %>
+<%- include('partials/board-nav') %>
+<p><a href="/mod/reports/closed<%= boardUri ? '?board=' + boardUri : '' %>">Closed</a></p>
+<form id="mod-close-reports">
+<table class="mod-table">
+<tr><th></th><th>Board</th><th>Thread</th><th>Post</th><th>Reasons</th><th>N</th></tr>
+<% reports.forEach(r => { %>
+<tr>
+<td><input type="checkbox" name="reportIds" value="<%= r._ids.join(',') %>" data-ids="<%= r._ids.join(',') %>" class="report-select" data-key="<%= r.boardUri %>-<%= r.threadId %><%= r.postId ? '-' + r.postId : '' %>"></td>
+<td>/<%= r.boardUri %>/</td>
+<td><a href="/mod/thread/<%= r.boardUri %>/<%= r.threadId %>"><%= r.threadId %></a></td>
+<td><%= r.postId || 'op' %></td>
+<td><%= r.reasons.join('; ') %></td>
+<td><%= r.total %></td>
+</tr>
+<% }) %>
+</table>
+<p>
+<select name="banTarget"><option value="0">No ban</option><option value="1">Ban</option></select>
+<input name="banReason" placeholder="Reason">
+<label><input type="checkbox" name="deleteContent"> Delete</label>
+<button type="submit">Close</button>
+</p>
+</form>

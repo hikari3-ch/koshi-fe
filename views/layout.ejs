@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= title %></title>
+<link rel="stylesheet" href="/css/global.css">
+<link id="theme-css" rel="stylesheet" href="/css/yotsuba-b.css">
+<script src="/js/dom.js"></script>
+<script src="/js/csrf.js"></script>
+<script src="/js/themes.js"></script>
+<% styles.forEach(function (s) { %>
+<link rel="stylesheet" href="<%= s %>">
+<% }) %>
+<%- head %>
+</head>
+<body>
+<%- include('partials/header') %>
+<div class="container"><main class="content">
+<% if (mod && locals.user && showNav) { %><%- include('mod/partials/nav') %><% } %>
+<%- body %>
+</main></div>
+<%- include('partials/footer', { boardFooter: boardFooter }) %>
+<% if (mod) { %><script src="/js/mod.js"></script><% } %>
+<script src="/js/thumb.js"></script>
+<script src="/js/thread-watcher.js"></script>
+<script src="/js/settings.js"></script>
+<% if (modUser) { %>
+<script>
+window.modUser = true;
+window.modIsGlobalMod = <%= Number(modUser.globalRole) <= 2 ? 'true' : 'false' %>;
+window.modShowIp = <%= showIp ? 'true' : 'false' %>;
+</script>
+<% } %>
+<script src="/js/post-menu.js"></script>
+</body>
+</html>

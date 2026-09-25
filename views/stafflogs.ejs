@@ -1,0 +1,48 @@
+<% title = 'Staff Logs'; %>
+<div class="box-layout">
+  <div class="box-outer top-box">
+    <div class="boxbar"><h2>Staff Logs</h2></div>
+    <div class="boxcontent">
+      <% if (logs.length === 0) { %>
+      <p>No logs found.</p>
+      <% } else { %>
+      <table class="logs-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>User</th>
+            <th>Type</th>
+            <th>Board</th>
+            <th>Description</th>
+            <th>Global</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% logs.forEach(log => { %>
+          <tr>
+            <td><%= new Date(log.time).toLocaleString() %></td>
+            <td><%= log.user %></td>
+            <td><span class="log-type <%= log.type.toLowerCase() %>"><%= log.type %></span></td>
+            <td><% if (log.boardUri) { %>/<%= log.boardUri %>/<% } else { %>-<% } %></td>
+            <td><%= log.description %></td>
+            <td><%= log.global ? '✓' : '-' %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <div style="justify-content: center; display: flex">
+        <div class="pagination">
+          <% if (currentPage > 1) { %>
+          <button class="page-button" href="/logs?page=<%= currentPage - 1 %>">&laquo; Previous</button>
+          <% } %>
+          <span class="page-info"> Page <%= currentPage %> of <%= totalPages %> </span>
+          <% if (currentPage < totalPages) { %>
+          <button class="page-button" href="/logs?page=<%= currentPage + 1 %>">Next &raquo;</button>
+          <% } %>
+        </div>
+      </div>
+      <div class="total-count">Total logs: <%= total %></div>
+      <% } %>
+    </div>
+  </div>
+</div>
