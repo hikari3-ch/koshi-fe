@@ -769,7 +769,7 @@ async function submitReport(postId, boardUri, reason, category, isThread, modal)
 function hidePost(postId, isThread) {
   const hiddenPosts = getHiddenPosts();
   const postElement = isThread
-    ? document.querySelector(`article.thread[id="${postId}"]`)
+    ? document.querySelector(`.thread[id="${postId}"]`)
     : document.querySelector(`.reply[data-post-id="${postId}"]`);
 
   if (!postElement) return;
@@ -849,7 +849,7 @@ function initializeHiddenPosts() {
     if (!data.hidden) return;
 
     const postElement = data.isThread
-      ? document.querySelector(`article.thread[id="${postId}"]`)
+      ? document.querySelector(`.thread[id="${postId}"]`)
       : document.querySelector(`.reply[data-post-id="${postId}"]`);
 
     if (postElement) {
