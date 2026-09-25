@@ -1724,6 +1724,7 @@ details:not([open]) .hide-file-button::before {
 
 .mv-strip {
   flex: 0 0 auto;
+  justify-content: safe center;
   overflow: auto hidden;
   padding: 0.35rem 0.5rem;
 }
