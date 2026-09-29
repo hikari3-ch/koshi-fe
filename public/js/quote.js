@@ -6,6 +6,7 @@ const tooltips = {
   knownData: {},
   activeTooltip: null,
   activeQuote: null,
+  highlightedPost: null,
 
   init() {
     document.querySelectorAll('.post.op, .post.reply').forEach((post) => {
@@ -142,6 +143,10 @@ const tooltips = {
       this.activeTooltip.remove();
       this.activeTooltip = null;
     }
+    if (this.highlightedPost) {
+      this.highlightedPost.classList.remove('highlight');
+      this.highlightedPost = null;
+    }
   },
 
   fitTooltip(tooltip, anchorRect) {
@@ -248,6 +253,19 @@ const tooltips = {
 
       this.hideTooltip();
       this.activeQuote = quote;
+
+      const parts = this.parseQuoteUrl(quoteUrl);
+      const quotedPost = parts ? document.querySelector(`[data-post-id="${parts.postId}"]`) : null;
+
+      if (quotedPost) {
+        const postRect = quotedPost.getBoundingClientRect();
+        const isInView = postRect.top >= 0 && postRect.bottom <= window.innerHeight;
+        if (isInView) {
+          quotedPost.classList.add('highlight');
+          this.highlightedPost = quotedPost;
+          return;
+        }
+      }
 
       const tooltip = document.createElement('div');
       tooltip.className = 'quote-preview';
