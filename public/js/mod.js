@@ -23,63 +23,6 @@ document.getElementById('emergency-toggle')?.addEventListener('click', async () 
   }
 });
 
-document.getElementById('news-create-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fd = new FormData(e.target);
-  const data = Object.fromEntries(fd);
-  if (data.date) data.date = new Date(data.date).toISOString();
-  try {
-    const result = await modPost('/mod/api/news', data);
-    location.href = '/mod/news?edit=' + result.newsPost.newsId;
-  } catch (err) {
-    alert(err.message);
-  }
-});
-
-document.getElementById('news-edit-form')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fd = new FormData(e.target);
-  const data = Object.fromEntries(fd);
-  if (data.date) data.date = new Date(data.date).toISOString();
-  try {
-    await modPost('/mod/api/news/update', data);
-    location.reload();
-  } catch (err) {
-    alert(err.message);
-  }
-});
-
-document.getElementById('news-delete-btn')?.addEventListener('click', async (e) => {
-  if (!confirm('Delete this news post?')) return;
-  try {
-    await modPost('/mod/api/news/delete', { newsId: Number(e.target.dataset.id) });
-    location.href = '/mod/news';
-  } catch (err) {
-    alert(err.message);
-  }
-});
-
-function updateNewsPreview() {
-  const form = document.getElementById('news-create-form') || document.getElementById('news-edit-form');
-  const preview = document.getElementById('news-preview-content');
-  if (!form || !preview) return;
-  const title = form.querySelector('[name=title]')?.value || '';
-  const author = form.querySelector('[name=author]')?.value || '';
-  const contents = form.querySelector('[name=contents]')?.value || '';
-  const image = form.querySelector('[name=image]')?.value || '';
-  let html = `<div class="news-title"><span style="text-transform: uppercase;">${escapeHtml(title)}</span> by ${escapeHtml(author)}</div>`;
-  html += `<div class="news-content">${contents}`;
-  if (image) html += `<p style="text-align:center;"><img src="${escapeHtml(image)}" width="400"></p>`;
-  html += '</div>';
-  preview.innerHTML = html;
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-document.getElementById('news-create-form')?.addEventListener('input', updateNewsPreview);
-document.getElementById('news-edit-form')?.addEventListener('input', updateNewsPreview);
 
 document.getElementById('mod-login-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -168,33 +111,6 @@ document.getElementById('mod-ip-delete-thread')?.addEventListener('click', async
   }
 });
 
-document.addEventListener('click', async (e) => {
-  const target = e.target instanceof Element ? e.target : e.target.parentElement;
-  if (!target) return;
-
-  const edit = target.closest('.mod-edit-post');
-  if (edit) {
-    e.preventDefault();
-    const container = edit.closest('.reply, .op');
-    const contentEl = container?.querySelector('.reply-content, .thread-content');
-    const message = prompt('Edit message', contentEl?.textContent || '');
-    if (message == null) return;
-    try {
-      await modPost('/mod/api/edit', {
-        boardUri: edit.dataset.board,
-        threadId: Number(edit.dataset.thread),
-        postId: Number(edit.dataset.post),
-        message,
-        isThread: edit.dataset.threadPost === '1'
-      });
-      location.reload();
-    } catch (err) {
-      alert(err.message);
-    }
-    return;
-  }
-
-});
 
 document.getElementById('mod-save-settings')?.addEventListener('click', async () => {
   try {
@@ -220,6 +136,7 @@ document.getElementById('mod-close-reports')?.addEventListener('submit', async (
     await modPost('/mod/api/reports/close', {
       reportIds: ids,
       banTarget: fd.get('banTarget'),
+      duration: fd.get('banDuration'),
       banReason: fd.get('banReason'),
       deleteContent: !!fd.get('deleteContent')
     });
@@ -358,6 +275,64 @@ document.getElementById('board-create-form')?.addEventListener('submit', async (
   }
 });
 
+let boardDeleteModal = null;
+let boardDeleteUri = null;
+
+function buildBoardDeleteModal() {
+  if (boardDeleteModal) return boardDeleteModal;
+
+  const modal = document.createElement('div');
+  modal.id = 'board-delete-modal';
+  modal.innerHTML =
+    '<div class="modal-content">' +
+    '<div class="box-outer">' +
+    '<div class="boxbar"><h2>Delete board</h2></div>' +
+    '<div class="boxcontent">' +
+    '<p><strong id="board-delete-question"></strong></p>' +
+    '<p class="file-info">Every thread, post, quote and uploaded file of this board is deleted. This cannot be undone.</p>' +
+    '<button type="button" id="board-delete-confirm">Delete board</button>' +
+    '<button type="button" id="board-delete-cancel">Cancel</button>' +
+    '<p class="file-info" id="board-delete-status"></p>' +
+    '</div></div></div>';
+
+  document.body.appendChild(modal);
+  modal.querySelector('#board-delete-cancel').addEventListener('click', () => {
+    modal.style.display = 'none';
+    boardDeleteUri = null;
+  });
+  modal.querySelector('#board-delete-confirm').addEventListener('click', async () => {
+    if (!boardDeleteUri) return;
+    const confirmButton = modal.querySelector('#board-delete-confirm');
+    const status = modal.querySelector('#board-delete-status');
+    confirmButton.disabled = true;
+    status.textContent = 'Deleting…';
+    try {
+      await modPost('/mod/api/board/delete', { boardUri: boardDeleteUri });
+      location.href = '/mod';
+    } catch (err) {
+      status.textContent = err.message;
+      confirmButton.disabled = false;
+    }
+  });
+
+  boardDeleteModal = modal;
+  return modal;
+}
+
+document.addEventListener('click', (e) => {
+  const target = e.target instanceof Element ? e.target : e.target.parentElement;
+  const link = target?.closest?.('.board-delete');
+  if (!link) return;
+  e.preventDefault();
+
+  const modal = buildBoardDeleteModal();
+  boardDeleteUri = link.dataset.board;
+  modal.querySelector('#board-delete-question').textContent = `Delete /${link.dataset.board}/ - ${link.dataset.name}?`;
+  modal.querySelector('#board-delete-status').textContent = '';
+  modal.querySelector('#board-delete-confirm').disabled = false;
+  modal.style.display = 'block';
+});
+
 document.getElementById('board-settings-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);
@@ -372,12 +347,46 @@ document.getElementById('board-settings-form')?.addEventListener('submit', async
     data[key] = fd.get(key) ? '1' : '';
   }
   try {
-    await modPost('/mod/api/board/settings', data);
-    alert('Saved');
+    const result = await modPost('/mod/api/board/settings', data);
+    await alert(result.backfillStarted ? 'Saved. Existing posts are being updated with IP flags in the background.' : 'Saved');
     location.reload();
   } catch (err) {
     alert(err.message);
   }
+});
+
+document.getElementById('flag-upload-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const message = document.getElementById('flag-upload-message');
+  if (message) message.textContent = 'Uploading…';
+  try {
+    const res = await fetch('/mod/api/board/flags', {
+      method: 'POST',
+      headers: csrfHeaders({ Accept: 'application/json' }),
+      body: new FormData(form)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+    location.reload();
+  } catch (err) {
+    if (message) message.textContent = err.message;
+  }
+});
+
+document.querySelectorAll('.delete-board-flag').forEach((button) => {
+  button.addEventListener('click', async () => {
+    if (!confirm(`Delete the flag ${button.dataset.name}?`)) return;
+    try {
+      await modPost('/mod/api/board/flags/delete', {
+        boardUri: document.querySelector('#flag-upload-form input[name="boardUri"]')?.value,
+        name: button.dataset.name
+      });
+      location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
 });
 
 document.getElementById('volunteer-form')?.addEventListener('submit', async (e) => {
@@ -434,13 +443,51 @@ document.querySelectorAll('.delete-global-filter').forEach((btn) => {
   });
 });
 
+document.querySelectorAll('.toggle-moderation-filter').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const turningOn = btn.dataset.enabled !== '1';
+    if (turningOn && !confirm('Turn this filter on? It can ban whoever trips it.')) return;
+    try {
+      await modPost('/mod/api/moderation-filters', { action: 'toggle', id: btn.dataset.id, enabled: turningOn ? '1' : '0' });
+      location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+});
+
+document.querySelectorAll('.delete-moderation-filter').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    if (!confirm('Delete this moderation filter?')) return;
+    try {
+      await modPost('/mod/api/moderation-filters', { action: 'delete', id: btn.dataset.id });
+      location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+});
+
+const bannerInput = document.querySelector('#banner-upload-form input[type="file"]');
+bannerInput?.addEventListener('change', () => {
+  const status = document.getElementById('banner-upload-status');
+  if (!status) return;
+  const count = bannerInput.files ? bannerInput.files.length : 0;
+  status.textContent = count ? `${count} file${count === 1 ? '' : 's'} selected` : '';
+});
+
 document.getElementById('banner-upload-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);
+  const files = [...((e.target.querySelector('input[type="file"]') || {}).files || [])];
+  if (!files.length) return alert('Select at least one banner');
   try {
     const res = await fetch('/mod/api/global/banners', { method: 'POST', headers: csrfHeaders(), body: fd });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Upload failed');
+    if (data.skipped?.length) {
+      await alert(`Uploaded ${data.count} banner(s).\nSkipped:\n${data.skipped.join('\n')}`);
+    }
     location.reload();
   } catch (err) {
     alert(err.message);
@@ -486,6 +533,18 @@ document.getElementById('clear-ip-role-form')?.addEventListener('submit', async 
   const fd = new FormData(e.target);
   try {
     await modPost('/mod/api/global/clear-ip-role', Object.fromEntries(fd));
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('captcha-global-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await modPost('/mod/api/captcha/settings', { enabled: fd.get('enabled') === 'true' });
+    await alert(data.message || 'Saved.');
     location.reload();
   } catch (err) {
     alert(err.message);

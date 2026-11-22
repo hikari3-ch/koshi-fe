@@ -16,9 +16,11 @@ const watchedThreads = {
     });
 
     document.querySelectorAll('.op').forEach((op) => this.processOP(op));
+    document.querySelectorAll('.catalog-thread').forEach((card) => this.processCatalogThread(card));
 
     this.bindEvents();
     this.createWatchList();
+    this.xchan.init();
 
     const stored = this.getStoredWatchedData();
     if (this.isInThread && stored[this.pageBoard] && stored[this.pageBoard][this.pageThread]) {
@@ -30,89 +32,186 @@ const watchedThreads = {
     this.updateWatchListDisplay();
     this.updateWatcherCounter();
     this.scheduleWatchedThreadsCheck();
+
+    try {
+      if (localStorage.getItem('watchListOpen') === 'true') {
+        this.showWatchList();
+      }
+    } catch (e) {}
+  },
+
+  placeWatchList() {
+    const modal = document.querySelector('.watch-list-modal');
+    if (!modal) return;
+    const inline = window.matchMedia('(max-width: 768px)').matches;
+    modal.classList.toggle('watch-list-inline', inline);
+    if (!inline) {
+      if (modal.parentNode !== document.body) document.body.appendChild(modal);
+      return;
+    }
+    const banner = document.getElementById('banner-container');
+    if (banner) {
+      banner.after(modal);
+    } else {
+      const content = document.querySelector('main.content') || document.body;
+      content.prepend(modal);
+    }
   },
 
   bindEvents() {
     document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('watch-thread-off') || e.target.classList.contains('watch-thread-on')) {
-        this.toggleThreadWatch(e.target);
-      }
+      const heart = e.target.closest('.watch-thread-toggle');
+      if (!heart) return;
+      e.preventDefault();
+      this.toggleThreadWatch(heart);
     });
 
     document.addEventListener('click', (e) => {
       if (e.target.closest('.watch-list-btn')) {
         e.preventDefault();
-        this.showWatchList();
+        if (this.showingWatched) {
+          this.closeWatchList();
+        } else {
+          this.showWatchList();
+        }
       }
     });
+
+    window.matchMedia('(max-width: 768px)').addEventListener('change', () => this.placeWatchList());
   },
 
   processOP(op) {
-    if (op.querySelector('.watch-thread-off, .watch-thread-on')) return;
+    if (op.querySelector('.watch-thread-toggle')) return;
 
     const info = op.querySelector('.post-info');
     if (!info) return;
-
-    const checkBox = info.querySelector('.post-checkbox, .mod-select');
-    if (!checkBox) return;
+    if (info.querySelector('.watch-thread-link')) {
+      this.xchan.observeToggler(info.querySelector('.watch-thread-link'));
+      return;
+    }
 
     const board = op.dataset.board;
     const thread = String(op.dataset.threadId || op.dataset.postId || '');
     if (!board || !thread) return;
 
-    const watchButton = document.createElement('i');
-    watchButton.title = 'Watch Thread';
-    watchButton.className = this.isWatched(board, thread) ? 'watch-thread-on' : 'watch-thread-off';
-    info.insertBefore(watchButton, checkBox);
+    const checkBox = info.querySelector('.post-checkbox, .mod-select');
+    info.insertBefore(this.makeWatchButton(board, thread), checkBox || info.firstElementChild);
+  },
+
+  processCatalogThread(card) {
+    if (card.querySelector('.watch-thread-toggle')) return;
+    const board = card.dataset.board;
+    const thread = String(card.dataset.threadId || '');
+    if (!board || !thread) return;
+    card.appendChild(this.makeWatchButton(board, thread));
+  },
+
+  makeWatchButton(board, thread) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'watch-thread-toggle';
+    this.setWatchButtonLabel(button, this.isWatched(board, thread));
+    return button;
+  },
+
+  setWatchButtonLabel(button, watched) {
+    button.classList.toggle('watch-thread-on', watched);
+    button.classList.toggle('watch-thread-off', !watched);
+    button.title = watched ? 'Unwatch Thread' : 'Watch Thread';
+    button.setAttribute('aria-label', button.title);
+    button.setAttribute('aria-pressed', watched ? 'true' : 'false');
+  },
+
+  threadSelector(board, thread) {
+    return (
+      `.op[data-board="${board}"][data-post-id="${thread}"], .op[data-board="${board}"][data-thread-id="${thread}"], ` +
+      `.catalog-thread[data-board="${board}"][data-thread-id="${thread}"]`
+    );
+  },
+
+  threadElementsFor(board, thread) {
+    return document.querySelectorAll(this.threadSelector(board, thread));
   },
 
   isWatched(board, thread) {
     const stored = this.getStoredWatchedData();
+    return this.isWatchedStored(stored, board, thread);
+  },
+
+  isWatchedStored(stored, board, thread) {
     return !!(stored[board] && stored[board][thread]);
   },
 
+  importWatched(stored, board, thread, label) {
+    const now = Date.now();
+    if (!stored[board]) stored[board] = {};
+    stored[board][thread] = {
+      lastSeen: now,
+      lastReplied: now,
+      label: label || null,
+      unreadCount: 0
+    };
+  },
+
   toggleThreadWatch(heartIcon) {
-    const threadElement = heartIcon.closest('.op');
+    const threadElement = heartIcon.closest('.op, .catalog-thread');
     if (!threadElement) return;
 
     const threadId = String(threadElement.dataset.postId || threadElement.dataset.threadId);
     const boardUri = threadElement.dataset.board || location.pathname.split('/')[1];
 
     if (heartIcon.classList.contains('watch-thread-off')) {
-      const subject = threadElement.querySelector('.subject')?.textContent?.trim();
-      const message = threadElement.querySelector('.thread-content, .reply-content, .message')?.textContent?.trim();
-      this.addThreadToWatch(threadId, boardUri, subject || message);
+      const subject = threadElement.querySelector('.subject, .thread-subject')?.textContent?.trim();
+      const message = threadElement
+        .querySelector('.thread-content, .reply-content, .message, .thread-text')
+        ?.textContent?.trim();
+      this.addThreadToWatch(threadId, boardUri, subject, message);
     } else {
       this.removeThreadFromWatch(threadId, boardUri);
     }
   },
 
-  threadLabel(op, subject) {
-    if (subject) return subject.substring(0, 50).trim();
-    const message = op
-      ? (op.querySelector('.thread-content, .reply-content, .message')?.textContent || op.querySelector('.divMessage')?.textContent || '')
-      : '';
-    return message.replace(/\s+/g, ' ').substring(0, 50).trim();
+  makeLabel(title, text) {
+    const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+
+    const cleanTitle = clean(title);
+    if (cleanTitle && cleanTitle !== 'No subject') return cleanTitle.substring(0, 50);
+
+    const cleanText = clean(text);
+    if (!cleanText) return '';
+    return cleanText.length > 15 ? `${cleanText.substring(0, 15)}...` : cleanText;
   },
 
-  addThreadToWatch(threadId, boardUri, subject) {
+  threadLabel(op, subject, message) {
+    if (op) {
+      const title = op.querySelector('.subject, .thread-subject')?.textContent;
+      const text =
+        op.querySelector('.thread-content, .reply-content, .message, .thread-text')?.textContent ||
+        op.querySelector('.divMessage')?.textContent;
+      return this.makeLabel(title, text);
+    }
+    return this.makeLabel(subject, message);
+  },
+
+  addThreadToWatch(threadId, boardUri, subject, message) {
     threadId = String(threadId);
     const stored = this.getStoredWatchedData();
     const boardThreads = stored[boardUri] || {};
     if (boardThreads[threadId]) return;
 
-    const op = document.querySelector(`.op[data-post-id="${threadId}"], .op[data-thread-id="${threadId}"]`);
+    const op = this.threadElementsFor(boardUri, threadId)[0] || null;
     const now = Date.now();
     boardThreads[threadId] = {
       lastSeen: now,
       lastReplied: now,
-      label: this.threadLabel(op, subject) || null,
+      label: this.threadLabel(op, subject, message) || null,
       unreadCount: 0
     };
     stored[boardUri] = boardThreads;
     this.saveWatchedData(stored);
     this.setWatchButtonState(boardUri, threadId, true);
     this.updateWatchListDisplay();
+    this.xchan.addToUserscript(boardUri, threadId);
   },
 
   removeThreadFromWatch(threadId, boardUri) {
@@ -126,14 +225,26 @@ const watchedThreads = {
     this.setWatchButtonState(boardUri, threadId, false);
     this.updateWatchListDisplay();
     this.updateWatcherCounter();
+    this.xchan.removeFromUserscript(boardUri, threadId);
   },
 
   setWatchButtonState(boardUri, threadId, watched) {
-    document.querySelectorAll(`.op[data-board="${boardUri}"][data-post-id="${threadId}"], .op[data-board="${boardUri}"][data-thread-id="${threadId}"]`).forEach((op) => {
-      const heart = op.querySelector('.watch-thread-off, .watch-thread-on');
-      if (!heart) return;
-      heart.classList.toggle('watch-thread-on', watched);
-      heart.classList.toggle('watch-thread-off', !watched);
+    this.threadElementsFor(boardUri, threadId).forEach((threadElement) => {
+      threadElement.querySelectorAll('.watch-thread-toggle').forEach((heart) => {
+        this.setWatchButtonLabel(heart, watched);
+      });
+    });
+  },
+
+  refreshHearts(stored) {
+    stored = stored || this.getStoredWatchedData();
+    document.querySelectorAll('.watch-thread-toggle').forEach((heart) => {
+      const threadElement = heart.closest('.op, .catalog-thread');
+      if (!threadElement) return;
+      const board = threadElement.dataset.board;
+      const thread = String(threadElement.dataset.threadId || threadElement.dataset.postId || '');
+      if (!board || !thread) return;
+      this.setWatchButtonLabel(heart, this.isWatchedStored(stored, board, thread));
     });
   },
 
@@ -170,7 +281,11 @@ const watchedThreads = {
   },
 
   saveWatchedData(data) {
-    localStorage.watchedData = JSON.stringify(data);
+    try {
+      localStorage.watchedData = JSON.stringify(data);
+    } catch (e) {
+      console.error('Could not save watched threads:', e);
+    }
   },
 
   updateWatcherCounter() {
@@ -190,12 +305,13 @@ const watchedThreads = {
       <div class="watch-list-content">
         <div class="watch-list-header">
           Watched Threads
-          <button class="close-watch-list">&times;</button>
+          <button type="button" class="close-watch-list" title="Close" aria-label="Close">&times;</button>
         </div>
         <div class="watch-list-body"></div>
       </div>
     `;
     document.body.appendChild(modal);
+    this.placeWatchList();
 
     modal.addEventListener('click', (e) => {
       if (e.target.classList.contains('remove-watch')) {
@@ -214,6 +330,12 @@ const watchedThreads = {
 
     const setTranslate = (xPos, yPos) => {
       modal.style.transform = `translate(${xPos}px, ${yPos}px)`;
+    };
+
+    const savePosition = (xPos, yPos) => {
+      try {
+        localStorage.setItem('watchListPosition', JSON.stringify({ x: xPos, y: yPos }));
+      } catch (e) {}
     };
 
     titleBar.addEventListener('mousedown', (e) => {
@@ -238,10 +360,11 @@ const watchedThreads = {
       initialX = currentX;
       initialY = currentY;
       isDragging = false;
+      savePosition(xOffset, yOffset);
     });
 
     modal.querySelector('.close-watch-list').addEventListener('click', () => {
-      localStorage.setItem('watchListPosition', JSON.stringify({ x: xOffset, y: yOffset }));
+      savePosition(xOffset, yOffset);
       this.closeWatchList();
     });
 
@@ -259,12 +382,20 @@ const watchedThreads = {
     this.showingWatched = true;
     this.updateWatchListDisplay();
     modal.style.display = 'block';
+
+    try {
+      localStorage.setItem('watchListOpen', 'true');
+    } catch (e) {}
   },
 
   closeWatchList() {
     const modal = document.querySelector('.watch-list-modal');
     if (modal) modal.style.display = 'none';
     this.showingWatched = false;
+
+    try {
+      localStorage.setItem('watchListOpen', 'false');
+    } catch (e) {}
   },
 
   watchListEntries() {
@@ -282,7 +413,14 @@ const watchedThreads = {
     const watchListBody = document.querySelector('.watch-list-body');
     if (!watchListBody) return;
 
-    const entries = this.watchListEntries();
+    const stored = this.getStoredWatchedData();
+    const entries = [];
+    Object.keys(stored).forEach((board) => {
+      Object.keys(stored[board]).forEach((thread) => {
+        entries.push({ board, thread, data: stored[board][thread] });
+      });
+    });
+
     watchListBody.textContent = '';
     if (!entries.length) {
       const empty = document.createElement('div');
@@ -292,8 +430,17 @@ const watchedThreads = {
       return;
     }
 
+    let labelAdded = false;
     entries.forEach(({ board, thread, data }) => {
-      const label = data.label || `${board}/${thread}`;
+      const op = this.threadElementsFor(board, thread)[0] || null;
+      const derived = op ? this.threadLabel(op) : '';
+      if (derived && derived !== data.label) {
+        data.label = derived;
+        labelAdded = true;
+      }
+
+      let label = data.label && data.label !== 'No subject' ? data.label : null;
+      label = label || `${board}/${thread}`;
       const unread = data.unreadCount > 0 || data.lastSeen < data.lastReplied;
       const item = document.createElement('div');
       item.className = 'watch-list-item';
@@ -304,13 +451,16 @@ const watchedThreads = {
       if (unread) {
         const span = document.createElement('span');
         span.className = 'unread-count';
-        span.textContent = `(${data.unreadCount > 0 ? data.unreadCount + ' new' : 'new'})`;
+        span.textContent = `[${data.unreadCount}]`;
         link.appendChild(document.createTextNode(' '));
         link.appendChild(span);
       }
 
       const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = 'remove-watch';
+      btn.title = 'Unwatch';
+      btn.setAttribute('aria-label', `Unwatch /${board}/ - ${label}`);
       btn.dataset.board = board;
       btn.dataset.thread = thread;
       btn.textContent = '×';
@@ -319,14 +469,17 @@ const watchedThreads = {
       item.appendChild(btn);
       watchListBody.appendChild(item);
     });
+
+    if (labelAdded) this.saveWatchedData(stored);
   },
 
-  autoWatchThread(threadId, boardUri, subject) {
+  autoWatchThread(threadId, boardUri, subject, message) {
     if (localStorage.getItem('disableAutoWatch') === 'true') return;
-    this.addThreadToWatch(threadId, boardUri, subject);
+    this.addThreadToWatch(threadId, boardUri, subject, message);
   },
 
   scheduleWatchedThreadsCheck() {
+    if (this.watchTimer) clearTimeout(this.watchTimer);
     const lastCheck = localStorage.lastWatchCheck;
     if (!lastCheck) {
       this.runWatchedThreadsCheck();
@@ -334,10 +487,16 @@ const watchedThreads = {
     }
     const next = new Date(+lastCheck);
     next.setUTCSeconds(next.getUTCSeconds() + 10);
-    setTimeout(() => this.runWatchedThreadsCheck(), next.getTime() - Date.now());
+    const delay = Math.max(1000, next.getTime() - Date.now());
+    this.watchTimer = setTimeout(() => this.runWatchedThreadsCheck(), delay);
   },
 
   runWatchedThreadsCheck() {
+    if (document.hidden) {
+      if (this.watchTimer) clearTimeout(this.watchTimer);
+      this.watchTimer = setTimeout(() => this.runWatchedThreadsCheck(), 10000);
+      return;
+    }
     this.watcherAlertCounter = 0;
     localStorage.lastWatchCheck = Date.now();
 
@@ -418,6 +577,218 @@ const watchedThreads = {
 
     this.saveWatchedData(stored);
     this.iterateWatchedThreads(urls, index + 1);
+  },
+
+  xchan: {
+    enabled: false,
+    dialog: null,
+    list: null,
+    suppressUntil: 0,
+    attachObserver: null,
+    listObserver: null,
+    scanObserver: null,
+    scanTimer: null,
+    reconcileTimer: null,
+    togglers: null,
+
+    init() {
+      if (localStorage.getItem('disableXchanSync') === 'true') return;
+      this.togglers = new WeakSet();
+      this.attach();
+      if (this.enabled) return;
+      this.attachObserver = new MutationObserver(() => this.attach());
+      this.attachObserver.observe(document.documentElement, { childList: true, subtree: true });
+    },
+
+    attach() {
+      if (this.enabled) return;
+      const dialog = document.getElementById('thread-watcher');
+      if (!dialog) return;
+      const list = dialog.querySelector('#watched-threads');
+      if (!list) return;
+
+      this.enabled = true;
+      this.dialog = dialog;
+      this.list = list;
+      if (this.attachObserver) {
+        this.attachObserver.disconnect();
+        this.attachObserver = null;
+      }
+
+      this.listObserver = new MutationObserver(() => this.scheduleReconcile());
+      this.listObserver.observe(dialog, { childList: true, subtree: true });
+
+      this.scan();
+      this.syncHearts();
+      this.reconcile();
+    },
+
+    scan() {
+      if (this.scanObserver) return;
+      this.scanObserver = new MutationObserver(() => {
+        if (this.scanTimer) return;
+        this.scanTimer = setTimeout(() => {
+          this.scanTimer = null;
+          this.syncHearts();
+        }, 250);
+      });
+      this.scanObserver.observe(document.body, { childList: true, subtree: true });
+    },
+
+    syncHearts() {
+      document.querySelectorAll('.watch-thread-toggle').forEach((heart) => {
+        const info = heart.parentElement;
+        if (!info) return;
+        if (info.querySelector('.watch-thread-link')) heart.remove();
+      });
+      const togglers = document.querySelectorAll('.watch-thread-link');
+      togglers.forEach((toggler) => this.observeToggler(toggler));
+      if (togglers.length) this.scheduleReconcile();
+    },
+
+    observeToggler(toggler) {
+      if (!toggler || !this.togglers || this.togglers.has(toggler)) return;
+      this.togglers.add(toggler);
+      new MutationObserver(() => this.scheduleReconcile()).observe(toggler, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+    },
+
+    scheduleReconcile() {
+      if (this.reconcileTimer) return;
+      this.reconcileTimer = setTimeout(() => {
+        this.reconcileTimer = null;
+        this.reconcile();
+      }, 300);
+    },
+
+    quiet(ms) {
+      this.suppressUntil = Date.now() + (ms || 800);
+    },
+
+    fullIdOf(row) {
+      return row.dataset.fullID || row.getAttribute('data-full-i-d') || row.getAttribute('data-full-id') || '';
+    },
+
+    listedThreads() {
+      const entries = [];
+      if (!this.list) return entries;
+      this.list.querySelectorAll('div[data-full-i-d], div[data-full-id]').forEach((row) => {
+        const link = row.querySelector('a.watcher-link');
+        if (!link) return;
+        let url;
+        try {
+          url = new URL(link.getAttribute('href'), location.href);
+        } catch (e) {
+          return;
+        }
+        if (url.origin !== location.origin) return;
+        const match = /^(.+)\.(\d+)$/.exec(this.fullIdOf(row));
+        if (!match) return;
+        const title = row.querySelector('.watcher-title');
+        entries.push({
+          board: match[1],
+          thread: match[2],
+          label: title && title.textContent ? title.textContent.trim() : null
+        });
+      });
+      return entries;
+    },
+
+    reconcile() {
+      if (!this.enabled) return;
+      if (Date.now() < this.suppressUntil) {
+        this.scheduleReconcile();
+        return;
+      }
+
+      const stored = watchedThreads.getStoredWatchedData();
+      const listed = new Set();
+      let changed = false;
+
+      this.listedThreads().forEach((entry) => {
+        listed.add(`${entry.board}.${entry.thread}`);
+        if (watchedThreads.isWatchedStored(stored, entry.board, entry.thread)) return;
+        watchedThreads.importWatched(stored, entry.board, entry.thread, entry.label);
+        changed = true;
+      });
+
+      document.querySelectorAll('.watch-thread-link').forEach((toggler) => {
+        const op = toggler.closest('.op');
+        if (!op) return;
+        const board = op.dataset.board;
+        const thread = String(op.dataset.threadId || op.dataset.postId || '');
+        if (!board || !thread) return;
+        const fullId = `${board}.${thread}`;
+        if (listed.has(fullId)) return;
+        if (toggler.classList.contains('watched')) {
+          if (watchedThreads.isWatchedStored(stored, board, thread)) return;
+          watchedThreads.importWatched(stored, board, thread, null);
+          changed = true;
+        } else if (watchedThreads.isWatchedStored(stored, board, thread)) {
+          delete stored[board][thread];
+          if (!Object.keys(stored[board]).length) delete stored[board];
+          changed = true;
+        }
+      });
+
+      if (!changed) return;
+      watchedThreads.saveWatchedData(stored);
+      watchedThreads.updateWatchListDisplay();
+      watchedThreads.updateWatcherCounter();
+      watchedThreads.refreshHearts(stored);
+    },
+
+    rowFor(board, thread) {
+      if (!this.list) return null;
+      const fullId = `${board}.${thread}`;
+      const rows = this.list.querySelectorAll('div[data-full-i-d], div[data-full-id]');
+      for (const row of rows) {
+        if (this.fullIdOf(row) === fullId) return row;
+      }
+      return null;
+    },
+
+    togglerFor(board, thread) {
+      const op = document.querySelector(
+        `.op[data-board="${board}"][data-post-id="${thread}"], .op[data-board="${board}"][data-thread-id="${thread}"]`
+      );
+      return op ? op.querySelector('.watch-thread-link') : null;
+    },
+
+    addToUserscript(board, thread) {
+      if (!this.enabled) return;
+      if (this.rowFor(board, thread)) return;
+      const toggler = this.togglerFor(board, thread);
+      if (toggler && !toggler.classList.contains('watched')) {
+        this.quiet();
+        toggler.click();
+        return;
+      }
+      this.request('xt-watch-thread', board, thread);
+    },
+
+    removeFromUserscript(board, thread) {
+      if (!this.enabled) return;
+      this.quiet();
+      const row = this.rowFor(board, thread);
+      const removeLink = row ? row.querySelector('a') : null;
+      if (removeLink && !removeLink.classList.contains('watcher-link')) {
+        removeLink.click();
+        return;
+      }
+      const toggler = this.togglerFor(board, thread);
+      if (toggler && toggler.classList.contains('watched')) {
+        toggler.click();
+        return;
+      }
+      this.request('xt-unwatch-thread', board, thread);
+    },
+
+    request(type, board, thread) {
+      document.dispatchEvent(new CustomEvent(type, { detail: `${board}.${thread}` }));
+    }
   }
 };
 

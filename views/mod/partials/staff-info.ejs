@@ -1,3 +1,4 @@
 <% if (post.ipDisplay) { %>
-<p>Ip: <% if (showIp && post.ipRaw) { %><%= post.ipDisplay %><% } else { %><%= post.ipDisplay %><% } %><% if (post.asn) { %> /ASN <%= post.asn %><% } %><% if (post.bypassDisplay) { %> /Bypass <%= post.bypassDisplay %><% } %></p>
+
+<p>Ip: <% if (showIp && post.ipRaw) { %><a href="/mod/ip/<%= encodeURIComponent(post.ipRaw) %>" title="IP information"><%= post.ipDisplay %></a><% } else { %><%= post.ipDisplay %><% } %><% if (post.asn) { %> /ASN <%= post.asn %><% } %><% if (post.bypassDisplay) { %> /Bypass <%= post.bypassDisplay %><% } %></p>
 <% } %>

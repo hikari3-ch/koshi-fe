@@ -1,25 +1,47 @@
-// Update the textarea value and visibility based on the URL
+const QUICK_REPLY_HIDDEN = '(max-width: 768px), (hover: none) and (pointer: coarse)';
+
+function quickReplyHidden() {
+  return window.matchMedia(QUICK_REPLY_HIDDEN).matches;
+}
+
+function insertQuote(id) {
+  const hidden = quickReplyHidden();
+  const quickreplydiv = document.getElementById('quickReply');
+  const msg = document.getElementById(hidden ? 'message' : 'message-qr');
+  if (!msg) return;
+  if (!hidden) quickreplydiv.classList.add('show-quickreply');
+
+  const quote = `>>${id}\n`;
+  const value = msg.value;
+  const start = msg.selectionStart ?? value.length;
+  const end = msg.selectionEnd ?? value.length;
+  const before = value.slice(0, start);
+  const prefix = before && !before.endsWith('\n') ? '\n' : '';
+  msg.value = before + prefix + quote + value.slice(end);
+  const caret = start + prefix.length + quote.length;
+  msg.focus();
+  msg.setSelectionRange(caret, caret);
+  msg.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 function quickReply() {
   const quickreplydiv = document.getElementById('quickReply');
-  const msg = document.getElementById('message-qr');
   const hash = window.location.hash;
   if (hash && hash.startsWith('#q')) {
-    quickreplydiv.className = 'show-quickreply';
-
-    const currentValue = msg.value.trim();
-    const newQuote = `>>${hash.substring(2)}`;
-
-    if (currentValue) {
-      if (!currentValue.includes(newQuote)) {
-        msg.value = currentValue + '\n' + newQuote + '\n';
-      }
-    } else {
-      msg.value = newQuote + '\n';
-    }
+    insertQuote(hash.substring(2));
   } else {
-    quickreplydiv.className = '';
+    quickreplydiv.classList.remove('show-quickreply');
   }
 }
+
+document.addEventListener('click', (e) => {
+  const link = e.target instanceof Element && e.target.closest('a.linkQuote[href*="#q"]');
+  if (!link || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+  const url = new URL(link.href, window.location.href);
+  if (url.pathname !== window.location.pathname || !url.hash.startsWith('#q')) return;
+  e.preventDefault();
+  insertQuote(url.hash.substring(2));
+});
 
 function initDragging(element, handle) {
   let pos1 = 0,
@@ -73,16 +95,15 @@ function initDragging(element, handle) {
   }
 }
 
-quickReply();
 initDragging(document.getElementById('quickReply'), document.getElementById('quickReplyHeader'));
 window.onhashchange = quickReply;
 
-// Add character counter for quick reply
 document.getElementById('message-qr').addEventListener('input', function () {
   document.getElementById('qr-charCount').textContent = this.value.length;
 });
 
 function syncText(a, b) {
+  if (!a || !b) return;
   a.oninput = function () {
     b.value = this.value;
   };
@@ -92,6 +113,7 @@ function syncText(a, b) {
 }
 
 function syncClick(a, b) {
+  if (!a || !b) return;
   a.onchange = function () {
     b.checked = this.checked;
   };
@@ -100,90 +122,164 @@ function syncClick(a, b) {
   };
 }
 
-// Sync textareas
 let qr_ta = document.getElementById('message-qr');
 let st_ta = document.getElementById('message');
 syncText(qr_ta, st_ta);
 
-// Sync names
 let qr_nm = document.getElementById('name-qr');
 let st_nm = document.getElementById('name');
 syncText(qr_nm, st_nm);
 
-// Sync nonokos
-let qr_nn = document.getElementById('nonoko-qr');
-let st_nn = document.getElementById('nonoko');
-syncClick(qr_nn, st_nn);
+syncText(document.getElementById('post-password-qr'), document.getElementById('post-password'));
 
-// Sync fortunes
-let qr_fs = document.getElementById('fortune-qr');
-let st_fs = document.getElementById('fortune');
-syncClick(qr_fs, st_fs);
-
-// Sync sages
-let qr_sg = document.getElementById('sage-qr');
-let st_sg = document.getElementById('sage');
-syncClick(qr_sg, st_sg);
+for (const name of ['fortune', 'sage', 'nonoko']) {
+  syncClick(document.getElementById(`${name}-qr`), document.getElementById(name));
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-  const mainDropZone = document.getElementById('drop-zone');
   const mainPreviewContainer = document.getElementById('preview-container');
   const qrFileSection = document.getElementById('qr-file-section');
   const mainForm = document.querySelector('.reply-form:not(#quick-reply-form)');
   const qrForm = document.getElementById('quick-reply-form');
 
-  function syncSpoilerCheckboxes() {
-    const qrSpoilerCheckboxes = qrFileSection.querySelectorAll('input[type="checkbox"]');
-    const mainSpoilerCheckboxes = mainForm.querySelectorAll('input[name="spoiler"]');
+  function syncSpoilerRadios() {
+    const qrSpoilerRadios = qrFileSection.querySelectorAll('input[type="radio"][name^="spoiler_"]');
+    const mainSpoilerRadios = mainForm.querySelectorAll('input[type="radio"][name^="spoiler_"]');
 
-    qrSpoilerCheckboxes.forEach((checkbox, index) => {
-      if (mainSpoilerCheckboxes[index]) {
-        checkbox.checked = mainSpoilerCheckboxes[index].checked;
+    mainSpoilerRadios.forEach((radio, index) => {
+      if (qrSpoilerRadios[index]) {
+        qrSpoilerRadios[index].checked = radio.checked;
       }
     });
   }
 
-  function reattachEventListeners() {
-    const qrDropZone = qrFileSection.querySelector('#drop-zone');
-    const qrFileInput = qrFileSection.querySelector('input[type="file"]');
-    const mainFileInput = mainForm.querySelector('input[type="file"]');
+  const quickReplyEl = document.getElementById('quickReply');
+  const mainFileInput = mainForm && mainForm.querySelector('#image');
+  const qrDropZone = document.getElementById('qr-dropzone');
 
-    // File upload event listeners
-    if (qrDropZone && qrFileInput) {
-      // Click to upload
-      qrDropZone.onclick = () => qrFileInput.click();
+  if (!mainFileInput || !mainPreviewContainer) {
+    if (qrDropZone) qrDropZone.hidden = true;
+  } else {
+    qrDropZone.addEventListener('click', () => {
+      if (!mainFileInput.disabled) mainFileInput.click();
+    });
 
-      // File input change
-      qrFileInput.onchange = (e) => {
-        if (mainFileInput) {
-          mainFileInput.files = e.target.files;
-          mainFileInput.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      };
+    let dragDepth = 0;
+    quickReplyEl.addEventListener('dragenter', (e) => {
+      if (!e.dataTransfer?.types?.includes('Files') || mainFileInput.disabled) return;
+      dragDepth++;
+      quickReplyEl.classList.add('qr-dragover');
+    });
+    quickReplyEl.addEventListener('dragover', (e) => {
+      if (e.dataTransfer?.types?.includes('Files')) e.preventDefault();
+    });
+    quickReplyEl.addEventListener('dragleave', () => {
+      if (--dragDepth <= 0) {
+        dragDepth = 0;
+        quickReplyEl.classList.remove('qr-dragover');
+      }
+    });
+    quickReplyEl.addEventListener('drop', (e) => {
+      if (!e.dataTransfer?.files?.length) return;
+      e.preventDefault();
+      dragDepth = 0;
+      quickReplyEl.classList.remove('qr-dragover');
+      if (mainFileInput.disabled) return;
+      if (typeof window.handleFilesUpload === 'function') window.handleFilesUpload(Array.from(e.dataTransfer.files));
+    });
+  }
 
-      // Drag and drop
-      qrDropZone.ondragover = (e) => {
-        e.preventDefault();
-        qrDropZone.style.backgroundColor = 'var(--small-button)';
-      };
+  function mirrorFields(source, slot) {
+    if (!source || !slot) return null;
+    const fields = (root) => root.querySelectorAll('input, select, textarea');
+    let copy;
 
-      qrDropZone.ondragleave = () => {
-        qrDropZone.style.backgroundColor = 'var(--background-gradient)';
-      };
-
-      qrDropZone.ondrop = (e) => {
-        e.preventDefault();
-        qrDropZone.style.backgroundColor = 'var(--background-gradient)';
-        if (mainFileInput) {
-          const dt = new DataTransfer();
-          Array.from(e.dataTransfer.files).forEach((file) => dt.items.add(file));
-          mainFileInput.files = dt.files;
-          mainFileInput.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      };
+    function refresh() {
+      const from = fields(source);
+      fields(copy).forEach((field, i) => {
+        if (from[i]) field.value = from[i].value;
+      });
     }
 
-    // Remove button event listeners
+    function build() {
+      copy = source.cloneNode(true);
+      copy.removeAttribute('style');
+      [copy, ...copy.querySelectorAll('[id]')].forEach((el) => {
+        el.id += '-qr';
+      });
+      slot.replaceChildren(copy);
+      refresh();
+    }
+
+    function copyValue(e, from, to) {
+      const index = Array.from(fields(from)).indexOf(e.target);
+      const target = fields(to)[index];
+      if (index !== -1 && target) target.value = e.target.value;
+    }
+
+    slot.addEventListener('input', (e) => copyValue(e, copy, source));
+    slot.addEventListener('change', (e) => copyValue(e, copy, source));
+    source.addEventListener('input', (e) => copyValue(e, source, copy));
+    source.addEventListener('change', (e) => copyValue(e, source, copy));
+    slot.addEventListener('click', (e) => {
+      const button = e.target instanceof Element && e.target.closest('button[id$="-qr"]');
+      if (!button) return;
+      e.preventDefault();
+      document.getElementById(button.id.slice(0, -3))?.click();
+    });
+    new MutationObserver(build).observe(source, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+    build();
+    return { slot, refresh };
+  }
+
+  const qrEmbed = mirrorFields(document.getElementById('embed-mode-content'), document.getElementById('qr-embed-slot'));
+  const qrPoll = mirrorFields(document.getElementById('poll-details'), document.getElementById('qr-poll-slot'));
+
+  function refreshMirrors() {
+    qrEmbed?.refresh();
+    qrPoll?.refresh();
+  }
+  mainForm?.addEventListener('reset', () => setTimeout(refreshMirrors));
+
+  const mainModeButtons = mainForm ? Array.from(mainForm.querySelectorAll('.mode-select-btn')) : [];
+  const qrModes = document.getElementById('qr-modes');
+  const qrModeLinks = [];
+
+  function activeMode() {
+    const active = mainModeButtons.find((btn) => btn.classList.contains('active'));
+    return active ? active.dataset.mode : 'file';
+  }
+
+  function updateMode() {
+    const mode = activeMode();
+    qrModeLinks.forEach((link) => link.classList.toggle('active', link.dataset.mode === mode));
+    if (qrDropZone && mainFileInput) qrDropZone.hidden = mode === 'youtube';
+    qrFileSection.hidden = mode === 'youtube';
+    if (qrEmbed) qrEmbed.slot.hidden = mode !== 'youtube';
+    if (qrPoll) qrPoll.slot.hidden = mode !== 'poll';
+    refreshMirrors();
+  }
+
+  if (qrModes && mainModeButtons.length > 1) {
+    mainModeButtons.forEach((btn, index) => {
+      if (index > 0) qrModes.append(' / ');
+      const link = document.createElement('span');
+      link.className = 'qr-mode';
+      link.dataset.mode = btn.dataset.mode;
+      link.textContent = btn.textContent.trim();
+      link.addEventListener('click', () => {
+        btn.click();
+        updateMode();
+      });
+      qrModeLinks.push(link);
+      qrModes.appendChild(link);
+    });
+    qrModes.hidden = false;
+    mainModeButtons.forEach((btn) => btn.addEventListener('click', () => setTimeout(updateMode)));
+  }
+  updateMode();
+
+  function reattachEventListeners() {
     const qrRemoveButtons = qrFileSection.querySelectorAll('.remove-file');
     const mainRemoveButtons = mainForm.querySelectorAll('.remove-file');
 
@@ -195,38 +291,41 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     });
 
-    // Spoiler checkbox event listeners
-    const qrSpoilerCheckboxes = qrFileSection.querySelectorAll('input[name="spoiler"]');
-    const mainSpoilerCheckboxes = mainForm.querySelectorAll('input[name="spoiler"]');
+    const qrSpoilerRadios = qrFileSection.querySelectorAll('input[type="radio"][name^="spoiler_"]');
+    const mainSpoilerRadios = mainForm.querySelectorAll('input[type="radio"][name^="spoiler_"]');
 
-    qrSpoilerCheckboxes.forEach((checkbox, index) => {
-      checkbox.onchange = () => {
-        if (mainSpoilerCheckboxes[index]) {
-          mainSpoilerCheckboxes[index].checked = checkbox.checked;
-          mainSpoilerCheckboxes[index].dispatchEvent(new Event('change', { bubbles: true }));
+    qrSpoilerRadios.forEach((radio, index) => {
+      radio.onchange = () => {
+        const mainRadio = mainSpoilerRadios[index];
+        if (mainRadio) {
+          mainRadio.checked = true;
+          mainRadio.dispatchEvent(new Event('change', { bubbles: true }));
         }
       };
     });
 
-    // Also listen to main form spoiler changes
-    mainSpoilerCheckboxes.forEach((checkbox, index) => {
-      checkbox.addEventListener('change', () => {
-        const qrCheckboxes = qrFileSection.querySelectorAll('input[name="spoiler"]');
-        if (qrCheckboxes[index]) {
-          qrCheckboxes[index].checked = checkbox.checked;
+    mainSpoilerRadios.forEach((radio, index) => {
+      radio.addEventListener('change', () => {
+        const qrRadios = qrFileSection.querySelectorAll('input[type="radio"][name^="spoiler_"]');
+        if (qrRadios[index]) {
+          qrRadios[index].checked = true;
         }
       });
     });
   }
 
-  // Add AJAX submission for quick reply form
+  let qrInFlight = false;
   qrForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (qrInFlight) return;
+    qrInFlight = true;
+    const qrSubmitButtons = [...qrForm.querySelectorAll('button[type="submit"], input[type="submit"]')];
+    qrSubmitButtons.forEach((button) => {
+      button.disabled = true;
+    });
 
-    // Create a new FormData object
     const formData = new FormData();
 
-    // Add all form fields except file
     const formFields = new FormData(qrForm);
     for (let [key, value] of formFields.entries()) {
       if (key !== 'image') {
@@ -234,19 +333,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Add files from main form
-    const mainFileInput = mainForm.querySelector('input[type="file"]');
-    if (mainFileInput && mainFileInput.files.length > 0) {
+    if (window.postPassword && typeof window.postPassword.ensure === 'function') {
+      formData.set('post-password', window.postPassword.ensure());
+    }
+
+    if (mainFileInput && !mainFileInput.disabled && mainFileInput.files.length > 0) {
       for (let i = 0; i < mainFileInput.files.length; i++) {
         formData.append('image', mainFileInput.files[i]);
       }
     }
 
-    // Add spoiler states
-    const mainSpoilerCheckboxes = mainForm.querySelectorAll('input[name="spoiler"]:checked');
-    mainSpoilerCheckboxes.forEach((checkbox) => {
-      formData.append('spoiler', checkbox.value);
-    });
+    if (window.getSpoilerFields) {
+      window.getSpoilerFields(mainForm).forEach(({ name, value }) => formData.append(name, value));
+    }
 
     try {
       const response = await fetch(qrForm.action, {
@@ -254,7 +353,8 @@ document.addEventListener('DOMContentLoaded', () => {
         body: formData,
         headers: {
           'X-Requested-With': 'XMLHttpRequest'
-        }
+        },
+        credentials: 'same-origin'
       });
 
       const contentType = response.headers.get('content-type');
@@ -265,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
           qrForm.reset();
           mainForm.reset();
 
-          const qrPreviewContainer = qrFileSection.querySelector('#preview-container');
+          const qrPreviewContainer = qrFileSection.querySelector('#qr-preview-container');
           if (qrPreviewContainer) qrPreviewContainer.innerHTML = '';
           if (mainPreviewContainer) mainPreviewContainer.innerHTML = '';
 
@@ -285,10 +385,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const threadId = result.post.threadId;
             const postId = result.post.postId;
             const postKey = `${boardUri}/${threadId}/${postId}`;
-            savePostPassword(postKey, postPassword);
+            savePostPassword(postKey, formData.get('post-password') || '');
           }
 
-          // Handle nonoko redirect
           if (result.post.nonoko) {
             window.location.href = `/${result.post.boardUri}/`;
             return;
@@ -303,13 +402,20 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           if (typeof watchedThreads !== 'undefined') {
-            watchedThreads.autoWatchThread(result.post.threadId, result.post.boardUri, result.post.subject || 'No subject');
+            try {
+              watchedThreads.autoWatchThread(result.post.threadId, result.post.boardUri, result.post.subject, result.post.message);
+            } catch (e) {
+              console.error('Could not update watched threads:', e);
+            }
           }
 
-          // Hide quick reply after successful post
-          document.getElementById('quickReply').classList.remove('show-quickreply');
+          document.getElementById('quickReply')?.classList.remove('show-quickreply');
         } else if (result.error) {
-          if (result.error === 'flood') {
+          if (result.error === 'captcha') {
+            const msg = result.message || 'Solve the captcha before posting.';
+            window.captchaWidget?.expire({ open: true, notice: msg });
+            alert(msg);
+          } else if (result.error === 'flood') {
             alert(result.message || 'Posting too quickly. Please wait a moment.');
           } else if (result.error === 'banned') {
             if (result.redirectUrl) {
@@ -318,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
               alert('You are banned from posting.');
             }
           } else {
-            alert(result.error.message || result.error || 'Error posting reply');
+            alert(result.error.message || result.message || result.error || 'Error posting reply');
           }
         }
       } else if (!response.ok) {
@@ -344,35 +450,37 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
       console.error('Error posting reply:', error);
       alert('Error posting reply');
+    } finally {
+      qrInFlight = false;
+      qrSubmitButtons.forEach((button) => {
+        button.disabled = false;
+      });
     }
   });
 
   function syncContent() {
-    if (mainDropZone && mainPreviewContainer) {
-      qrFileSection.innerHTML = mainDropZone.outerHTML + mainPreviewContainer.outerHTML;
+    if (mainPreviewContainer) {
+      const copy = mainPreviewContainer.cloneNode(true);
+      copy.id = 'qr-preview-container';
+      copy.removeAttribute('style');
+      qrFileSection.replaceChildren(copy);
       reattachEventListeners();
-      syncSpoilerCheckboxes(); // Sync checkbox states after content update
+      syncSpoilerRadios(); 
     }
   }
 
-  // Initial sync
   syncContent();
 
-  // Keep synced with main form
   const observer = new MutationObserver(syncContent);
 
-  observer.observe(mainDropZone, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-    attributes: true
-  });
-  observer.observe(mainPreviewContainer, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-    attributes: true
-  });
+  if (mainPreviewContainer) {
+    observer.observe(mainPreviewContainer, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true
+    });
+  }
 });
 
 document.getElementById('qr-close').addEventListener('click', function () {
@@ -395,3 +503,5 @@ function savePostPassword(postKey, password) {
     console.error('QR: Error saving password to localStorage:', e);
   }
 }
+
+quickReply();

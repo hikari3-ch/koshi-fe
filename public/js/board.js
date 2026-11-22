@@ -1,10 +1,8 @@
-// Store original thread list on page load
 document.addEventListener('DOMContentLoaded', function () {
   const threads = document.querySelector('#thread-container .threads');
   if (!threads) return;
-  const store = document.createElement('div');
+  const store = document.createElement('template');
   store.id = 'original-threads';
-  store.style.display = 'none';
   store.innerHTML = threads.innerHTML;
   document.body.appendChild(store);
 });
@@ -42,7 +40,7 @@ async function performSearch(query) {
 
     const listRes = await fetch(`/${boardUri}/cells/thread-list`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: csrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ threads: data.threads, boardUri, isOverboard: false })
     });
     threadsEl.innerHTML = await listRes.text();
@@ -80,13 +78,25 @@ function savePostPasswords(passwords) {
 }
 
 function generateRandomPassword() {
-  return Math.random().toString(36).substring(2, 10);
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  let password = '';
+  for (const byte of bytes) password += alphabet[byte % alphabet.length];
+  return password;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('form[action*="/thread"]').forEach((form) => {
+    let posting = false;
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
+      if (posting) return;
+      posting = true;
+      const submitButtons = [...form.querySelectorAll('button[type="submit"], input[type="submit"]')];
+      submitButtons.forEach((button) => {
+        button.disabled = true;
+      });
       const fileInput = document.getElementById('image') || document.getElementById('standard-image');
 
       if (document.getElementById('image') && window.updateFileInput) {
@@ -96,7 +106,9 @@ document.addEventListener('DOMContentLoaded', function () {
       try {
         const formData = new FormData(form);
         const boardUri = window.location.pathname.split('/')[1];
-        const postPassword = generateRandomPassword();
+        const postPassword = window.postPassword
+          ? window.postPassword.ensure()
+          : String(formData.get('post-password') || '').trim() || generateRandomPassword();
 
         formData.delete('image');
         if (fileInput && fileInput.files && fileInput.files.length > 0) {
@@ -105,7 +117,6 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         }
 
-        // Always set a new random password
         formData.set('post-password', postPassword);
 
         const response = await fetch(form.getAttribute('action'), {
@@ -113,7 +124,8 @@ document.addEventListener('DOMContentLoaded', function () {
           body: formData,
           headers: {
             'X-Requested-With': 'XMLHttpRequest'
-          }
+          },
+          credentials: 'same-origin'
         });
 
         const contentType = response.headers.get('content-type');
@@ -135,11 +147,23 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (typeof watchedThreads !== 'undefined') {
-              const subject = formData.get('subject') || formData.get('message') || '';
-              watchedThreads.autoWatchThread(result.threadId, boardUri, subject);
+              try {
+                watchedThreads.autoWatchThread(
+                  result.threadId,
+                  boardUri,
+                  formData.get('subject') || '',
+                  formData.get('message') || ''
+                );
+              } catch (e) {
+                console.error('Could not update watched threads:', e);
+              }
             }
 
             window.location.href = `/${boardUri}/thread/${result.threadId}`;
+          } else if (result.error === 'captcha') {
+            const msg = result.message || 'Solve the captcha before posting.';
+            window.captchaWidget?.expire({ open: true, notice: msg });
+            alert(msg);
           } else if (result.error === 'flood') {
             alert(result.message || 'Posting too quickly. Please wait a moment.');
           } else if (result.error === 'banned') {
@@ -149,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
               alert('You are banned from posting.');
             }
           } else {
-            alert(result.error || 'Error creating thread');
+            alert(result.message || result.error || 'Error creating thread');
           }
         } else if (!response.ok) {
           const errorText = await response.text();
@@ -180,6 +204,11 @@ document.addEventListener('DOMContentLoaded', function () {
       } catch (error) {
         console.error('Error submitting form:', error);
         alert('Error submitting form: ' + (error.message || 'Unknown error'));
+      } finally {
+        posting = false;
+        submitButtons.forEach((button) => {
+          button.disabled = false;
+        });
       }
     });
   });

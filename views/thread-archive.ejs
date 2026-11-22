@@ -1,5 +1,5 @@
 <% boardFooter = true; %>
-<% title = '/' + boardUri + '/ - ' + (thread.subject || thread.message); %>
+<% title = '/' + boardUri + '/ - ' + (thread.subject || titleText(thread.message)); %>
 <% styles = ['/css/tegaki.css', 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css']; %>
 <%- include('partials/banner') %>
 <%- include('partials/announcement') %>
@@ -22,10 +22,8 @@
 </div>
 <%- include('partials/quick-reply') %>
 
-<script src="/js/tegaki.js"></script>
 <script src="/js/tegaki.min.js"></script>
 <script src="/js/tegaki-replay.js"></script>
-<script src="/js/qr.js"></script>
-<script src="/js/expansion.js"></script>
-<script src="/js/gallery.js"></script>
-<script src="/js/thread.js"></script>
+<script src="/js/expansion.js?v=<%= locals.assetVersion('js/expansion.js') %>"></script>
+<script src="/js/gallery.js?v=<%= locals.assetVersion('js/gallery.js') %>"></script>
+<script src="/js/thread.js?v=<%= locals.assetVersion('js/thread.js') %>"></script>

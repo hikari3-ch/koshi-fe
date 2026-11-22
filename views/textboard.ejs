@@ -1,4 +1,5 @@
 <% boardFooter = true; %>
+<% bodyClass = 'textboard'; %>
 <% title = '/' + boardUri + '/ - ' + boardName; %>
 <% styles = ['/css/textboard.css', '/css/tegaki.css', 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css']; %>
 <% head = '<link rel="alternate" type="application/rss+xml" title="' + siteName + ' | ' + boardName + '" href="/' + boardUri + '/rss.xml" />'; %>
@@ -56,7 +57,7 @@
                 <% 
                   const totalReplies = thread.postCount || thread.replies.length;
                   const lastFiveReplies = thread.replies.slice(-5);
-                  const startingReplyNumber = totalReplies - lastFiveReplies.length + 2; // Start from 2 since OP is 1
+                  const startingReplyNumber = totalReplies - lastFiveReplies.length + 2; 
                 %>
                 <% lastFiveReplies.forEach((reply, index) => { %>
                   <%- include('cells/textreply', { reply, thread, boardUri, replyNumber: startingReplyNumber + index, modView, showIp, globalStaff }) %>
@@ -78,6 +79,7 @@
           </noscript>
         </div>
           <form id="delete-form" action="/api/delete-posts" method="POST" style="float: right;margin-bottom: 10px;margin-right: 10px;">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             Delete post: 
             <input type="password" id="delete-password" name="password" style="width: 50px;">
           <button type="submit">Delete</button>
@@ -89,12 +91,14 @@
       <% } %>
 
 <script src="/js/delete-form.js"></script>
-<script src="/js/quote.js"></script>
+<script src="/js/quote.js?v=<%= locals.assetVersion('js/quote.js') %>"></script>
+<script src="/js/post-inline.js?v=<%= locals.assetVersion('js/post-inline.js') %>"></script>
 <script src="/js/you.js"></script>
-<script src="/js/board.js"></script>
+<script src="/js/board.js?v=<%= locals.assetVersion('js/board.js') %>"></script>
 <% if (modView) { %>
 <script>
   window.modBoardUri = '<%= boardUri %>';
 </script>
-<script src="/js/mod.js"></script>
+<script src="/js/mod.js?v=<%= locals.assetVersion('js/mod.js') %>"></script>
+<script src="/js/edit-post.js?v=<%= locals.assetVersion('js/edit-post.js') %>"></script>
 <% } %>

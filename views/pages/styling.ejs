@@ -1,0 +1,21 @@
+<% title = 'Styling'; %>
+<div class="box-layout">
+<%- include('../partials/banner', { title: 'Styling', boardUri: false }) %>
+<div class="box-outer top-box">
+  <div class="boxbar"><h2>Styling</h2></div>
+  <div class="boxcontent">
+    <p>Posts support the following formatting:</p>
+    <ul>
+      <li><code>'''bold'''</code> or <code>''italic''</code></li>
+      <li><code>==heading==</code></li>
+      <li><code>~~strikethrough~~</code></li>
+      <li><code>||spoiler||</code> or <code>**spoiler**</code></li>
+      <li><code>&gt;quote</code> for greentext, <code>&lt;text</code> for bluetext and <code>!text</code> for red text</li>
+      <li><code>[code]code here[/code]</code> for syntax-highlighted code blocks</li>
+      <li><code>&gt;&gt;123</code> to quote a post, <code>&gt;&gt;&gt;/board/</code> to link to a board</li>
+      <li><code>:emote:</code> or <code>[emote:name]</code> for an emote</li>
+    </ul>
+    <p>You can combine these with normal links and line breaks. Unsupported formatting is shown as typed.</p>
+  </div>
+</div>
+</div>

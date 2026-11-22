@@ -1,6 +1,7 @@
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('image');
 const previewContainer = document.getElementById('preview-container');
+const uploadWidget = Boolean(dropZone && fileInput && previewContainer);
 const form =
   document.getElementById('post-form') ||
   document.getElementById('submit-form') ||
@@ -17,12 +18,13 @@ const maxFilesLimit = Math.max(
   ) || 3
 );
 
-// Only set up QR drop zone if we're on a thread page (check for QR element)
 const isThreadPage = document.getElementById('quick-reply') !== null;
 const dropZone_QR = isThreadPage ? document.getElementById('qr-drop-zone') : null;
 const previewContainer_QR = isThreadPage ? document.getElementById('qr-preview-container') : null;
 
 let currentFiles = [];
+let spoilerGroupSeq = 0;
+const previewFileOf = new WeakMap();
 
 Object.defineProperty(window, 'currentFiles', {
   get: function () {
@@ -33,35 +35,35 @@ Object.defineProperty(window, 'currentFiles', {
   }
 });
 
-fileInput.removeAttribute('required');
-fileInput.setAttribute('multiple', 'true');
-fileInput.setAttribute('max', String(maxFilesLimit));
+if (uploadWidget) {
+  fileInput.removeAttribute('required');
+  fileInput.setAttribute('multiple', 'true');
+  fileInput.setAttribute('max', String(maxFilesLimit));
+}
 
-// Set up main drop zone
-dropZone.addEventListener('click', () => {
+dropZone?.addEventListener('click', () => {
   fileInput.click();
 });
 
-dropZone.addEventListener('dragover', (e) => {
+dropZone?.addEventListener('dragover', (e) => {
   e.preventDefault();
   dropZone.style.backgroundColor = 'var(--small-button)';
 });
 
-dropZone.addEventListener('dragleave', () => {
+dropZone?.addEventListener('dragleave', (e) => {
   dropZone.style.backgroundColor = 'var(--background-gradient)';
 });
 
-dropZone.addEventListener('drop', (e) => {
+dropZone?.addEventListener('drop', (e) => {
   e.preventDefault();
   dropZone.style.backgroundColor = 'var(--background-gradient)';
   const files = Array.from(e.dataTransfer.files);
   handleFilesUpload(files);
 });
 
-// Set up QR drop zone only if it exists
 if (dropZone_QR) {
   dropZone_QR.addEventListener('click', () => {
-    fileInput.click();
+    fileInput?.click();
   });
 
   dropZone_QR.addEventListener('dragover', (e) => {
@@ -81,41 +83,46 @@ if (dropZone_QR) {
   });
 }
 
-fileInput.addEventListener('change', (e) => {
-  const files = Array.from(e.target.files);
-  if (files.length === 0) return;
+if (uploadWidget) {
+  fileInput.addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
 
-  window.currentFiles = [];
-  const previewItems = previewContainer.querySelectorAll('.preview-item');
-  previewItems.forEach((item) => item.remove());
-  if (previewContainer_QR) {
-    const qrPreviews = previewContainer_QR.querySelectorAll('.preview-text');
-    qrPreviews.forEach((item) => item.remove());
-  }
-  handleFilesUpload(files);
-  updateFileInput();
-});
+    window.currentFiles = [];
+    const previewItems = previewContainer.querySelectorAll('.preview-item');
+    previewItems.forEach((item) => item.remove());
+    if (previewContainer_QR) {
+      const qrPreviews = previewContainer_QR.querySelectorAll('.preview-text');
+      qrPreviews.forEach((item) => item.remove());
+    }
+    handleFilesUpload(files);
+    updateFileInput();
+  });
+}
 
-document.addEventListener('paste', (e) => {
-  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-  const files = [];
-  let hasFiles = false;
+if (uploadWidget) {
+  document.addEventListener('paste', (e) => {
+    const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+    if (!items) return;
+    const files = [];
+    let hasFiles = false;
 
-  for (const item of items) {
-    if (item.kind === 'file') {
-      hasFiles = true;
-      const file = item.getAsFile();
-      if (file) {
-        files.push(file);
+    for (const item of items) {
+      if (item.kind === 'file') {
+        hasFiles = true;
+        const file = item.getAsFile();
+        if (file) {
+          files.push(file);
+        }
       }
     }
-  }
 
-  if (hasFiles) {
-    e.preventDefault();
-    handleFilesUpload(files);
-  }
-});
+    if (hasFiles) {
+      e.preventDefault();
+      handleFilesUpload(files);
+    }
+  });
+}
 
 function isTegakiReplayFile(file) {
   return file.type === 'tegaki/replay' || (file.name || '').toLowerCase().endsWith('.tgkr');
@@ -123,6 +130,22 @@ function isTegakiReplayFile(file) {
 
 function visibleFileCount() {
   return currentFiles.filter((f) => !isTegakiReplayFile(f)).length;
+}
+
+function displayFileName(name) {
+  const value = String(name || '');
+  const max = Number(window.fileNameMaxLength);
+  if (!Number.isFinite(max) || max <= 0) return value;
+
+  const chars = Array.from(value);
+  if (chars.length <= max) return value;
+
+  const dot = value.lastIndexOf('.');
+  const ext = dot > 0 ? value.slice(dot) : '';
+  const stem = dot > 0 ? value.slice(0, dot) : value;
+  const extChars = Array.from(ext);
+  const room = Math.max(1, max - extChars.length - 1);
+  return `${Array.from(stem).slice(0, room).join('')}…${ext}`;
 }
 
 function handleFilesUpload(files) {
@@ -142,7 +165,6 @@ function handleFilesUpload(files) {
 
     if (visibleFileCount() >= maxFilesLimit) return;
 
-    const reader = new FileReader();
     const previewDiv = document.createElement('div');
     previewDiv.className = 'preview-item';
 
@@ -154,37 +176,51 @@ function handleFilesUpload(files) {
     removeButton.className = 'remove-file';
     removeButton.type = 'button';
 
-    reader.onload = function (e) {
-      if (file.type.startsWith('image/')) {
+    if (file.type && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
         previewImage.src = e.target.result;
-      } else {
-        previewImage.src = '/genericThumb.webp';
-      }
-    };
+      };
+      reader.readAsDataURL(file);
+    } else {
+      previewImage.src = '/genericThumb.webp';
+    }
 
-    reader.readAsDataURL(file);
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'preview-name';
+    nameSpan.textContent = displayFileName(file.name);
+    nameSpan.title = file.name;
+    const sizeSpan = document.createElement('span');
+    sizeSpan.className = 'preview-size';
+    sizeSpan.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+    fileInfo.append(nameSpan, sizeSpan);
 
-    fileInfo.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-
-    const spoilerLabel = document.createElement('label');
-    spoilerLabel.style.marginTop = '5px';
-    spoilerLabel.style.display = 'block';
-    spoilerLabel.style.color = 'var(--file-info-color)';
-    spoilerLabel.innerHTML = `
-      <input type="checkbox" name="spoiler" value="${currentFiles.length}">
-      Spoiler
+    const spoilerGroup = document.createElement('div');
+    spoilerGroup.className = 'spoiler-options';
+    spoilerGroup.style.marginTop = '5px';
+    spoilerGroup.style.display = 'flex';
+    spoilerGroup.style.flexWrap = 'wrap';
+    spoilerGroup.style.gap = '8px';
+    spoilerGroup.style.color = 'var(--file-info-color)';
+    const groupName = `spoiler_${spoilerGroupSeq++}`;
+    spoilerGroup.innerHTML = `
+      <label style="display: inline-flex; align-items: center; gap: 2px;"><input type="radio" name="${groupName}" value="none" checked>None</label>
+      <label style="display: inline-flex; align-items: center; gap: 2px;"><input type="radio" name="${groupName}" value="spoiler">Spoiler</label>
+      <label style="display: inline-flex; align-items: center; gap: 2px;"><input type="radio" name="${groupName}" value="nsfw">NSFW</label>
     `;
 
     previewDiv.appendChild(previewImage);
     previewDiv.appendChild(fileInfo);
-    previewDiv.appendChild(spoilerLabel);
+    previewDiv.appendChild(spoilerGroup);
     previewDiv.appendChild(removeButton);
     previewContainer.appendChild(previewDiv);
+    previewFileOf.set(previewDiv, file);
 
     if (previewContainer_QR) {
       const qrAppend = document.createElement('div');
       qrAppend.className = 'preview-text';
-      qrAppend.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+      qrAppend.textContent = `${displayFileName(file.name)} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+      qrAppend.title = file.name;
       previewContainer_QR.appendChild(qrAppend);
     }
 
@@ -214,6 +250,7 @@ function handleFilesUpload(files) {
 }
 
 function updateFileInput() {
+  if (!uploadWidget) return;
   const dataTransfer = new DataTransfer();
   currentFiles.forEach((file) => dataTransfer.items.add(file));
   fileInput.files = dataTransfer.files;
@@ -221,11 +258,34 @@ function updateFileInput() {
 
 window.updateFileInput = updateFileInput;
 
+function refreshSpoilerIndexes(root) {
+  root.querySelectorAll('.preview-item').forEach((card) => {
+    const file = previewFileOf.get(card);
+    const index = file ? currentFiles.indexOf(file) : -1;
+    card.querySelectorAll('input[type="radio"][name^="spoiler_"]').forEach((radio) => {
+      if (index >= 0) radio.dataset.index = String(index);
+      else radio.removeAttribute('data-index');
+    });
+  });
+}
+
+window.getSpoilerFields = function (root) {
+  const scope = root || document;
+  refreshSpoilerIndexes(scope);
+  const fields = [];
+  scope.querySelectorAll('input[type="radio"][name^="spoiler_"]:checked').forEach((radio) => {
+    const index = radio.dataset.index;
+    if (index === undefined || index === '' || index === '-1') return;
+    if (radio.value === 'nsfw') fields.push({ name: 'nsfw', value: index });
+    else if (radio.value === 'spoiler') fields.push({ name: 'spoiler', value: index });
+  });
+  return fields;
+};
+
 if (form) {
   form.addEventListener('submit', (e) => {
-  // Skip validation if the clicked button has data-no-upload-check="true"
   if (e.submitter && e.submitter.getAttribute('data-no-upload-check') === 'true') {
-    return; // Allow the form to submit without validation
+    return; 
   }
 
   updateFileInput();
@@ -235,26 +295,20 @@ if (form) {
     form.id !== 'quick-reply-form' &&
     form.getAttribute('data-requires-file') !== 'false';
 
-  if (!fileInput.files.length && requiresFile) {
+  if (uploadWidget && !fileInput.files.length && requiresFile) {
     e.preventDefault();
     alert('Please select at least one file before submitting.');
     return;
   }
 
-  // Get all checked spoiler checkboxes
-  const checkedSpoilers = Array.from(document.querySelectorAll('input[name="spoiler"]:checked')).map((checkbox) => checkbox.value);
-
-  // Create hidden input for spoiler information
-  if (checkedSpoilers.length > 0) {
-    let existingSpoilerInput = form.querySelector('input[name="spoilers"]');
-    if (existingSpoilerInput) {
-      existingSpoilerInput.remove();
-    }
-    const spoilerInput = document.createElement('input');
-    spoilerInput.type = 'hidden';
-    spoilerInput.name = 'spoiler';
-    spoilerInput.value = JSON.stringify(checkedSpoilers);
-    form.appendChild(spoilerInput);
-  }
+  form.querySelectorAll('input[data-spoiler-field]').forEach((input) => input.remove());
+  window.getSpoilerFields(form).forEach(({ name, value }) => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    input.setAttribute('data-spoiler-field', 'true');
+    form.appendChild(input);
+  });
   });
 }

@@ -1,0 +1,6 @@
+<%
+const src = locals.flagUrl ? locals.flagUrl(flag) : null;
+if (src) {
+%>
+<img class="post-flag" src="<%= src %>" alt="<%= flagName || '' %>" title="<%= flagName || '' %>" loading="lazy" decoding="async">
+<% } %>

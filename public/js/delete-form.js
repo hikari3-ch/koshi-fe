@@ -11,7 +11,12 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const storedPasswords = JSON.parse(localStorage.getItem('postingPasswords') || '{}');
+      let storedPasswords = {};
+      try {
+        storedPasswords = JSON.parse(localStorage.getItem('postingPasswords') || '{}') || {};
+      } catch {
+        storedPasswords = {};
+      }
       const boardUri = window.location.pathname.split('/')[1];
 
       let missingPasswords = [];
@@ -61,17 +66,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
 
+      const match = document.cookie.match(/(?:^|;\s*)csrf=([^;]*)/);
+      let liveCsrf = '';
+      if (match) {
+        try {
+          liveCsrf = decodeURIComponent(match[1]);
+        } catch {
+          liveCsrf = match[1];
+        }
+      }
+      if (!liveCsrf) {
+        liveCsrf = deleteForm.querySelector('input[name="_csrf"]')?.value || '';
+      }
+
       if (missingPasswords.length > 0) {
         const password = prompt(`Enter password for post(s): ${missingPasswords.join(', ')}`);
         if (!password) return;
 
         const formData = new FormData(deleteForm);
         formData.append('password', password);
+        if (liveCsrf) formData.set('_csrf', liveCsrf);
 
         const formAction = deleteForm.getAttribute('action');
         fetch(formAction, {
           method: 'POST',
-          body: formData
+          body: new URLSearchParams(formData)
         })
           .then((response) => {
             if (response.redirected) {
@@ -95,6 +114,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const newForm = document.createElement('form');
         newForm.method = 'POST';
         newForm.action = deleteForm.getAttribute('action');
+
+        if (liveCsrf) {
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = '_csrf';
+          csrfInput.value = liveCsrf;
+          newForm.appendChild(csrfInput);
+        }
 
         const fileOnlyCheckbox = deleteForm.querySelector('input[name="fileOnly"]');
         if (fileOnlyCheckbox && fileOnlyCheckbox.checked) {

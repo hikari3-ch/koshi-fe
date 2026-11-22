@@ -245,6 +245,12 @@
       el.controls = true;
       el.autoplay = true;
       el.addEventListener('click', (e) => e.stopPropagation());
+    } else {
+      el.addEventListener('error', () => {
+        if (el.dataset.fellBack) return;
+        el.dataset.fellBack = '1';
+        el.src = item.thumb;
+      });
     }
     return el;
   }

@@ -1,10 +1,18 @@
+function safeParseFilters() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('filters') || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 const settings = {
   init() {
     this.createModal();
     this.loadSavedSettings();
-    this.filters = JSON.parse(localStorage.getItem('filters') || '[]');
+    this.filters = safeParseFilters();
 
-    // Apply filters immediately after initialization
     setTimeout(() => this.applyFilters(), 100);
   },
 
@@ -13,33 +21,43 @@ const settings = {
     this.modal.id = 'settings-modal';
 
     const content = document.createElement('div');
-    content.className = 'modal-content';
+    content.className = 'modal-content settings-panel';
 
-    const header = document.createElement('p');
-    header.appendChild(document.createTextNode('Settings '));
+    const header = document.createElement('div');
+    header.className = 'settings-header';
+    const title = document.createElement('span');
+    title.className = 'settings-title';
+    title.textContent = 'Settings';
     const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
     closeBtn.className = 'modal-close';
+    closeBtn.title = 'Close';
     closeBtn.textContent = '×';
-    header.appendChild(closeBtn);
+    header.append(title, closeBtn);
 
-    const tabs = document.createElement('div');
-    tabs.className = 'tabs';
+    const expandAll = document.createElement('div');
+    expandAll.className = 'settings-expand-all';
+    const expandLink = document.createElement('a');
+    expandLink.href = '#';
+    expandAll.append('[', expandLink, ']');
 
-    const tabNames = ['Filters', 'CSS', 'JS', 'Other'];
-    tabNames.forEach((name) => {
-      const tab = document.createElement('button');
-      tab.textContent = name;
-      tab.onclick = () => this.switchTab(name.toLowerCase());
-      tabs.appendChild(tab);
-      if (name === 'Filters') tab.classList.add('active');
-    });
+    const body = document.createElement('div');
+    body.className = 'settings-body';
 
-    const tabContents = document.createElement('div');
-    tabContents.className = 'tab-contents';
+    const section = (name, open) => {
+      const details = document.createElement('details');
+      details.className = 'settings-section';
+      details.open = open;
+      const summary = document.createElement('summary');
+      summary.textContent = name;
+      const inner = document.createElement('div');
+      inner.className = 'settings-section-body';
+      details.append(summary, inner);
+      body.appendChild(details);
+      return inner;
+    };
 
-    const filtersContent = document.createElement('div');
-    filtersContent.id = 'filters-content';
-    filtersContent.style.display = 'block';
+    const filtersContent = section('Filters & Post Hiding', true);
 
     const filterControls = document.createElement('div');
     filterControls.className = 'filter-controls';
@@ -58,122 +76,94 @@ const settings = {
     filterInput.id = 'filter-input';
     filterInput.placeholder = 'filter';
 
-    const regexContainer = document.createElement('span');
+    const regexContainer = document.createElement('label');
     const regexCheckbox = document.createElement('input');
     regexCheckbox.type = 'checkbox';
     regexCheckbox.id = 'filter-regex';
-    const regexLabel = document.createElement('label');
-    regexLabel.htmlFor = 'filter-regex';
-    regexLabel.textContent = 'Regex';
-    regexContainer.appendChild(regexCheckbox);
-    regexContainer.appendChild(regexLabel);
+    regexContainer.append(regexCheckbox, ' Regex');
 
     const addFilterButton = document.createElement('button');
+    addFilterButton.type = 'button';
     addFilterButton.textContent = 'Add filter';
     addFilterButton.onclick = () => this.addFilter();
 
-    filterControls.appendChild(filterTypeSelect);
-    filterControls.appendChild(filterInput);
-    filterControls.appendChild(regexContainer);
-    filterControls.appendChild(addFilterButton);
+    filterControls.append(filterTypeSelect, filterInput, regexContainer, addFilterButton);
 
     const filtersList = document.createElement('div');
     filtersList.id = 'filters-list';
     filtersList.className = 'filters-list';
 
-    filtersContent.appendChild(filterControls);
-    filtersContent.appendChild(filtersList);
+    filtersContent.append(filterControls, filtersList);
 
-    const cssContent = document.createElement('div');
-    cssContent.id = 'css-content';
-    cssContent.style.display = 'none';
+    const optionsContent = section('Posts & Threads', false);
+
+    const options = [
+      { id: 'disable-you-tag', label: 'Disable (You) tags', desc: 'Stop marking your own posts and the replies to them with (You)', checked: localStorage.getItem('disableYouTag') === 'true' },
+      { id: 'image-preview-hover', label: 'Image preview on hover', desc: 'Show the full image while the pointer is over a thumbnail', checked: localStorage.getItem('imagePreviewHover') === 'true' },
+      { id: 'disable-auto-watch', label: 'Disable auto-watching', desc: 'Stop automatically adding threads you post in to the Thread Watcher', checked: localStorage.getItem('disableAutoWatch') === 'true' },
+      { id: 'disable-xchan-sync', label: 'Disable 4chan-X sync', desc: 'Keep this Thread Watcher separate from the thread watcher of the 4chan-X userscript', checked: localStorage.getItem('disableXchanSync') === 'true' },
+      { id: 'hide-fortunes', label: 'Hide fortunes', desc: 'Hide fortunes on posts that contain it', checked: localStorage.getItem('hideFortunes') === 'true' },
+      { id: 'new-post-sound', label: 'New post sound', desc: 'Play a sound when an open thread gets a new post', checked: localStorage.getItem('newPostSound') === 'true' },
+      { id: 'post-inlining', label: 'Inline quoted posts', desc: 'Clicking a quote opens the quoted post inside the reply', checked: localStorage.getItem('disablePostInlining') !== 'true' }
+    ];
+
+    options.forEach((opt) => {
+      const item = document.createElement('label');
+      item.className = 'settings-option';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = opt.id;
+      checkbox.checked = opt.checked;
+      const name = document.createElement('span');
+      name.className = 'settings-option-name';
+      name.textContent = opt.label;
+      const desc = document.createElement('span');
+      desc.className = 'settings-option-desc';
+      desc.textContent = opt.desc;
+      item.append(checkbox, name, desc);
+      optionsContent.appendChild(item);
+    });
+
+    const cssContent = section('Custom CSS', false);
     cssContent.innerHTML = `
-      <textarea id="custom-css" placeholder="Enter your custom CSS here..." 
-        style="width: 350px; height: 300px; background-color: var(--bg-color); 
-        color: var(--text-color); border: 1px solid var(--border-color); 
-        padding: 10px; font-family: monospace;"></textarea>
+      <p class="settings-option-desc">Your own CSS rules, added to every page.</p>
+      <textarea id="custom-css" class="settings-code" placeholder="Enter your custom CSS here..." spellcheck="false"></textarea>
     `;
 
-    const jsContent = document.createElement('div');
-    jsContent.id = 'js-content';
-    jsContent.style.display = 'none';
+    const jsContent = section('Custom JavaScript', false);
     jsContent.innerHTML = `
-      <textarea id="custom-js" placeholder="Enter your custom JavaScript here..." 
-        style="width: 350px; height: 300px; background-color: var(--bg-color); 
-        color: var(--text-color); border: 1px solid var(--border-color); 
-        padding: 10px; font-family: monospace;"></textarea>
+      <p class="settings-option-desc">Your own script, run on every page.</p>
+      <textarea id="custom-js" class="settings-code" placeholder="Enter your custom JavaScript here..." spellcheck="false"></textarea>
     `;
 
-    const otherContent = document.createElement('div');
-    otherContent.id = 'other-content';
-    otherContent.style.display = 'none';
+    const sections = Array.from(body.querySelectorAll('.settings-section'));
+    const syncExpandLabel = () => {
+      expandLink.textContent = sections.every((d) => d.open) ? 'Collapse All Settings' : 'Expand All Settings';
+    };
+    sections.forEach((d) => d.addEventListener('toggle', syncExpandLabel));
+    expandLink.onclick = (e) => {
+      e.preventDefault();
+      const open = !sections.every((d) => d.open);
+      sections.forEach((d) => (d.open = open));
+      syncExpandLabel();
+    };
+    syncExpandLabel();
 
-    const optionsList = document.createElement('div');
-    optionsList.className = 'options-list';
-
-    const disableYouOption = document.createElement('div');
-    disableYouOption.className = 'option-item';
-
-    const disableYouCheckbox = document.createElement('input');
-    disableYouCheckbox.type = 'checkbox';
-    disableYouCheckbox.id = 'disable-you-tag';
-    disableYouCheckbox.checked = localStorage.getItem('disableYouTag') === 'true';
-
-    const disableYouLabel = document.createElement('label');
-    disableYouLabel.htmlFor = 'disable-you-tag';
-    disableYouLabel.textContent = 'Disable (You) tags on posts';
-
-    disableYouOption.appendChild(disableYouCheckbox);
-    disableYouOption.appendChild(disableYouLabel);
-
-    const imagePreviewOption = document.createElement('div');
-    imagePreviewOption.className = 'option-item';
-
-    const imagePreviewCheckbox = document.createElement('input');
-    imagePreviewCheckbox.type = 'checkbox';
-    imagePreviewCheckbox.id = 'image-preview-hover';
-    imagePreviewCheckbox.checked = localStorage.getItem('imagePreviewHover') === 'true';
-
-    const imagePreviewLabel = document.createElement('label');
-    imagePreviewLabel.htmlFor = 'image-preview-hover';
-    imagePreviewLabel.textContent = 'Image preview on hover';
-
-    imagePreviewOption.appendChild(imagePreviewCheckbox);
-    imagePreviewOption.appendChild(imagePreviewLabel);
-
-    const disableAutoWatchOption = document.createElement('div');
-    disableAutoWatchOption.className = 'option-item';
-
-    const disableAutoWatchCheckbox = document.createElement('input');
-    disableAutoWatchCheckbox.type = 'checkbox';
-    disableAutoWatchCheckbox.id = 'disable-auto-watch';
-    disableAutoWatchCheckbox.checked = localStorage.getItem('disableAutoWatch') === 'true';
-
-    const disableAutoWatchLabel = document.createElement('label');
-    disableAutoWatchLabel.htmlFor = 'disable-auto-watch';
-    disableAutoWatchLabel.textContent = 'Disable auto-watching threads after posting';
-
-    disableAutoWatchOption.appendChild(disableAutoWatchCheckbox);
-    disableAutoWatchOption.appendChild(disableAutoWatchLabel);
-
-    optionsList.appendChild(disableYouOption);
-    optionsList.appendChild(imagePreviewOption);
-    optionsList.appendChild(disableAutoWatchOption);
-
-    otherContent.appendChild(optionsList);
-
-    tabContents.append(filtersContent, cssContent, jsContent, otherContent);
+    const footer = document.createElement('div');
+    footer.className = 'settings-footer';
 
     const saveButton = document.createElement('button');
-    saveButton.textContent = 'Save';
+    saveButton.type = 'button';
+    saveButton.textContent = 'Save Settings';
     saveButton.onclick = () => this.saveSettings();
-    saveButton.style.cssText = 'margin-top: 15px; padding: 5px 15px;';
 
-    content.append(header, tabs, tabContents, saveButton);
+    footer.appendChild(saveButton);
+
+    content.append(header, expandAll, body, footer);
     this.modal.appendChild(content);
     document.body.appendChild(this.modal);
 
-    this.modal.querySelector('.modal-close').onclick = () => this.hide();
+    closeBtn.onclick = () => this.hide();
     this.modal.onclick = (e) => {
       if (e.target === this.modal) this.hide();
     };
@@ -186,7 +176,15 @@ const settings = {
 
     if (!pattern) return;
 
-    // Check if trying to filter "Anonymous"
+    if (isRegex) {
+      try {
+        new RegExp(pattern, 'i');
+      } catch (e) {
+        alert(`Invalid regular expression: ${e.message}`);
+        return;
+      }
+    }
+
     if (type === 'name' && pattern.toLowerCase() === 'anonymous') {
       alert("Cannot create name filter on 'Anonymous'");
       return;
@@ -253,29 +251,10 @@ const settings = {
     this.modal.style.display = 'none';
   },
 
-  switchTab(tabName) {
-    const tabs = this.modal.querySelectorAll('button');
-    tabs.forEach((tab) => tab.classList.remove('active'));
-    const activeTab = Array.from(tabs).find((tab) => tab.textContent.toLowerCase() === tabName);
-    if (activeTab) activeTab.classList.add('active');
-
-    const contents = {
-      filters: 'filters-content',
-      css: 'css-content',
-      js: 'js-content',
-      other: 'other-content'
-    };
-
-    Object.values(contents).forEach((id) => {
-      document.getElementById(id).style.display = 'none';
-    });
-    document.getElementById(contents[tabName]).style.display = 'block';
-  },
-
   loadSavedSettings() {
     const customCSS = localStorage.getItem('customCSS') || '';
     const customJS = localStorage.getItem('customJS') || '';
-    this.filters = JSON.parse(localStorage.getItem('filters') || '[]');
+    this.filters = safeParseFilters();
 
     document.getElementById('custom-css').value = customCSS;
     document.getElementById('custom-js').value = customJS;
@@ -291,6 +270,11 @@ const settings = {
     const disableYouTag = document.getElementById('disable-you-tag').checked;
     const imagePreviewHover = document.getElementById('image-preview-hover').checked;
     const disableAutoWatch = document.getElementById('disable-auto-watch').checked;
+    const disableXchanSync = document.getElementById('disable-xchan-sync').checked;
+    const hideFortunes = document.getElementById('hide-fortunes').checked;
+    const newPostSound = document.getElementById('new-post-sound').checked;
+    const postInlining = document.getElementById('post-inlining').checked;
+    if (!postInlining) window.postInline?.closeAll();
 
     localStorage.setItem('customCSS', customCSS);
     localStorage.setItem('customJS', customJS);
@@ -298,6 +282,10 @@ const settings = {
     localStorage.setItem('disableYouTag', disableYouTag);
     localStorage.setItem('imagePreviewHover', imagePreviewHover);
     localStorage.setItem('disableAutoWatch', disableAutoWatch);
+    localStorage.setItem('disableXchanSync', disableXchanSync);
+    localStorage.setItem('hideFortunes', hideFortunes);
+    localStorage.setItem('newPostSound', newPostSound);
+    localStorage.setItem('disablePostInlining', String(!postInlining));
 
     this.applySettings();
     this.hide();
@@ -306,6 +294,7 @@ const settings = {
   applySettings() {
     const customCSS = localStorage.getItem('customCSS') || '';
     const disableYouTag = localStorage.getItem('disableYouTag') === 'true';
+    const hideFortunes = localStorage.getItem('hideFortunes') === 'true';
 
     let styleElement = document.getElementById('custom-style');
     if (!styleElement) {
@@ -331,9 +320,26 @@ const settings = {
       `;
     }
 
+    if (hideFortunes) {
+      combinedCSS += `
+        .fortune,
+        .excellentLuck,
+        .goodLuck,
+        .averageLuck,
+        .badLuck,
+        .tellYouNow,
+        .outlookGood,
+        .veryBadLuck,
+        .godlyLuck,
+        .youAreBanned,
+        .divFortune {
+          display: none !important;
+        }
+      `;
+    }
+
     styleElement.textContent = combinedCSS;
 
-    // Apply JS
     const customJS = localStorage.getItem('customJS');
     if (customJS) {
       try {
@@ -356,6 +362,7 @@ const settings = {
     const posts = document.querySelectorAll('.post, .reply, .op, .thread');
 
     posts.forEach((post) => {
+      if (post.classList.contains('op') && post.closest('.thread')) return;
       const existingButton = post.previousElementSibling;
       if (existingButton && existingButton.classList.contains('filter-unhide-button')) {
         existingButton.remove();
@@ -393,14 +400,11 @@ const settings = {
           content = messageElement ? messageElement.textContent.trim() : '';
         }
 
-        console.log(`Checking filter: ${filter.type}="${filter.pattern}" against "${content.substring(0, 50)}..."`);
-
         if (filter.isRegex) {
           try {
             const regex = new RegExp(filter.pattern, 'i');
             return regex.test(content);
           } catch (e) {
-            console.error('Invalid regex:', filter.pattern);
             return false;
           }
         } else {
@@ -409,8 +413,6 @@ const settings = {
       });
 
       if (shouldFilter) {
-        console.log('Filtering post:', post);
-
         const boardUri = window.location.pathname.split('/')[1] || 'unknown';
         const postId = post.dataset.postId || post.id || 'unknown';
 
@@ -441,6 +443,4 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('contentAdded', () => {
     settings.applyFilters();
   });
-
-  setTimeout(() => settings.applyFilters(), 500);
 });

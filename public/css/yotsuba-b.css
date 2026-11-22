@@ -18,3 +18,15 @@
   --board-title-color: #af0a0f;
   --button-background: #d6daf0;
 }
+
+.board-list {
+    color: #89A;
+}
+
+.navtopright{
+    color: #89A;
+}
+
+.footer-nav-tools{
+    color: #89A;
+}

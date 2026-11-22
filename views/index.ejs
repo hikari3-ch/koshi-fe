@@ -1,27 +1,118 @@
-<% title = siteName; %>
+<%
+const pageTitle = siteName || 'Koshi';
+const homeOg = locals.og || {
+  siteName: pageTitle,
+  type: 'website',
+  title: pageTitle,
+  description: locals.siteDescription || '',
+  url: (locals.siteUrl || '') + '/',
+  image: locals.siteImage ? ((locals.siteUrl || '') + locals.siteImage) : ''
+};
+const newsList = Array.isArray(latestNews) ? latestNews : (latestNews ? [latestNews] : []);
+const topNews = newsList[0] || null;
+
+const boardMetaMap = {};
+(locals.boards || []).forEach((b) => { if (b && b.boardUri) boardMetaMap[b.boardUri] = b; });
+const directoryBoards = (Array.isArray(locals.allBoards) && locals.allBoards.length)
+  ? locals.allBoards
+  : (Array.isArray(locals.boards) ? locals.boards : []);
+
+const featured = [];
+const featuredKeys = new Set();
+for (const t of (locals.featuredThreads || [])) {
+  if (!t || t.exists === false) continue;
+  const key = `${t.boardUri}/${t.threadId}`;
+  if (featuredKeys.has(key)) continue;
+  featuredKeys.add(key);
+  featured.push({
+    boardUri: t.boardUri,
+    boardName: t.boardName || t.boardUri,
+    threadId: t.threadId,
+    title: t.title || t.subject || 'No subject',
+    teaser: '',
+    thumb: t.thumb || (t.files && t.files.length ? t.files[0].thumb : null)
+  });
+}
+if (!featured.length) {
+  for (const t of (locals.pinnedThreads || [])) {
+    if (!t) continue;
+    featured.push({
+      boardUri: t.boardUri,
+      boardName: t.boardName || t.boardUri,
+      threadId: t.threadId,
+      title: t.subject || 'No subject',
+      teaser: t.message || '',
+      thumb: t.files && t.files.length ? t.files[0].thumb : null
+    });
+  }
+}
+%><!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= titleText ? titleText(pageTitle) : pageTitle %></title>
+<% if (homeOg.description) { %><meta name="description" content="<%= homeOg.description %>"><% } %>
+<link rel="stylesheet" href="/css/global.css?v=<%= locals.assetVersion('css/global.css') %>">
+<link id="theme-css" rel="stylesheet" href="/css/yotsuba-b.css">
+<script src="/js/csrf.js?v=<%= locals.assetVersion('js/csrf.js') %>"></script>
+<script src="/js/dom.js?v=<%= locals.assetVersion('js/dom.js') %>"></script>
+<script src="/js/alert.js?v=<%= locals.assetVersion('js/alert.js') %>"></script>
+<script>window.boardDefaultTheme = '';</script>
+<script src="/js/themes.js?v=<%= locals.assetVersion('js/themes.js') %>"></script>
+<%- include('partials/open-graph', { og: homeOg }) %>
+</head>
+<body>
+<%- include('partials/header') %>
+<div class="container"><main class="content">
 <div class="box-layout">
-<%- include('partials/banner', { title: siteName, boardUri: false }) %>
+<%- include('partials/banner', { title: pageTitle, boardUri: false }) %>
 <%- include('partials/announcement') %>
-<% if (latestNews) { %>
+
+<% if (topNews) { %>
 <div class="box-outer top-box">
   <div class="boxcontent" style="text-align: center;">
     <p>Current news:</p>
-    <h1><a href="/news"><span style="text-transform: uppercase;"><%= latestNews.title %></span></a></h1>
-    <p>by <a href="mailto:<%= latestNews.authorEmail %>"><%= latestNews.author %></a> - <%= new Date(latestNews.date).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' }) %> @ <%= new Date(latestNews.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) %> (UTC)</p>
+    <h1><a href="/news<%= topNews.newsId != null ? '#' + topNews.newsId : '' %>"><span style="text-transform: uppercase;"><%= topNews.title %></span></a></h1>
+    <p>by <% if (topNews.authorEmail) { %><a href="mailto:<%= topNews.authorEmail %>"><%= topNews.author %></a><% } else { %><%= topNews.author %><% } %> - <%= new Date(topNews.date).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' }) %> @ <%= new Date(topNews.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) %> (UTC)</p>
   </div>
 </div>
 <% } %>
-<% if (activeThreads.length > 0) { %>
+
+<% if (directoryBoards.length > 0) { %>
+<div class="box-outer top-box">
+  <div class="boxbar">
+    <h2>Boards <span class="home-box-links">[<a href="/all/">Overboard</a>] [<a href="/stats">Stats</a>]</span></h2>
+  </div>
+  <div class="boxcontent">
+    <div class="home-boards-grid">
+      <% directoryBoards.forEach((b) => { %>
+      <% const meta = boardMetaMap[b.boardUri]; %>
+      <a href="/<%= b.boardUri %>/" class="home-board-item" title="<%= b.boardDescription || b.boardName || b.boardUri %>">
+        <span class="home-board-title">/<%= b.boardUri %>/ - <%= b.boardName || b.boardUri %></span>
+        <% if (meta && (meta.threadCount != null || meta.lastPostId != null)) { %>
+        <span class="home-board-meta">T: <%= Number(meta.threadCount || 0).toLocaleString() %> / P: <%= Number(meta.lastPostId || 0).toLocaleString() %></span>
+        <% } else if (b.boardDescription) { %>
+        <span class="home-board-meta"><%= b.boardDescription %></span>
+        <% } %>
+      </a>
+      <% }) %>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<% if ((activeThreads || []).length > 0) { %>
 <div class="box-outer top-box">
   <div class="boxbar"><h2>Active Threads</h2></div>
   <div class="boxcontent">
     <div id="c-threads">
-      <% activeThreads.slice(0, 8).forEach(thread => { %>
+      <% activeThreads.slice(0, 8).forEach((thread) => { %>
       <div class="c-thread active-thread" data-last-bump="<%= new Date(thread.lastBump).getTime() %>">
         <div class="c-board"><%= thread.boardName %></div>
         <% if (thread.files && thread.files.length > 0) { %>
         <a href="/<%= thread.boardUri %>/thread/<%= thread.threadId %>" class="boardlink active-thread-img">
-          <img alt="" class="c-thumb" src="<%= thread.files[0].thumb %>">
+          <img alt="" class="c-thumb" src="<%= thread.files[0].thumb %>" loading="lazy" decoding="async">
         </a>
         <% } %>
         <div class="c-teaser"><% if (thread.subject) { %><b><%- thread.subject %></b>: <% } %><%- thread.message %></div>
@@ -31,22 +122,22 @@
   </div>
 </div>
 <% } %>
+
 <table>
   <tr>
     <td class="left-col">
-      <% if (pinnedThreads && pinnedThreads.length > 0) { %>
+      <% if (featured.length > 0) { %>
       <div class="box-outer box-green">
         <div class="boxbar"><h2>Featured Threads</h2></div>
         <div class="boxcontent">
-        
-          <% pinnedThreads.slice(0, 3).forEach(thread => { %>
+          <% featured.slice(0, 4).forEach((thread) => { %>
           <a class="featured-thread" href="/<%= thread.boardUri %>/thread/<%= thread.threadId %>">
-            <% if (thread.files && thread.files.length > 0) { %>
-            <img src="<%= thread.files[0].thumb %>" alt="" class="featured-thumb">
+            <% if (thread.thumb) { %>
+            <img src="<%= thread.thumb %>" alt="" class="featured-thumb" loading="lazy" decoding="async">
             <% } %>
             <span class="featured-info">
-              <span class="featured-title"><%- thread.subject || 'No subject' %></span>
-              <span class="featured-teaser"><%- thread.message %></span>
+              <span class="featured-title"><%- unescapeHtml ? unescapeHtml(thread.title) : thread.title %></span>
+              <% if (thread.teaser) { %><span class="featured-teaser"><%- thread.teaser %></span><% } %>
               <span class="featured-board">/<%= thread.boardUri %>/ - <%= thread.boardName %></span>
             </span>
           </a>
@@ -57,9 +148,9 @@
       <div class="box-outer box-green">
         <div class="boxbar"><h2>Recent Images</h2></div>
         <div class="boxcontent images-list image-box-content">
-          <% latestImages.slice(0, 9).forEach(image => { %>
+          <% (latestImages || []).slice(0, 9).forEach((image) => { %>
           <a href="/<%= image.boardUri %>/thread/<%= image.threadId %><%= !image.isThread ? '#' + image.postId : '' %>" class="image-link image-item" data-creation="<%= new Date(image.creation).getTime() %>">
-            <img src="<%= image.thumb %>" alt="" loading="lazy">
+            <img src="<%= image.thumb %>" alt="" loading="lazy" decoding="async">
           </a>
           <% }) %>
         </div>
@@ -69,9 +160,9 @@
       <div class="box-outer box-blue">
         <div class="boxbar"><h2>Latest Posts</h2></div>
         <div class="boxcontent posts-list">
-          <% latestPosts.forEach(post => { %>
+          <% (latestPosts || []).forEach((post) => { %>
           <a class="latest-post" href="/<%= post.boardUri %>/thread/<%= post.threadId %><%= !post.isThread ? '#' + post.postId : '' %>">
-            <span class="latest-link">>>/<%= post.boardUri %>/<%= post.postId || post.threadId %></span> <span class="latest-text"><%- post.message || 'No message' %></span>
+            <span class="latest-link">&gt;&gt;/<%= post.boardUri %>/<%= post.postId || post.threadId %></span> <span class="latest-text"><%- post.message || 'No message' %></span>
           </a>
           <% }) %>
         </div>
@@ -79,12 +170,37 @@
       <div class="box-outer box-blue">
         <div class="boxbar"><h2>Stats</h2></div>
         <div class="boxcontent stats-list">
-          <div>Total Posts: <%= siteStats.totalPosts.toLocaleString() %></div>
-          <div>Unique IPs: <%= siteStats.totalUniquePosters.toLocaleString() %></div>
+          <div>Total Posts: <%= Number(siteStats.totalPosts || 0).toLocaleString() %></div>
+          <div>Unique IPs: <%= Number(siteStats.totalUniquePosters || 0).toLocaleString() %></div>
           <div>Active Content: <%= siteStats.totalMediaSize %> GB</div>
+          <% if (siteStats.usersOnline != null) { %><div>Users Online Now: <%= Number(siteStats.usersOnline || 0).toLocaleString() %></div><% } %>
+          <% if (siteStats.mostUsersOnline != null) { %><div>Peak Users Online: <%= Number(siteStats.mostUsersOnline || 0).toLocaleString() %></div><% } %>
+          <div><a href="/stats">Detailed Statistics &rarr;</a></div>
         </div>
       </div>
     </td>
   </tr>
 </table>
 </div>
+</main></div>
+<%- include('partials/footer', { boardFooter: false }) %>
+<script src="/js/thumb.js?v=<%= locals.assetVersion('js/thumb.js') %>"></script>
+<script src="/js/thread-watcher.js?v=<%= locals.assetVersion('js/thread-watcher.js') %>"></script>
+<script src="/js/settings.js?v=<%= locals.assetVersion('js/settings.js') %>"></script>
+<script>
+window.reportCategories = <%- JSON.stringify(locals.reportCategories || []).replace(/</g, '\\u003c') %>;
+window.deletedPostDisplay = '<%= locals.deletedPostDisplay || 'remove' %>';
+window.fileNameMaxLength = <%- Number(locals.fileNameMaxLength) || 30 %>;
+</script>
+<% if (locals.modUser) { %>
+<script>
+window.modUser = true;
+window.modIsGlobalMod = <%= Number(modUser.globalRole) <= 2 ? 'true' : 'false' %>;
+window.modShowIp = <%= locals.showIp ? 'true' : 'false' %>;
+</script>
+<% } %>
+<script src="/js/post-menu.js?v=<%= locals.assetVersion('js/post-menu.js') %>"></script>
+<script src="/js/poll-handler.js?v=<%= locals.assetVersion('js/poll-handler.js') %>"></script>
+<script src="/js/agree.js?v=<%= locals.assetVersion('js/agree.js') %>"></script>
+</body>
+</html>

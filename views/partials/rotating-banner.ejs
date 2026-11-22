@@ -1,0 +1,7 @@
+
+<% if (locals.rotatingBanner) { %>
+<hr>
+<div class="rotating-banner">
+  <a href="<%= rotatingBanner.href %>"<% if (/^https?:/.test(rotatingBanner.href)) { %> target="_blank" rel="noopener"<% } %>><img src="<%= rotatingBanner.src %>" alt="" width="468" height="60"></a>
+</div>
+<% } %>

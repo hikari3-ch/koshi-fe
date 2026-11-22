@@ -1,172 +1,289 @@
 <script>
-  function updateTextareaValueFromURL() {
-    const textarea = document.getElementById('message');
-    const hash = window.location.hash;
-    if (hash && hash.startsWith('#q')) {
-      const id = hash.substring(2);
-      textarea.value = `>>${id}\n`;
+    function updateTextareaValueFromURL() {
+        const textarea = document.getElementById('message');
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#q')) {
+            const id = hash.substring(2);
+            textarea.value = `>>${id}\n`;
+        }
     }
-  }
-  window.onload = updateTextareaValueFromURL;
-  window.onhashchange = updateTextareaValueFromURL;
+    window.onload = updateTextareaValueFromURL;
+    window.onhashchange = updateTextareaValueFromURL;
+
 </script>
 
+<style>
+    .mode-select-group {
+        font-size: 0.95em;
+    }
+
+    .mode-select-btn:hover {
+        color: var(--hover-link-color);
+    }
+
+    .mode-select-btn {
+        color: var(--link-color);
+        cursor: pointer;
+    }
+
+</style>
+    
+
+<% const textBoard = locals.textBoard === true; %>
 <table id="postformTable">
-  <tbody>
-    <tr>
-      <td class="post-block"><label for="name">Name</label></td>
-      <td class="postform-input-cell">
-        <input type="text" id="name" name="name" class="input-text" placeholder="<%= anonymousName %>" />
-      </td>
-    </tr>
-    <tr>
-      <td class="post-block"><label>Options</label></td>
-      <td class="postform-input-cell">
-        <label>Fortune <input type="checkbox" id="fortune" name="fortune" value="true" /></label>
-        <% if (isThread) { %>
-        <label>Sage <input type="checkbox" id="sage" name="sage" value="true" /></label>
-        <label>Nonoko <input type="checkbox" id="nonoko" name="nonoko" value="true" /></label>
-        <button class="new-thread-btn" type="submit">New reply</button>
+    <tbody>
+        <tr>
+            <td class="post-block"><label for="name">Name</label></td>
+            <td class="postform-input-cell">
+                <input type="text" id="name" name="name" class="input-text" placeholder="<%= anonymousName %>" />
+            </td>
+        </tr>
+        <% const formFlagMode = locals.flagModeFor ? locals.flagModeFor(locals.board) : 'off'; %>
+        <% const formFlags = formFlagMode === 'custom' || formFlagMode === 'both' ? (locals.customFlagsFor ? locals.customFlagsFor(boardUri) : []) : []; %>
+        <% if (formFlagMode === 'custom' || formFlagMode === 'both') { %>
+        <tr>
+            <td class="post-block"><label for="user_flag">Flag</label></td>
+            <td class="postform-input-cell">
+                <select id="user_flag" name="user_flag" class="input-text">
+                    <option value=""><%= formFlagMode === 'both' ? 'None (use my country)' : 'None' %></option>
+                    <% formFlags.forEach((flag) => { %><option value="<%= flag.name %>"><%= flag.label %></option><% }) %>
+                </select>
+            </td>
+        </tr>
         <% } %>
-      </td>
-    </tr>
-    <% if (!isThread) { %>
-    <tr>
-      <td class="post-block"><label for="subject">Subject</label></td>
-      <td class="postform-input-cell">
-        <input type="text" id="subject" name="subject" class="input-text" />
-        <button class="new-thread-btn" type="submit">New thread</button>
-      </td>
-    </tr>
-    <% } %>
-    <tr>
-      <td class="post-block">
-        <label for="message">Comment</label>
-      </td>
-      <td class="postform-input-cell">
-        <textarea id="message" name="message" class="input-text" rows="5"></textarea>
-        <p class="file-info no-js" style="margin: 0;">Max comment length: <span id="charCount">0</span>/4096</p>
-        <% var youtubeOk = locals.youtubeAllowed !== false; %>
-        <% var pollsOk = locals.pollsAllowed !== false; %>
-        <% var tegakiOk = locals.tegakiAllowed !== false; %>
-        <div class="js-only comment-block-extra">
-          <% if (youtubeOk) { %>
-          <details id="youtube-details">
-            <summary class="format-summary" title="YouTube">YT</summary>
-            <input type="text" id="youtube-url" name="youtube-url" placeholder="Paste YouTube URL here" style="width: 98%;" />
-          </details>
-          <% } %>
-          <% if (pollsOk) { %>
-          <details id="poll-details" class="poll-details">
-            <summary class="format-summary">Poll</summary>
-            <div style="padding: 10px;">
-              <input type="text" autocomplete="off" name="poll_question" placeholder="Poll question" style="width: 98%; margin-bottom: 5px;" />
-              <div id="poll-options">
-                <input type="text" autocomplete="off" name="poll_options[]" placeholder="Option 1" style="width: 90%; margin-bottom: 5px;" />
-                <input type="text" autocomplete="off" name="poll_options[]" placeholder="Option 2" style="width: 90%; margin-bottom: 5px;" />
-              </div>
-              <button type="button" id="add-option" style="margin-bottom: 5px;">+ Add Option</button>
-              <div style="margin-top: 5px;">
-                <label>Poll duration:
-                  <select name="poll_duration">
-                    <option value="1">1 day</option>
-                    <option value="3">3 days</option>
-                    <option value="7">1 week</option>
-                    <option value="30">1 month</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-          </details>
-          <% } %>
-          <% if (tegakiOk) { %>
-          <button type="button" id="tegaki-btn" title="Tegaki" class="form-button">Tegaki</button>
-          <% } %>
-          <details class="formatting-details">
-            <summary class="format-summary">Styling</summary>
-          <button data-emote="[b][/b]" type="button"><span><strong>Bold</strong></span></button>
-          <button data-emote="[i][/i]" type="button"><span><em>Italics</em></span></button>
-          <button data-emote="[s][/s]" type="button"><span><s>Strike</s></span></button>
-          <button data-emote="[spoiler][/spoiler]" type="button"><span class="spoiler">Spoiler</span></button>
-          <button data-emote="[moe][/moe]" type="button"><span class="moeText">Moe</span></button>
-          <button data-emote="[doom][/doom]" type="button"><span class="doomText">DOOM</span></button>
-          <button data-emote="[s1][/s1]" type="button"><span class="s1">Size 1</span></button>
-          <button data-emote="[s2][/s2]" type="button"><span class="s2">Size 2</span></button>
-          <button data-emote="[s3][/s3]" type="button"><span class="s3">Size 3</span></button>
-          <button data-emote="[s4][/s4]" type="button"><span class="s4">Size 4</span></button>
-          <button data-emote="[s5][/s5]" type="button"><span class="s5">Size 5</span></button>
-          <button data-emote="[s6][/s6]" type="button"><span class="s6">Size 6</span></button>
-          <button data-emote="[s7][/s7]" type="button"><span class="s7">Size 7</span></button>
-          <button data-emote="[red][/red]" type="button"><span class="c1">Red</span></button>
-          <button data-emote="[orange][/orange]" type="button"><span class="c2">Orange</span></button>
-          <button data-emote="[brown][/brown]" type="button"><span class="c3">Brown</span></button>
-          <button data-emote="[purple][/purple]" type="button"><span class="c4">Purple</span></button>
-          <button data-emote="[pink][/pink]" type="button"><span class="c5">Pink</span></button>
-          <button data-emote="[yellow][/yellow]" type="button"><span class="c6">Yellow</span></button>
-          <button data-emote="[green][/green]" type="button"><span class="c7">Green</span></button>
-          <button data-emote="[blue][/blue]" type="button"><span class="c8">Blue</span></button>
-          <button data-emote="[lightblue][/lightblue]" type="button"><span class="c9">Light Blue</span></button>
-          <button data-emote="[rainbow][/rainbow]" type="button"><span class="powerful">Rainbow</span></button>
-          <button data-emote="[code][/code]" type="button"><span>Codeblock</span></button>
-          </details>
-        </div>
-      </td>
-    </tr>
-    <tr>
-      <td class="post-block"><label for="standard-image">File</label></td>
-      <td class="postform-input-cell">
-        <div id="drop-zone">
-          Drag files here to upload or <br />click here to select them, or paste an image
-          <input type="file" id="image" name="image" accept="image/*,video/*" style="display: none;" />
-        </div>
-        <div id="standard-file-input">
-          <input type="file" id="standard-image" name="image" accept="image/*,video/*" />
-        </div>
-        <div id="preview-container" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;"></div>
-      </td>
-    </tr>
-    <tr>
-      <td class="post-block"><label for="post-password">Password</label></td>
-      <td class="postform-input-cell">
-        <input type="password" id="post-password" name="post-password" class="input-text" /><span id="delPasswordInfo"> (for deletion)</span>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<a class="js-only" style="display: none" href="/styling">Styling</a>
+        <tr>
+            <td class="post-block"><label>Options</label></td>
+            <td class="postform-input-cell">
+                
+                <details class="post-options" id="post-options">
+                    <summary><select class="input-text post-options-select" tabindex="-1" aria-hidden="true"><option class="post-options-label">None</option></select></summary>
+                    <div class="post-options-menu">
+                        <label><input type="checkbox" id="fortune" name="fortune" value="true" /> Fortune</label>
+                        <% if (isThread) { %>
+                        <label><input type="checkbox" id="sage" name="sage" value="true" /> Sage</label>
+                        <label><input type="checkbox" id="nonoko" name="nonoko" value="true" /> Nonoko</label>
+                        <% } %>
+                    </div>
+                </details>
+                <% if (isThread) { %>
+                <button class="new-thread-btn" type="submit">New reply</button>
+                <% } %>
+            </td>
+        </tr>
+        <% if (!isThread) { %>
+        <tr>
+            <td class="post-block"><label for="subject">Subject</label></td>
+            <td class="postform-input-cell subject-row-cell">
+                <input type="text" id="subject" name="subject" class="input-text" />
+                <button class="new-thread-btn" type="submit">New thread</button>
+            </td>
+        </tr>
+        <% } %>
+        <tr>
+            <td class="post-block">
+                <label for="message">Comment</label>
+            </td>
+            <td class="postform-input-cell">
+                <textarea id="message" name="message" class="input-text" rows="5"></textarea>
+                <p class="file-info no-js" style="margin: 0;font-size: 10px;">Max comment length: <span id="charCount">0</span>/4096</p>
+                <% var youtubeOk = locals.youtubeAllowed !== false; %>
+                <% var pollsOk = locals.pollsAllowed !== false; %>
+                <% var tegakiOk = locals.tegakiAllowed !== false; %>
+                <div class="js-only comment-block-extra">
+                    <% if (pollsOk) { %>
+                    <div id="poll-details" class="poll-details" style="display: <%= textBoard ? 'block' : 'none' %>; padding: 10px;">
+                        <input type="text" autocomplete="off" name="poll_question" placeholder="Poll question" style="width: 98%; margin-bottom: 5px;" />
+                        <div id="poll-options" data-max-options="<%= locals.maxPollOptions || 10 %>">
+                            <input type="text" autocomplete="off" name="poll_options[]" placeholder="Option 1" style="width: 90%; margin-bottom: 5px;" />
+                            <input type="text" autocomplete="off" name="poll_options[]" placeholder="Option 2" style="width: 90%; margin-bottom: 5px;" />
+                        </div>
+                        <button type="button" id="add-option" style="margin-bottom: 5px;">+ Add Option</button>
+                        <div style="margin-top: 5px;">
+                            <label>Poll duration:
+                                <select name="poll_duration">
+                                    <option value="1">1 day</option>
+                                    <option value="3">3 days</option>
+                                    <option value="7">1 week</option>
+                                    <option value="30">1 month</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                    <% } %>
+                    <% if (tegakiOk && !textBoard) { %>
+                    <button type="button" id="tegaki-btn" title="Tegaki" class="form-button" style="display: none;">Tegaki</button>
+                    <% } %>
+                </div>
+            </td>
+        </tr>
+        <% if (!textBoard && (youtubeOk || pollsOk || tegakiOk)) { %>
+        <%
+      var modeOptions = [{ mode: 'file', label: 'File' }];
+      if (youtubeOk) modeOptions.push({ mode: 'youtube', label: 'Embed' });
+      if (pollsOk) modeOptions.push({ mode: 'poll', label: 'Poll' });
+      if (tegakiOk) modeOptions.push({ mode: 'tegaki', label: 'Tegaki' });
+    %>
+        <tr class="js-only">
+            <td class="post-block"><label>Select</label></td>
+            <td class="postform-input-cell">
+                <span class="mode-select-group" role="group" aria-label="Attachment type">
+                    <% modeOptions.forEach(function (opt, idx) { %>
+                    <% if (idx > 0) { %> / <% } %>
+                    <span class="mode-select-btn<%= idx === 0 ? ' active' : '' %>" data-mode="<%= opt.mode %>"><%= opt.label %></span>
+                    <% }); %>
+                </span>
+            </td>
+        </tr>
+        <% } %>
+        <% if (!textBoard) { %>
+        <tr>
+            <td class="post-block"><label id="file-row-label" for="standard-image">File</label></td>
+            <td class="postform-input-cell">
+                <div id="file-mode-content">
+                    <div id="drop-zone">
+                        Drag files here to upload or <br />click here to select them, or paste an image
+                        <input type="file" id="image" name="image" accept="image/*,video/*,.jxl,.avif" style="display: none;" />
+                    </div>
+                    <div id="standard-file-input">
+                        <input type="file" id="standard-image" name="image" accept="image/*,video/*,.jxl,.avif" />
+                    </div>
+                    <div id="preview-container" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                </div>
+                <% if (youtubeOk) { %>
+                <div id="embed-mode-content" style="display: none;">
+                    <input type="text" id="youtube-url" name="youtube-url" placeholder="Enter a supported URL here" style="width: 98%;" />
+                </div>
+                <% } %>
+            </td>
+        </tr>
+        <% } %>
+<% if (locals.captcha && (locals.captcha.required || locals.captcha.solved)) { %>
+        <tr class="captcha-row">
+            <td class="post-block"><label>Captcha</label></td>
+            <td class="postform-input-cell"><%- include('captcha') %></td>
+        </tr>
+        <% } %>
+        <tr>
+            <td class="post-block"><label for="post-password">Password</label></td>
+            <td class="postform-input-cell">
+                <input type="text" id="post-password" name="post-password" class="input-text" autocomplete="off" spellcheck="false" value="<%= locals.formPassword %>" /><span id="delPasswordInfo"> (for deletion)</span>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="rules">
+                <ul style="margin-left: 0; margin-top: 0; margin-bottom: 0;">
+                    <li>Please read the <a href="/rules">Rules</a> and <a href="/faq">FAQ</a> before posting.</li>
+                    <% if (!textBoard) { %>
+                    <li>Supported file types are: GIF, JPG, OGG, MP3, MP4, PNG, SWF, WEBM, WEBP.</li>
+                    <% } %>
+                    <li>Supported embeds are: YouTube, Nicovideo, Twitter/X, Bluesky, BiliBili, Vocaroo.</li>
+                    <% if (!textBoard) { %>
+                    <li>Maximum file size allowed is 20MB.</li>
+                    <li>Images greater than 250x250 pixels will be thumbnailed.</li>
+                    <% } %>
+                </ul>
 
-<script src="/js/markdown-btn.js"></script>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
 <script>
-  document.getElementById('message').addEventListener('input', function () {
-    document.getElementById('charCount').textContent = this.value.length;
-  });
+    (function() {
+        const dropdown = document.getElementById('post-options');
+        if (!dropdown) return;
+        const label = dropdown.querySelector('.post-options-label');
+        const boxes = Array.from(dropdown.querySelectorAll('input[type="checkbox"]'));
+        function updateLabel() {
+            const ticked = boxes.filter(function(cb) { return cb.checked; }).map(function(cb) { return cb.parentNode.textContent.trim(); });
+            label.textContent = ticked.length ? ticked.join(', ') : 'None';
+        }
+        document.addEventListener('change', function(e) {
+            if (e.target instanceof HTMLInputElement && e.target.type === 'checkbox') updateLabel();
+        });
+        dropdown.closest('form')?.addEventListener('reset', function() { setTimeout(updateLabel); });
+        document.addEventListener('click', function(e) {
+            if (dropdown.open && !dropdown.contains(e.target)) dropdown.open = false;
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && dropdown.open) dropdown.open = false;
+        });
+        updateLabel();
+    })();
+
+    document.getElementById('message').addEventListener('input', function() {
+        document.getElementById('charCount').textContent = this.value.length;
+    });
+
 </script>
-<% if (tegakiOk) { %>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const message = document.getElementById('message');
+        document.querySelectorAll('#emo .emote').forEach(function(img) {
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', function() {
+                if (!message) return;
+                const tag = ':' + img.title + ':';
+                const start = message.selectionStart != null ? message.selectionStart : message.value.length;
+                const end = message.selectionEnd != null ? message.selectionEnd : message.value.length;
+                message.value = message.value.slice(0, start) + tag + message.value.slice(end);
+                message.focus();
+                message.selectionStart = message.selectionEnd = start + tag.length;
+            });
+        });
+    });
+
+</script>
+
+<% if (tegakiOk && !textBoard) { %>
 <script src="/js/tegaki-post.js"></script>
 <% } %>
-<% if (pollsOk) { %>
-<script src="/js/poll-handler.js"></script>
-<% } %>
-<% if (youtubeOk) { %>
+
+<% if (!textBoard && (youtubeOk || pollsOk || tegakiOk)) { %>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const youtubeDetails = document.getElementById('youtube-details');
-    const fileInput = document.getElementById('image');
-    const dropZone = document.getElementById('drop-zone');
-    if (youtubeDetails) {
-      youtubeDetails.addEventListener('toggle', function () {
-        if (youtubeDetails.open) {
-          dropZone.style.opacity = '0.5';
-          fileInput.disabled = true;
-        } else {
-          dropZone.style.opacity = '1';
-          fileInput.disabled = false;
-          document.getElementById('youtube-url').value = '';
+    document.addEventListener('DOMContentLoaded', function() {
+        const modeButtons = document.querySelectorAll('.mode-select-btn');
+        const pollDetails = document.getElementById('poll-details');
+        const tegakiBtn = document.getElementById('tegaki-btn');
+        const fileModeContent = document.getElementById('file-mode-content');
+        const embedModeContent = document.getElementById('embed-mode-content');
+        const fileRowLabel = document.getElementById('file-row-label');
+        const fileInput = document.getElementById('image');
+        const youtubeUrl = document.getElementById('youtube-url');
+
+        function setMode(mode) {
+            modeButtons.forEach(function(btn) {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+
+            const isYoutube = mode === 'youtube';
+            if (fileModeContent) fileModeContent.style.display = isYoutube ? 'none' : '';
+            if (embedModeContent) embedModeContent.style.display = isYoutube ? 'block' : 'none';
+            if (fileRowLabel) fileRowLabel.textContent = isYoutube ? 'Embed' : 'File';
+            if (fileInput) fileInput.disabled = isYoutube;
+            if (!isYoutube && youtubeUrl) youtubeUrl.value = '';
+
+            if (pollDetails) pollDetails.style.display = mode === 'poll' ? 'block' : 'none';
         }
-      });
-    }
-    const standardFileInput = document.getElementById('standard-file-input');
-    if (standardFileInput) standardFileInput.style.display = 'none';
-  });
+
+        modeButtons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const mode = btn.dataset.mode;
+
+                if (mode === 'tegaki') {
+                    if (tegakiBtn) tegakiBtn.click();
+                    return;
+                }
+
+                setMode(mode);
+            });
+        });
+
+        const standardFileInput = document.getElementById('standard-file-input');
+        if (standardFileInput) standardFileInput.style.display = 'none';
+    });
+
 </script>
 <% } %>
+<script src="/js/post-password.js?v=<%= locals.assetVersion('js/post-password.js') %>" defer></script>

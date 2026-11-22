@@ -9,6 +9,8 @@ function markPost(id) {
     markedPosting = null;
   }
 
+  if (document.querySelector(`.op[data-post-id="${id}"]`)) return;
+
   const container = document.querySelector(`.reply[data-post-id="${id}"]`);
   if (!container) return;
 
@@ -24,7 +26,10 @@ function scrollToHash() {
   const el =
     document.querySelector(`.reply[data-post-id="${postId}"], .op[data-post-id="${postId}"]`) ||
     document.getElementById('p' + postId);
-  if (el) el.scrollIntoView();
+  if (el) {
+    markPost(postId);
+    el.scrollIntoView();
+  }
 }
 
 window.markPost = markPost;
@@ -58,6 +63,76 @@ function nextReplyNumber() {
   return isTextBoardPage() ? count + 2 : count + 1;
 }
 
+function postIdOfElement(el) {
+  if (!el) return 0;
+  const postEl = el.matches?.('[data-post-id]') ? el : el.querySelector?.('[data-post-id]');
+  const id = parseInt(postEl?.getAttribute('data-post-id') || '', 10);
+  return Number.isFinite(id) ? id : 0;
+}
+
+function hasReplyInDom(threadReplies, postId) {
+  return Boolean(threadReplies && threadReplies.querySelector(`.reply[data-post-id="${Number(postId)}"]`));
+}
+
+function insertReplyInOrder(threadReplies, replyEl, postId) {
+  const targetId = Number(postId) || postIdOfElement(replyEl);
+  if (targetId && hasReplyInDom(threadReplies, targetId)) return { inserted: false, outOfOrder: false };
+
+  let before = null;
+  for (let cursor = threadReplies.lastElementChild; cursor; cursor = cursor.previousElementSibling) {
+    const existingId = postIdOfElement(cursor);
+    if (!existingId) continue;
+    if (existingId <= targetId) break;
+    before = cursor;
+  }
+
+  if (before) {
+    threadReplies.insertBefore(replyEl, before);
+    return { inserted: true, outOfOrder: true };
+  }
+  threadReplies.appendChild(replyEl);
+  return { inserted: true, outOfOrder: false };
+}
+
+function linksToPostHere(anchor, postId) {
+  const href = anchor.getAttribute('href') || '';
+  const [path, hash] = href.split('#');
+  if (hash !== String(postId)) return false;
+  if (!path) return true;
+  return new RegExp(`/thread/${threadAutoRefresh.threadId}(?:\\.html)?$`).test(path);
+}
+
+function dropQuoteReferencesTo(postId) {
+  document.querySelectorAll('a.quoteLink, a.backlink').forEach((anchor) => {
+    if (linksToPostHere(anchor, postId)) anchor.remove();
+  });
+}
+
+function markPostDeleted(post) {
+  if (post.dataset.deleted === '1') return false;
+  post.dataset.deleted = '1';
+  post.classList.add('deleted-post');
+
+  const nameBlock = post.querySelector('.post-info .name-block') || post.querySelector('.name-block');
+  if (!nameBlock || !nameBlock.parentNode) return false;
+
+  const label = document.createElement('span');
+  label.className = 'deleted-label';
+  label.textContent = '[DELETED]';
+  nameBlock.parentNode.insertBefore(label, nameBlock);
+  return true;
+}
+
+function renumberReplies() {
+  const start = isTextBoardPage() ? 2 : 1;
+  document.querySelectorAll('.reply[data-post-id]').forEach((reply, index) => {
+    const number = String(index + start);
+    reply.setAttribute('data-reply-number', number);
+    const label = reply.querySelector('.reply-number');
+    if (label) label.textContent = number;
+  });
+}
+
 const threadAutoRefresh = {
   autoRefresh: true,
   refreshTimer: null,
@@ -72,6 +147,7 @@ const threadAutoRefresh = {
   refreshLabel: null,
   refreshButton: null,
   autoCheckbox: null,
+  sound: null,
 
   init() {
     const threadElement = document.querySelector('.thread');
@@ -135,10 +211,39 @@ const threadAutoRefresh = {
     this.startTimer(this.manualRefresh || foundPosts ? 5 : this.lastRefresh * 2);
   },
 
+  applyDeletedPosts(liveIds) {
+    const mark = window.deletedPostDisplay === 'mark';
+    let handled = 0;
+
+    document.querySelectorAll('.post[data-post-id]').forEach((post) => {
+      const id = post.getAttribute('data-post-id');
+      if (!id || liveIds.has(String(id))) return;
+
+      if (mark) {
+        if (markPostDeleted(post)) handled += 1;
+        return;
+      }
+
+      const container = post.closest('.post-container') || post;
+      const { bottom, height } = container.getBoundingClientRect();
+      const aboveViewport = bottom < 0;
+
+      container.remove();
+      dropQuoteReferencesTo(id);
+      if (aboveViewport) window.scrollBy(0, -height);
+      handled += 1;
+    });
+
+    if (!handled || mark) return handled;
+    renumberReplies();
+    if (window.backlinks?.init) window.backlinks.init();
+    return handled;
+  },
+
   refreshPosts(manual) {
     if (this.refreshing) {
       if (manual) this.pendingRefresh = true;
-      return;
+      return Promise.resolve();
     }
     this.manualRefresh = !!manual;
     if (this.autoRefresh && manual && this.refreshTimer) {
@@ -148,24 +253,30 @@ const threadAutoRefresh = {
     this.refreshing = true;
     if (this.refreshButton) this.refreshButton.disabled = true;
 
-    fetch(`/${this.boardUri}/thread/${this.threadId}.json`)
+    return fetch(`/${this.boardUri}/thread/${this.threadId}.json`)
       .then((r) => {
         if (!r.ok) throw new Error('refresh failed');
         return r.json();
       })
       .then((data) => {
-        const posts = data.posts || [];
-        let foundPosts = false;
-        let replyNum = nextReplyNumber();
-        for (let i = 0; i < posts.length; i++) {
-          const post = posts[i];
-          if (post.postId > lastReplyId) {
-            foundPosts = true;
-            this.appendPost(post, replyNum++);
-            lastReplyId = post.postId;
-          }
-        }
-        if (!this.pendingRefresh) this.scheduleNextTimer(foundPosts);
+        const posts = (data.posts || []).slice().sort((a, b) => Number(a.postId) - Number(b.postId));
+
+        const liveIds = new Set([
+          String(data.threadId ?? data.thread?.threadId ?? this.threadId),
+          ...posts.map((post) => String(post.postId))
+        ]);
+        this.applyDeletedPosts(liveIds);
+
+        const threadReplies = getRepliesContainer();
+        const newPosts = posts.filter((post) => {
+          const id = Number(post.postId);
+          return id > lastReplyId && !hasReplyInDom(threadReplies, id);
+        });
+
+        return this.appendPosts(newPosts).then(({ insertedCount, insertedOthers }) => {
+          if (insertedOthers && !manual) this.playNewPostSound();
+          if (!this.pendingRefresh) this.scheduleNextTimer(insertedCount > 0);
+        });
       })
       .catch((err) => {
         console.error('Thread refresh error:', err);
@@ -182,60 +293,141 @@ const threadAutoRefresh = {
       });
   },
 
-  appendPost(post, replyNumber) {
-    const threadReplies = getRepliesContainer();
-    if (!threadReplies) return;
+  playNewPostSound() {
+    if (localStorage.getItem('newPostSound') !== 'true') return;
+    if (!this.sound) this.sound = new Audio('/sound/new-post.mp3');
+    this.sound.currentTime = 0;
+    const played = this.sound.play();
+    if (played && played.catch) played.catch(() => {});
+  },
 
+  async fetchReplyCells(posts, startReplyNumber) {
     const thread = { threadId: this.threadId, boardUri: this.boardUri };
-    const cellPath = isTextBoardPage() ? 'textreply' : 'reply';
+    if (isTextBoardPage()) {
+      return Promise.all(
+        posts.map((post, idx) =>
+          fetch(`/${this.boardUri}/cells/textreply`, {
+            method: 'POST',
+            headers: csrfHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({
+              reply: { ...post, sage: Boolean(post.sage) },
+              thread,
+              replyNumber: startReplyNumber + idx,
+              isArchive: this.isArchive
+            })
+          })
+            .then((response) => {
+              if (!response.ok) throw response;
+              return response.text();
+            })
+            .then((replyHtml) => {
+              const temp = document.createElement('div');
+              temp.innerHTML = replyHtml.trim();
+              return { post, element: temp.firstElementChild };
+            })
+        )
+      );
+    }
 
-    fetch(`/${this.boardUri}/cells/${cellPath}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        reply: { ...post, sage: Boolean(post.sage) },
-        thread,
-        replyNumber,
-        isArchive: this.isArchive
-      })
-    })
-      .then((response) => {
-        if (!response.ok) throw response;
-        return response.text();
-      })
-      .then((replyHtml) => {
-        const temp = document.createElement('div');
-        temp.innerHTML = replyHtml.trim();
-        const reply = temp.firstElementChild;
-        if (!reply) return;
+    const CHUNK_SIZE = 250;
+    const chunks = [];
+    for (let offset = 0; offset < posts.length; offset += CHUNK_SIZE) {
+      chunks.push({ slice: posts.slice(offset, offset + CHUNK_SIZE), offset });
+    }
 
-        if (post.poll) {
-          const content = reply.querySelector('.reply-content, .thread-content');
-          if (content) {
-            const message = document.createElement('div');
-            message.className = 'poll-message';
-            message.textContent = 'Refresh page to see poll';
-            content.appendChild(message);
-          }
-        }
+    const chunkResults = await Promise.all(
+      chunks.map(({ slice, offset }) =>
+        fetch(`/${this.boardUri}/cells/replies`, {
+          method: 'POST',
+          headers: csrfHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            replies: slice.map((post) => ({ ...post, sage: Boolean(post.sage) })),
+            thread,
+            replyNumbers: slice.map((_, idx) => startReplyNumber + offset + idx),
+            isArchive: this.isArchive
+          })
+        })
+          .then((response) => {
+            if (!response.ok) throw response;
+            return response.text();
+          })
+          .then((html) => {
+            const temp = document.createElement('div');
+            temp.innerHTML = html.trim();
+            const children = Array.from(temp.children);
+            const byId = new Map();
+            for (const el of children) {
+              const id = postIdOfElement(el);
+              if (id && !byId.has(id)) byId.set(id, el);
+            }
+            return slice.map((post, idx) => ({
+              post,
+              element: byId.get(Number(post.postId)) || children[idx] || null
+            }));
+          })
+      )
+    );
+    return chunkResults.flat();
+  },
 
-        threadReplies.appendChild(reply);
-        document.dispatchEvent(new CustomEvent('contentAdded'));
-        if (window.backlinks?.init) window.backlinks.init();
-        if (window.initializeThumbnails) window.initializeThumbnails();
-        if (window.initializePostMenus) window.initializePostMenus(reply);
-        if (window.initializePolls) window.initializePolls();
-        if (window.settings?.applyFilters) window.settings.applyFilters();
+  async appendPosts(newPosts, startReplyNumber = nextReplyNumber()) {
+    const threadReplies = getRepliesContainer();
+    if (!threadReplies || !Array.isArray(newPosts) || !newPosts.length) {
+      return { insertedCount: 0, insertedOthers: false, insertedOwn: false };
+    }
 
-        const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
-        if (!isAtBottom && post.postId !== lastPostedId) {
-          unreadCount++;
-          updateTitle();
-        }
-      })
-      .catch((err) => {
-        console.error('Error loading reply cells:', err, post);
-      });
+    const rendered = await this.fetchReplyCells(newPosts, startReplyNumber);
+    const wasAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
+
+    const insertedElements = [];
+    let outOfOrder = false;
+    let insertedOthers = false;
+    let insertedOwn = false;
+    let unreadDelta = 0;
+
+    for (const { post, element } of rendered) {
+      if (!element) continue;
+      const postId = Number(post.postId) || postIdOfElement(element);
+      const res = insertReplyInOrder(threadReplies, element, postId);
+      if (!res.inserted) continue;
+
+      insertedElements.push(element);
+      if (res.outOfOrder) outOfOrder = true;
+      if (postId > lastReplyId) lastReplyId = postId;
+
+      if (postId === lastPostedId) {
+        insertedOwn = true;
+      } else {
+        insertedOthers = true;
+        unreadDelta++;
+      }
+    }
+
+    if (insertedElements.length > 0) {
+      if (outOfOrder) renumberReplies();
+      document.dispatchEvent(new CustomEvent('contentAdded'));
+      if (window.backlinks?.init) window.backlinks.init();
+      if (window.initializeThumbnails) window.initializeThumbnails();
+      for (const el of insertedElements) {
+        if (window.initializePostMenus) window.initializePostMenus(el);
+      }
+      if (window.initializePolls) window.initializePolls();
+      if (window.settings?.applyFilters) window.settings.applyFilters();
+
+      if (!wasAtBottom && unreadDelta > 0) {
+        unreadCount += unreadDelta;
+        updateTitle();
+      }
+      if (insertedOwn) {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+      }
+    }
+
+    return { insertedCount: insertedElements.length, insertedOthers, insertedOwn };
+  },
+
+  appendPost(post, replyNumber) {
+    return this.appendPosts([post], replyNumber);
   }
 };
 
@@ -278,8 +470,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const mainReplyForm = document.getElementById('reply-form');
 
   if (mainReplyForm) {
+    let replyInFlight = false;
     mainReplyForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (replyInFlight) return;
+      replyInFlight = true;
+      const submitButtons = [...mainReplyForm.querySelectorAll('button[type="submit"], input[type="submit"]')];
+      submitButtons.forEach((button) => {
+        button.disabled = true;
+      });
 
       const fileInput = document.getElementById('image');
       if (window.updateFileInput && typeof window.updateFileInput === 'function') {
@@ -288,7 +487,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const formData = new FormData(mainReplyForm);
 
-      const postPassword = generateRandomPassword();
+      const postPassword = window.postPassword
+        ? window.postPassword.ensure()
+        : String(formData.get('post-password') || '').trim() || generateRandomPassword();
       formData.set('post-password', postPassword);
 
       formData.delete('image');
@@ -305,10 +506,9 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: {
             'X-Requested-With': 'XMLHttpRequest'
           },
-          credentials: 'omit'
+          credentials: 'same-origin'
         });
 
-        // Check if response is JSON
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const result = await response.json();
@@ -368,10 +568,18 @@ document.addEventListener('DOMContentLoaded', () => {
             lastPostedId = result.post.postId;
             threadAutoRefresh.refreshPosts(true);
             if (typeof watchedThreads !== 'undefined') {
-              watchedThreads.autoWatchThread(result.post.threadId, result.post.boardUri, result.post.subject || 'No subject');
+              try {
+                watchedThreads.autoWatchThread(result.post.threadId, result.post.boardUri, result.post.subject, result.post.message);
+              } catch (e) {
+                console.error('Could not update watched threads:', e);
+              }
             }
           } else if (result.error) {
-            if (result.error === 'flood') {
+            if (result.error === 'captcha') {
+              const msg = result.message || 'Solve the captcha before posting.';
+              window.captchaWidget?.expire({ open: true, notice: msg });
+              alert(msg);
+            } else if (result.error === 'flood') {
               alert(result.message || 'Posting too quickly. Please wait a moment.');
             } else if (result.error === 'banned') {
               if (result.redirectUrl) {
@@ -380,12 +588,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('You are banned from posting.');
               }
             } else {
-              const errorMsg = result.error.message || result.error || result.message || 'Unknown error';
+              const errorMsg = result.error.message || result.message || result.error || 'Unknown error';
               alert(errorMsg);
             }
           }
         } else if (!response.ok) {
-          // Handle non-JSON error responses
           const errorText = await response.text();
 
           if (errorText.includes('/banned?id=')) {
@@ -427,12 +634,16 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (error) {
         console.error('Error posting reply:', error);
         alert(error.message || error.toString() || 'Unknown error');
+      } finally {
+        replyInFlight = false;
+        submitButtons.forEach((button) => {
+          button.disabled = false;
+        });
       }
     });
   }
 });
 
-// Reset unread count when user scrolls to bottom
 window.addEventListener('scroll', () => {
   const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
   if (isAtBottom) {

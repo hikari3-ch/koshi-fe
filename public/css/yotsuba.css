@@ -19,6 +19,42 @@
   --button-background: #eeaa88;
 }
 
+.board-list:not(.footer-board-list) {
+    color: #B86;
+}
+
+.board-list a{
+    color: #800000;
+}
+
+.board-list a:hover{
+    color: var(--hover-link-color);
+}
+
+.navtopright{
+    color: #B86;
+}
+
+.navtopright a{
+    color: #800000;
+}
+
+.navtopright a:hover{
+    color: var(--hover-link-color);
+}
+
+.footer-nav-tools{
+    color: #B86;
+}
+
+.footer-nav-tools a{
+    color: #800000;
+}
+
+.footer-nav-tools a:hover{
+    color: var(--hover-link-color);
+}
+
 .boxbar {
   background: #fca;
   color: #800;
@@ -38,4 +74,16 @@
 
 .stats-list {
   color: #000;
+}
+
+.post-num a{
+    color: var(--text-color);
+}
+
+.post-num a:hover{
+    color: var(--hover-link-color);
+}
+
+.quoteLink {
+    color: #000080;
 }

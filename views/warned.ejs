@@ -14,6 +14,7 @@
       Acknowledge this warning to continue posting.
       <br><br>
       <form action="/warned/dismiss" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <input type="hidden" name="banId" value="<%= warning.id %>">
         <input type="hidden" name="returnUrl" value="<%= returnUrl %>">
         <button type="submit">I understand</button>

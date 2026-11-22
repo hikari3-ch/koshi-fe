@@ -7,36 +7,45 @@ function getCookie(name) {
   return null;
 }
 
-function getPostPassword(postId, isThread) {
+function postSelector(boardUri, threadId, postId) {
+  const board = boardUri ? `[data-board="${boardUri}"]` : '';
+  const thread = threadId ? `[data-thread-id="${threadId}"]` : '';
+  return `.post[data-post-id="${postId}"]${board}${thread}`;
+}
+
+function findPostElement(ctx) {
+  if (ctx.postEl) return ctx.postEl;
+  return document.querySelector(postSelector(ctx.boardUri, ctx.threadId, ctx.postId));
+}
+
+function hiddenTarget(key, isThread) {
+  const parts = key.split('/');
+  if (parts.length !== 3) {
+    return isThread
+      ? document.querySelector(`.thread[id="${key}"]`)
+      : document.querySelector(`.reply[data-post-id="${key}"]`);
+  }
+  const [boardUri, threadId, postId] = parts;
+  if (isThread) {
+    return (
+      document.querySelector(`article.thread[id="${postId}"][data-board="${boardUri}"]`) ||
+      document.querySelector(`.thread[id="${postId}"]`)
+    );
+  }
+  return document.querySelector(
+    `.reply[data-post-id="${postId}"][data-board="${boardUri}"][data-thread-id="${threadId}"]`
+  );
+}
+
+function getPostPassword(ctx) {
   try {
     const storedPasswords = localStorage.getItem('postingPasswords');
     if (storedPasswords) {
       const passwords = JSON.parse(storedPasswords);
-      const boardUri = window.location.pathname.split('/')[1];
-
-      if (isThread) {
-        const key = `${boardUri}/${postId}`;
-        if (passwords[key]) return passwords[key];
-      } else {
-        const pathParts = window.location.pathname.split('/');
-        if (pathParts.length >= 4 && pathParts[2] === 'thread') {
-          const threadId = pathParts[3];
-          const key = `${boardUri}/${threadId}/${postId}`;
-          if (passwords[key]) return passwords[key];
-        } else {
-          const replyElement = document.querySelector(`.reply[data-post-id="${postId}"]`);
-          if (replyElement) {
-            const threadElement = replyElement.closest('.thread');
-            if (threadElement) {
-              const threadId = threadElement.id || threadElement.dataset.postId;
-              if (threadId) {
-                const key = `${boardUri}/${threadId}/${postId}`;
-                if (passwords[key]) return passwords[key];
-              }
-            }
-          }
-        }
-      }
+      const key = ctx.isThread
+        ? `${ctx.boardUri}/${ctx.postId}`
+        : `${ctx.boardUri}/${ctx.threadId}/${ctx.postId}`;
+      if (passwords[key]) return passwords[key];
     }
   } catch (e) {
     console.error('Error getting password from localStorage:', e);
@@ -46,8 +55,13 @@ function getPostPassword(postId, isThread) {
 }
 
 function getHiddenPosts() {
-  const hidden = localStorage.getItem('hiddenPosts');
-  return hidden ? JSON.parse(hidden) : {};
+  try {
+    const hidden = localStorage.getItem('hiddenPosts');
+    const parsed = hidden ? JSON.parse(hidden) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 function setHiddenPosts(hiddenPosts) {
@@ -256,35 +270,48 @@ function selectionKey(ctx) {
   return ctx.isThread ? `${ctx.boardUri}-${ctx.threadId}` : `${ctx.boardUri}-${ctx.threadId}-${ctx.postId}`;
 }
 
+function removeReplyFromDom(replyElement) {
+  (replyElement?.closest('.reply-container') || replyElement)?.remove();
+}
+
 function removePostFromDom(ctx) {
   if (ctx.isThread) {
     const threadContainer =
-      document.querySelector(`article.thread[id="${ctx.postId}"], article.textthread[id="${ctx.postId}"]`) ||
-      ctx.postEl?.closest('article');
+      ctx.postEl?.closest('article.thread, .thread') ||
+      document.querySelector(
+        `article.thread[id="${ctx.postId}"][data-board="${ctx.boardUri}"], article.textthread[id="${ctx.postId}"][data-board="${ctx.boardUri}"], .thread[id="${ctx.postId}"]`
+      );
     if (threadContainer) {
       const nextElement = threadContainer.nextElementSibling;
       if (nextElement?.tagName?.toLowerCase() === 'hr') nextElement.remove();
       threadContainer.remove();
     }
   } else {
-    ctx.postEl?.remove();
+    removeReplyFromDom(ctx.postEl);
   }
 }
 
-window.modStaffDeletePost = async function (postId, isThread, boardUri, threadId) {
+window.modStaffDeletePost = async function (postId, isThread, boardUri, threadId, postEl) {
   if (!confirm('Delete this post?')) return;
   const selections = isThread ? [`${boardUri}-${threadId}`] : [`${boardUri}-${threadId}-${postId}`];
   try {
     await modPost('/mod/api/content', { action: 'delete', selections });
     if (isThread) {
-      const threadContainer = document.querySelector(`article.thread[id="${postId}"], article.textthread[id="${postId}"]`);
+      const threadContainer =
+        postEl?.closest('article.thread') ||
+        document.querySelector(`article.thread[id="${postId}"][data-board="${boardUri}"]`);
       if (threadContainer) {
         const nextElement = threadContainer.nextElementSibling;
         if (nextElement?.tagName?.toLowerCase() === 'hr') nextElement.remove();
         threadContainer.remove();
       }
     } else {
-      document.querySelector(`.reply[data-post-id="${postId}"]`)?.remove();
+      removeReplyFromDom(
+        postEl ||
+          document.querySelector(
+            `.reply[data-post-id="${postId}"][data-board="${boardUri}"][data-thread-id="${threadId}"]`
+          )
+      );
     }
   } catch (err) {
     alert(err.message);
@@ -293,39 +320,125 @@ window.modStaffDeletePost = async function (postId, isThread, boardUri, threadId
 
 let banModalContext = null;
 
+function dialogMarkup(title, body, buttons) {
+  return `
+    <div class="post-dialog" role="dialog">
+      <div class="post-dialog-header">
+        <span class="post-dialog-title">${title}</span>
+        <span class="post-dialog-ref"></span>
+        <button type="button" class="post-dialog-close" title="Close">&times;</button>
+      </div>
+      <div class="post-dialog-body">
+        <div class="error-message" style="display: none;"></div>
+        ${body}
+      </div>
+      <div class="post-dialog-footer">${buttons}</div>
+    </div>
+  `;
+}
+
+function wireDialog(overlay, onClose) {
+  const close = () => {
+    overlay.style.display = 'none';
+    if (onClose) onClose();
+  };
+  overlay.querySelector('.post-dialog-close').addEventListener('click', close);
+  overlay.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+
+  const header = overlay.querySelector('.post-dialog-header');
+  header.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || e.target.closest('.post-dialog-close')) return;
+    e.preventDefault();
+    const rect = overlay.getBoundingClientRect();
+    const dx = e.clientX - rect.left;
+    const dy = e.clientY - rect.top;
+    const move = (ev) => {
+      overlay.style.left = `${ev.clientX - dx}px`;
+      overlay.style.top = `${ev.clientY - dy}px`;
+      clampDialog(overlay);
+    };
+    const stop = () => {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', stop);
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', stop);
+  });
+  return close;
+}
+
+function clampDialog(overlay) {
+  const rect = overlay.getBoundingClientRect();
+  const left = Math.min(Math.max(rect.left, 0), Math.max(window.innerWidth - rect.width, 0));
+  const top = Math.min(Math.max(rect.top, 0), Math.max(window.innerHeight - 30, 0));
+  overlay.style.left = `${left}px`;
+  overlay.style.top = `${top}px`;
+}
+
+function showDialog(overlay) {
+  document.querySelectorAll('#delete-modal, #report-modal, #mod-ban-modal').forEach((other) => {
+    if (other !== overlay) other.style.display = 'none';
+  });
+  overlay.style.display = 'block';
+  if (!overlay.style.left) {
+    overlay.style.left = `${(window.innerWidth - overlay.offsetWidth) / 2}px`;
+    overlay.style.top = '126px';
+  }
+  clampDialog(overlay);
+}
+
+function setDialogPost(overlay, postId, boardUri) {
+  const ref = overlay.querySelector('.post-dialog-ref');
+  if (ref) ref.textContent = `No.${postId}${boardUri ? ` on /${boardUri}/` : ''}`;
+}
+
 function createBanModal() {
   if (document.getElementById('mod-ban-modal')) return;
   const modal = document.createElement('div');
   modal.id = 'mod-ban-modal';
   modal.style.display = 'none';
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="box-outer">
-        <div class="boxbar"><h2>Ban</h2></div>
-        <div class="boxcontent">
-          <p>Duration <input type="text" id="mod-menu-ban-duration" value="5y"></p>
-          <p>Ban Message <input type="text" id="mod-menu-ban-message"></p>
-          <p>Ban Reason <input type="text" id="mod-menu-ban-reason"></p>
-          <p>Ban type
-            <select id="mod-menu-ban-type">
-              <option value="">IP/Bypass ban</option>
-              <option value="1">/16 range</option>
-              <option value="2">/24 range</option>
-              <option value="3">ASN</option>
-              <option value="4">Warning</option>
-            </select>
-          </p>
-          <p><label><input type="checkbox" id="mod-menu-ban-non-bypass"> Non-Bypassable</label> <label><input type="checkbox" id="mod-menu-ban-global"> Global</label></p>
-          <button type="button" id="mod-menu-ban-submit">Ban</button>
-          <button type="button" id="mod-menu-ban-delete-submit">Ban and delete</button>
-          <button type="button" id="mod-menu-ban-cancel">Cancel</button>
-        </div>
+  modal.innerHTML = dialogMarkup(
+    'Ban Post',
+    `
+      <div class="post-dialog-form">
+        <label for="mod-menu-ban-duration">Duration</label>
+        <input type="text" id="mod-menu-ban-duration" value="5y" title="Ban length: 30s, 10m, 6h, 3d, 2w, 5y">
+        <label for="mod-menu-ban-message">Message</label>
+        <input type="text" id="mod-menu-ban-message" value="(USER WAS BANNED FOR THIS POST)" title="Shown on the post">
+        <label for="mod-menu-ban-reason">Reason</label>
+        <input type="text" id="mod-menu-ban-reason" title="Shown to the banned user">
+        <label for="mod-menu-ban-type">Type</label>
+        <select id="mod-menu-ban-type">
+          <option value="">IP/Bypass ban</option>
+          <option value="1">/16 range</option>
+          <option value="2">/24 range</option>
+          <option value="3">ASN</option>
+          <option value="4">Warning</option>
+        </select>
+        <span></span>
+        <span class="post-dialog-checks">
+          <label><input type="checkbox" id="mod-menu-ban-non-bypass"> Non-Bypassable</label>
+          <label><input type="checkbox" id="mod-menu-ban-global"> Global</label>
+        </span>
       </div>
-    </div>
-  `;
+    `,
+    `
+      <button type="button" id="mod-menu-ban-submit">Ban</button>
+      <button type="button" id="mod-menu-ban-delete-submit">Ban and delete</button>
+    `
+  );
   document.body.appendChild(modal);
-  document.getElementById('mod-menu-ban-cancel').addEventListener('click', () => {
-    modal.style.display = 'none';
+  const banNotice = '(USER WAS BANNED FOR THIS POST)';
+  const warnNotice = '(USER WAS WARNED FOR THIS POST)';
+  const typeSelect = document.getElementById('mod-menu-ban-type');
+  const messageInput = document.getElementById('mod-menu-ban-message');
+  typeSelect.addEventListener('change', () => {
+    if (messageInput.value !== banNotice && messageInput.value !== warnNotice) return;
+    messageInput.value = typeSelect.value === '4' ? warnNotice : banNotice;
+  });
+  wireDialog(modal, () => {
     banModalContext = null;
   });
   document.getElementById('mod-menu-ban-submit').addEventListener('click', () => runBanFromModal('ban'));
@@ -363,7 +476,10 @@ async function runBanFromModal(action) {
 function showBanModal(ctx) {
   createBanModal();
   banModalContext = ctx;
-  document.getElementById('mod-ban-modal').style.display = 'block';
+  const modal = document.getElementById('mod-ban-modal');
+  setDialogPost(modal, ctx.postId, ctx.boardUri);
+  showDialog(modal);
+  document.getElementById('mod-menu-ban-reason')?.focus();
 }
 
 async function runContentAction(ctx, action) {
@@ -441,12 +557,18 @@ async function handleModAction(action, dropdown) {
       case 'transfer': {
         const targetBoard = prompt('Transfer thread to board (uri):');
         if (!targetBoard) return;
-        await modPost('/mod/api/thread/transfer', {
+        const moved = await modPost('/mod/api/thread/transfer', {
           boardUri: ctx.boardUri,
           threadId: ctx.threadId,
           targetBoard: targetBoard.trim()
         });
-        location.reload();
+        // A moved thread is renumbered onto the target board, so the old URL
+        // is dead; follow the new id.
+        if (moved && moved.threadId) {
+          location.href = '/' + moved.boardUri + '/thread/' + moved.threadId;
+        } else {
+          location.reload();
+        }
         break;
       }
       case 'toggle-lock':
@@ -517,50 +639,49 @@ function createModal() {
   const modal = document.createElement('div');
   modal.id = 'delete-modal';
   modal.style.display = 'none';
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="box-outer">
-        <div class="boxbar"><h2>Delete Post</h2></div>
-        <div class="boxcontent">
-          <div class="error-message" style="display: block; color: red; margin: 10px 0px; font-weight: bold;margin-top: 0;"></div>
-          <input id="delete-password" placeholder="Enter post password">
-          <button id="confirm-delete">Delete</button>
-          <button id="cancel-delete">Cancel</button>
-        </div>
+  modal.innerHTML = dialogMarkup(
+    'Delete Post',
+    `
+      <div class="post-dialog-fields">
+        <input type="text" id="delete-password" autocomplete="off" spellcheck="false" placeholder="Password" aria-label="Password">
       </div>
-    </div>
-  `;
+    `,
+    `
+      <button type="button" id="confirm-delete">Delete</button>
+    `
+  );
   document.body.appendChild(modal);
+  wireDialog(modal);
 
   const reportModal = document.createElement('div');
   reportModal.id = 'report-modal';
   reportModal.style.display = 'none';
-  reportModal.innerHTML = `
-    <div class="modal-content">
-      <div class="box-outer">
-        <div class="boxbar"><h2>Report Post</h2></div>
-        <div class="boxcontent">
-          <div class="error-message" style="display: none; color: red; margin-bottom: 10px;"></div>
-          <select id="report-category" style="margin-bottom: 10px; width: 100%;">
-            <option value="">Select a category...</option>
-          </select>
-          <textarea id="report-reason" placeholder="Enter reason (max 256 characters)" 
-            maxlength="256" style="width: 100%; margin-bottom: 10px;"></textarea>
-          <button id="confirm-report">Submit Report</button>
-          <button id="cancel-report">Cancel</button>
-        </div>
+  reportModal.innerHTML = dialogMarkup(
+    'Report Post',
+    `
+      <div class="post-dialog-fields">
+        <select id="report-category" class="post-dialog-category" aria-label="Category">
+          <option value="">Select a category...</option>
+        </select>
+        <textarea id="report-reason" placeholder="What is wrong with this post? (max 256 characters)" maxlength="256" aria-label="Reason"></textarea>
       </div>
-    </div>
-  `;
+    `,
+    `
+      <button type="button" id="confirm-report">Submit</button>
+    `
+  );
   document.body.appendChild(reportModal);
+  wireDialog(reportModal);
 
   const categorySelect = reportModal.querySelector('#report-category');
-  (window.reportCategories || []).forEach((cat) => {
+  const categories = window.reportCategories || [];
+  categories.forEach((cat) => {
     const opt = document.createElement('option');
     opt.value = cat;
     opt.textContent = cat;
     categorySelect.appendChild(opt);
   });
+  if (!categories.length) reportModal.querySelector('.post-dialog-category').style.display = 'none';
 }
 
 function handleAction(action, dropdown) {
@@ -572,15 +693,15 @@ function handleAction(action, dropdown) {
   switch (action) {
     case 'delete':
       if (window.modUser && typeof window.modStaffDeletePost === 'function') {
-        window.modStaffDeletePost(postId, isThread, boardUri, threadId);
+        window.modStaffDeletePost(postId, isThread, boardUri, threadId, ctx.postEl);
         break;
       }
       {
-        const savedPassword = getPostPassword(postId, isThread);
+        const savedPassword = getPostPassword(ctx);
         if (savedPassword) {
-          deletePost(postId, savedPassword, isThread, boardUri);
+          deletePost(ctx, savedPassword);
         } else {
-          showDeleteModal(postId, isThread);
+          showDeleteModal(ctx);
         }
       }
       break;
@@ -588,35 +709,33 @@ function handleAction(action, dropdown) {
       showReportModal(postId, boardUri, isThread);
       break;
     case 'hide':
-      hidePost(postId, isThread);
+      hidePost(ctx);
       break;
   }
 }
 
-function showDeleteModal(postId, isThread, errorMessage = '') {
+function showDeleteModal(ctx, errorMessage = '') {
   const modal = document.getElementById('delete-modal');
   const passwordInput = document.getElementById('delete-password');
   const confirmButton = document.getElementById('confirm-delete');
-  const cancelButton = document.getElementById('cancel-delete');
   const errorDisplay =
     modal.querySelector('.error-message') ||
     (() => {
       const err = document.createElement('div');
       err.className = 'error-message';
-      modal.querySelector('.boxcontent').appendChild(err);
+      modal.querySelector('.post-dialog-body').appendChild(err);
       return err;
     })();
 
-  modal.style.display = 'block';
+  setDialogPost(modal, ctx.postId, ctx.boardUri);
+  showDialog(modal);
   passwordInput.value = '';
   passwordInput.focus();
   errorDisplay.textContent = errorMessage;
   errorDisplay.style.display = errorMessage ? 'block' : 'none';
 
   const handleDelete = () => {
-    const password = passwordInput.value;
-    const boardUri = window.location.pathname.split('/')[1];
-    deletePost(postId, password, isThread, boardUri);
+    deletePost(ctx, passwordInput.value);
   };
 
   const handleCancel = () => {
@@ -624,7 +743,6 @@ function showDeleteModal(postId, isThread, errorMessage = '') {
   };
 
   confirmButton.onclick = handleDelete;
-  cancelButton.onclick = handleCancel;
 
   passwordInput.onkeyup = (e) => {
     if (e.key === 'Enter') handleDelete();
@@ -632,50 +750,37 @@ function showDeleteModal(postId, isThread, errorMessage = '') {
   };
 }
 
-async function deletePost(postId, password, isThread, boardUri) {
+async function deletePost(ctx, password) {
+  const { postId, isThread, boardUri } = ctx;
   try {
     const response = await fetch('/api/delete-post', {
       method: 'POST',
-      headers: {
+      headers: csrfHeaders({
         'Content-Type': 'application/json'
-      },
+      }),
       body: JSON.stringify({ postId, password, isThread, boardUri })
     });
 
     const result = await response.json();
 
     if (result.success) {
-      if (isThread) {
-        const threadContainer = document.querySelector(`article.thread[id="${postId}"]`);
-        if (threadContainer) {
-          const nextElement = threadContainer.nextElementSibling;
-          if (nextElement && nextElement.tagName.toLowerCase() === 'hr') {
-            nextElement.remove();
-          }
-          threadContainer.remove();
-        }
-      } else {
-        const replyElement = document.querySelector(`.reply[data-post-id="${postId}"]`);
-        if (replyElement) {
-          replyElement.remove();
-        }
-      }
+      removePostFromDom(ctx);
 
       const modal = document.getElementById('delete-modal');
       if (modal) {
         modal.style.display = 'none';
       }
     } else {
-      showDeleteModal(postId, isThread, result.message);
+      showDeleteModal(ctx, result.message);
     }
   } catch (error) {
     console.error('Delete error:', error);
-    showError(postId, 'An error occurred while deleting the post');
+    showError(postId, 'An error occurred while deleting the post', ctx.postEl);
   }
 }
 
-function showError(postId, message) {
-  const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+function showError(postId, message, postEl) {
+  const postElement = postEl || document.querySelector(`[data-post-id="${postId}"]`);
   if (postElement) {
     const errorElement = document.createElement('div');
     errorElement.className = 'error-message';
@@ -697,20 +802,22 @@ function showReportModal(postId, boardUri, isThread) {
   const modal = document.getElementById('report-modal');
   const reasonInput = document.getElementById('report-reason');
   const categorySelect = document.getElementById('report-category');
+  const hasCategories = categorySelect.options.length > 1;
   const confirmButton = document.getElementById('confirm-report');
-  const cancelButton = document.getElementById('cancel-report');
   const errorDisplay = modal.querySelector('.error-message');
 
-  modal.style.display = 'block';
+  setDialogPost(modal, postId, boardUri);
+  showDialog(modal);
   reasonInput.value = '';
   categorySelect.value = '';
   errorDisplay.style.display = 'none';
+  (hasCategories ? categorySelect : reasonInput).focus();
 
   const handleReport = () => {
     const reason = reasonInput.value.trim();
     const category = categorySelect.value;
 
-    if (!category) {
+    if (hasCategories && !category) {
       errorDisplay.textContent = 'Please select a category';
       errorDisplay.style.display = 'block';
       return;
@@ -725,21 +832,16 @@ function showReportModal(postId, boardUri, isThread) {
     submitReport(postId, boardUri, reason, category, isThread, modal);
   };
 
-  const handleCancel = () => {
-    modal.style.display = 'none';
-  };
-
   confirmButton.onclick = handleReport;
-  cancelButton.onclick = handleCancel;
 }
 
 async function submitReport(postId, boardUri, reason, category, isThread, modal) {
   try {
     const response = await fetch('/api/report', {
       method: 'POST',
-      headers: {
+      headers: csrfHeaders({
         'Content-Type': 'application/json'
-      },
+      }),
       body: JSON.stringify({
         postId,
         boardUri,
@@ -766,11 +868,11 @@ async function submitReport(postId, boardUri, reason, category, isThread, modal)
   }
 }
 
-function hidePost(postId, isThread) {
+function hidePost(ctx) {
   const hiddenPosts = getHiddenPosts();
-  const postElement = isThread
-    ? document.querySelector(`.thread[id="${postId}"]`)
-    : document.querySelector(`.reply[data-post-id="${postId}"]`);
+  const postElement = ctx.isThread
+    ? ctx.postEl?.closest('article.thread, .thread') || document.querySelector(`.thread[id="${ctx.postId}"]`)
+    : findPostElement(ctx);
 
   if (!postElement) return;
 
@@ -778,9 +880,10 @@ function hidePost(postId, isThread) {
   const name = postInfo.querySelector('.name')?.textContent || 'Anonymous';
   const time = postInfo.querySelector('.time-info')?.textContent || '';
   const originalContent = postElement.outerHTML;
+  const key = `${ctx.boardUri}/${ctx.threadId}/${ctx.postId}`;
 
-  hiddenPosts[postId] = {
-    isThread,
+  hiddenPosts[key] = {
+    isThread: ctx.isThread,
     name,
     time,
     hidden: true,
@@ -788,13 +891,14 @@ function hidePost(postId, isThread) {
   };
 
   setHiddenPosts(hiddenPosts);
-  replaceWithCollapsed(postElement, postId, name, time, isThread);
+  replaceWithCollapsed(postElement, key, name, time, ctx.isThread);
 }
 
-function replaceWithCollapsed(postElement, postId, name, time, isThread) {
+function replaceWithCollapsed(postElement, key, name, time, isThread) {
   const collapsedDiv = document.createElement('div');
   collapsedDiv.className = isThread ? 'thread collapsed-post' : 'reply collapsed-post';
-  collapsedDiv.setAttribute('data-post-id', postId);
+  collapsedDiv.setAttribute('data-post-key', key);
+  collapsedDiv.setAttribute('data-post-id', key.split('/').pop());
 
   collapsedDiv.innerHTML = `
     <div class="post-info">
@@ -806,7 +910,7 @@ function replaceWithCollapsed(postElement, postId, name, time, isThread) {
 
   collapsedDiv.querySelector('.expand-post').addEventListener('click', (e) => {
     e.preventDefault();
-    unhidePost(postId, isThread);
+    unhidePost(key);
   });
 
   if (isThread) {
@@ -819,13 +923,13 @@ function replaceWithCollapsed(postElement, postId, name, time, isThread) {
   postElement.replaceWith(collapsedDiv);
 }
 
-function unhidePost(postId, isThread) {
+function unhidePost(key) {
   const hiddenPosts = getHiddenPosts();
-  const postData = hiddenPosts[postId];
+  const postData = hiddenPosts[key];
 
   if (!postData) return;
 
-  const collapsedElement = document.querySelector(`.collapsed-post[data-post-id="${postId}"]`);
+  const collapsedElement = document.querySelector(`.collapsed-post[data-post-key="${key}"]`);
   if (!collapsedElement) return;
 
   const tempContainer = document.createElement('div');
@@ -834,7 +938,7 @@ function unhidePost(postId, isThread) {
 
   collapsedElement.replaceWith(originalPost);
 
-  delete hiddenPosts[postId];
+  delete hiddenPosts[key];
   setHiddenPosts(hiddenPosts);
 
   window.initializePostMenus(originalPost);
@@ -845,15 +949,13 @@ function unhidePost(postId, isThread) {
 function initializeHiddenPosts() {
   const hiddenPosts = getHiddenPosts();
 
-  Object.entries(hiddenPosts).forEach(([postId, data]) => {
+  Object.entries(hiddenPosts).forEach(([key, data]) => {
     if (!data.hidden) return;
 
-    const postElement = data.isThread
-      ? document.querySelector(`.thread[id="${postId}"]`)
-      : document.querySelector(`.reply[data-post-id="${postId}"]`);
+    const postElement = hiddenTarget(key, data.isThread);
 
     if (postElement) {
-      replaceWithCollapsed(postElement, postId, data.name, data.time, data.isThread);
+      replaceWithCollapsed(postElement, key, data.name, data.time, data.isThread);
     }
   });
 }

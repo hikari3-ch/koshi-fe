@@ -28,12 +28,12 @@
 </div>
 <div class="catalog-threads" id="thread-container">
   <% threads.forEach(thread => { %>
-  <article class="catalog-thread" id="<%= thread.threadId %>" data-replies="<%= thread.replyCount %>" data-bump="<%= thread.bumpDate %>" data-creation="<%= thread.createdAt %>" data-pinned="<%= thread.pinned || false %>">
+  <article class="catalog-thread" id="<%= thread.threadId %>" data-board="<%= boardUri %>" data-thread-id="<%= thread.threadId %>" data-replies="<%= thread.replyCount %>" data-bump="<%= thread.bumpDate %>" data-creation="<%= thread.createdAt %>" data-pinned="<%= thread.pinned || false %>">
     <% var catalogFile = thread.files && thread.files.find(function(f) { return f.mime !== 'tegaki/replay'; }); %>
     <% if (catalogFile) { %>
-    <div class="catalog-file">
+    <div class="catalog-file"<% if (catalogFile.size) { %> data-name="<%= catalogFile.originalName %>" data-path="<%= catalogFile.path %>" data-size="<%= catalogFile.size %>"<% if (catalogFile.width && catalogFile.height) { %> data-dims="<%= catalogFile.width %>x<%= catalogFile.height %>"<% } %><% } %>>
       <a href="/<%= boardUri %>/thread/<%= thread.threadId %>" class="media-toggle" data-mime="<%= catalogFile.mime %>"<% if (catalogFile.width && catalogFile.height) { %> data-file-width="<%= catalogFile.width %>" data-file-height="<%= catalogFile.height %>"<% } %>>
-        <img src="<%= catalogFile.thumb %>" alt="<%= catalogFile.originalName %>" class="catalog-image" data-full="<%= catalogFile.path %>" data-thumb="<%= catalogFile.thumb %>" />
+        <img loading="lazy" decoding="async" src="<%= catalogFile.thumb %>" alt="<%= catalogFile.originalName %>" class="catalog-image" data-full="<%= catalogFile.path %>" data-thumb="<%= catalogFile.thumb %>" />
       </a>
     </div>
     <% } %>
@@ -46,4 +46,6 @@
   <% }) %>
 </div>
 
-<script src="/js/catalog.js"></script>
+<script src="/js/catalog.js?v=<%= locals.assetVersion('js/catalog.js') %>"></script>
+<script src="/js/quote.js?v=<%= locals.assetVersion('js/quote.js') %>"></script>
+<script src="/js/post-inline.js?v=<%= locals.assetVersion('js/post-inline.js') %>"></script>

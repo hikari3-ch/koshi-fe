@@ -1,0 +1,7 @@
+<% if (locals.agreeEnabled && !locals.isSearchResult && !locals.isArchive && !locals.modView) { %>
+<%
+const agreeTotal = Number(agreeCount) || 0;
+const agreeWord = locals.agreeWord || 'Yeah!';
+%>
+ <a href="#" class="agree-toggle" role="button" data-board="<%= boardUri %>" data-post-id="<%= postId %>" data-is-thread="<%= isThread ? '1' : '0' %>" data-word="<%= agreeWord %>" data-count="<%= agreeTotal %>" title="Agree"><%= agreeTotal > 0 ? `${agreeWord} x${agreeTotal}` : '+' %></a>
+<% } %>

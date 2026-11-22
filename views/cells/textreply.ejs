@@ -1,3 +1,10 @@
+<%
+var archivePrefix = locals.isArchive ? 'archive/' : '';
+var href = '/' + boardUri + '/' + archivePrefix + 'thread/' + thread.threadId;
+var threadHref = modView ? '/mod/thread/' + boardUri + '/' + thread.threadId : href;
+var permalinkHref = modView ? threadHref + '#' + reply.postId : threadHref + '?post=' + reply.postId + '#' + reply.postId;
+var controls = modView || locals.modControls;
+%>
 <div class="reply"
 data-post-id="<%= reply.postId %>"
 data-thread-id="<%= thread.threadId %>"
@@ -7,34 +14,27 @@ data-board="<%= boardUri %>"
     <% if (locals.replyNumber != null) { %><span class="reply-number" title="Reply #<%= replyNumber %>"><%= replyNumber %></span> <% } %><% if (!modView) { %><span class="post-quote">&gt;&gt;</span> <% } %>
     <% if (!locals.isSearchResult) { %><input type="checkbox" class="<%= modView ? 'mod-select' : 'post-checkbox' %>" <% if (modView) { %>value="<%= boardUri %>-<%= thread.threadId %>-<%= reply.postId %>"<% } else { %>name="posts" form="delete-form" value="<%= reply.postId %>-false"<% } %>><% } %>
     Name:
-    <% if (reply.signedRole === "Admin") { %>
-      <span title="This user is the site administrator" class="admin-name"><a target="_blank" href="https://syrno.net">syrno<span style="font-weight: normal;">!!zmOAdD</span></a> ## Admin <img src="/img/admin.png"></span>
-      <% } else if (reply.signedRole === "Global volunteer" || reply.signedRole === "Global Volunteer" || reply.signedRole === "Global Moderator" || reply.signedRole === "Moderator") { %>
-        <span title="This user is a site moderator" class="mod-name"><%- reply.name %> ## Moderator <img src="/img/modicon.gif"></span>
+    <% const cap = locals.capcodeFor(reply.signedRole); %>
+    <% if (cap) { %>
+      <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %> name" data-capcode="<%= cap.text %>"><%- reply.name %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
       <% } else { %>
         <span class="name" data-post-id="<%= reply.postId %>" data-board="<%= boardUri %>" data-thread-id="<%= thread.threadId %>"><%- reply.name %></span>
       <%}%>
+      <%- include('../partials/post-flag', { flag: reply.flag, flagName: reply.flagName }).trim() %>
       <%- include('../partials/time', { date: reply.creation }) %>
-    <a class="linkQuote" title="Link to this post" href="/<%= boardUri %>/<%= locals.isArchive ? 'archive/' : '' %>thread/<%= thread.threadId %>#<%= reply.postId %>">No.</a>
-    <a class="linkQuote" title="Reply to this post" href="/<%= boardUri %>/<%= locals.isArchive ? 'archive/' : '' %>thread/<%= thread.threadId %>#q<%= reply.postId %>"><%= reply.postId %></a>
-    <% if (modView) { %>
+    <span class="post-num"><a class="linkQuote" title="Link to this post" href="<%= permalinkHref %>">No.</a>
+    <a class="linkQuote" title="Reply to this post" href="<%= href %>#q<%= reply.postId %>"><%= reply.postId %></a><%- include('agree-button', { postId: reply.postId, isThread: false, agreeCount: reply.agreeCount }) %></span>
+    <% if (controls) { %>
     <%- include('/mod/partials/post-links', { boardUri, thread, postId: reply.postId, isThread: false, post: reply, showIp, globalStaff }) %>
     <% } %>
     <div class="backlinks"></div>
-    <% if (modView) { %>
+    <% if (controls) { %>
     <%- include('/mod/partials/staff-info', { post: reply, showIp }) %>
     <% } %>
   </div>
   <div class="reply-content"><%
-    const regExp = /<a\s+[^>]*href=["'](?:https?:\/\/(?:www\.)?youtube\.com\/watch\?v=|https?:\/\/youtu\.be\/)([a-zA-Z0-9_-]{11})["'][^>]*>.*?<\/a>/gi;
-    const boardLinkRegex = /href=["']\/([\w-]+)\/res\/(\d+)\.html(?:#(\d+))?["']/gi;
-    let parsedMSG = reply.markdown.replace(regExp, (match, videoId) => {
-      let embedStr = `<details class="embed-container"><summary><a href="https://youtu.be/${videoId}">https://youtu.be/${videoId} </a><span class="format-summary">[Embed]</span></summary>`;
-      embedStr += `<iframe style="margin-top: 3px" src="https://www.youtube.com/embed/${videoId}" frameborder="0"`;
-      embedStr += `allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"`;
-      embedStr += `referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></details>`;
-      return embedStr;
-    });
+    let parsedMSG = locals.expandMediaEmbeds(reply.markdown);
+    const boardLinkRegex = /href=["'](?:[^"']*?\/)?([\w-]+)\/res\/(\d+)\.html(?:#(\d+))?["']/gi;
     parsedMSG = parsedMSG.replace(boardLinkRegex, (match, board, threadId, post) => {
       const archivePrefix = locals.isArchive ? 'archive/' : '';
       return `href="/${board}/${archivePrefix}thread/${threadId}${post ? '#'+post : ''}"`;
@@ -48,7 +48,7 @@ data-board="<%= boardUri %>"
     <%- include('../partials/warning-message', { message: reply.warningMessage }) %>
     <% } else if (reply.banMessage) { %>
       <div class="ban-message">
-        <%- reply.banMessage %> <img src="/img/ban.gif" width="60">
+        <%- reply.banMessage %>
       </div>
     <% } %>
   </div>

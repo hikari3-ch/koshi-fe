@@ -1,31 +1,48 @@
-<!doctype html>
+<% if (String(body).trim().toLowerCase().startsWith('<!doctype')) { %><%- body %><% } else { %><!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><%= title %></title>
-<link rel="stylesheet" href="/css/global.css">
+<%
+let pageTitle = String(title || '');
+for (let i = 0; i < 5; i++) {
+  const decodedTitle = unescapeHtml(pageTitle);
+  if (decodedTitle === pageTitle) break;
+  pageTitle = decodedTitle;
+}
+%>
+<title><%= pageTitle %></title>
+<% if (locals.og && locals.og.description) { %><meta name="description" content="<%= locals.og.description %>"><% } %>
+<link rel="stylesheet" href="/css/global.css?v=<%= locals.assetVersion('css/global.css') %>">
 <link id="theme-css" rel="stylesheet" href="/css/yotsuba-b.css">
-<script src="/js/dom.js"></script>
-<script src="/js/csrf.js"></script>
-<script src="/js/themes.js"></script>
+<script src="/js/csrf.js?v=<%= locals.assetVersion('js/csrf.js') %>"></script>
+<script src="/js/dom.js?v=<%= locals.assetVersion('js/dom.js') %>"></script>
+<script src="/js/alert.js?v=<%= locals.assetVersion('js/alert.js') %>"></script>
+<script>window.boardDefaultTheme = <%- JSON.stringify(locals.boardDefaultTheme || '').replace(/</g, '\\u003c') %>;</script>
+<script src="/js/themes.js?v=<%= locals.assetVersion('js/themes.js') %>"></script>
 <% styles.forEach(function (s) { %>
 <link rel="stylesheet" href="<%= s %>">
 <% }) %>
 <%- head %>
+<%- include('partials/open-graph', { og: locals.og }) %>
 </head>
-<body>
+<body<% if (locals.bodyClass) { %> class="<%= locals.bodyClass %>"<% } %>>
 <%- include('partials/header') %>
-<div class="container"><main class="content">
+<div class="container"><main class="content<%= mod ? ' mod-page' : '' %>">
 <% if (mod && locals.user && showNav) { %><%- include('mod/partials/nav') %><% } %>
 <%- body %>
 </main></div>
 <%- include('partials/footer', { boardFooter: boardFooter }) %>
-<% if (mod) { %><script src="/js/mod.js"></script><% } %>
-<script src="/js/thumb.js"></script>
-<script src="/js/thread-watcher.js"></script>
-<script src="/js/settings.js"></script>
-<script>window.reportCategories = <%- JSON.stringify(reportCategories || []) %>;</script>
+<% if (mod || locals.modControls) { %><script src="/js/mod.js?v=<%= locals.assetVersion('js/mod.js') %>"></script><script src="/js/edit-post.js?v=<%= locals.assetVersion('js/edit-post.js') %>"></script><% } %>
+<script src="/js/captcha.js?v=<%= locals.assetVersion('js/captcha.js') %>"></script>
+<script src="/js/thumb.js?v=<%= locals.assetVersion('js/thumb.js') %>"></script>
+<script src="/js/thread-watcher.js?v=<%= locals.assetVersion('js/thread-watcher.js') %>"></script>
+<script src="/js/settings.js?v=<%= locals.assetVersion('js/settings.js') %>"></script>
+<script>
+window.reportCategories = <%- JSON.stringify(locals.reportCategories || []).replace(/</g, '\\u003c') %>;
+window.deletedPostDisplay = '<%= locals.deletedPostDisplay %>';
+window.fileNameMaxLength = <%- Number(locals.fileNameMaxLength) || 30 %>;
+</script>
 <% if (modUser) { %>
 <script>
 window.modUser = true;
@@ -33,6 +50,9 @@ window.modIsGlobalMod = <%= Number(modUser.globalRole) <= 2 ? 'true' : 'false' %
 window.modShowIp = <%= showIp ? 'true' : 'false' %>;
 </script>
 <% } %>
-<script src="/js/post-menu.js"></script>
+<script src="/js/post-menu.js?v=<%= locals.assetVersion('js/post-menu.js') %>"></script>
+<script src="/js/poll-handler.js?v=<%= locals.assetVersion('js/poll-handler.js') %>"></script>
+<script src="/js/agree.js?v=<%= locals.assetVersion('js/agree.js') %>"></script>
 </body>
 </html>
+<% } %>
