@@ -295,7 +295,10 @@ const threadAutoRefresh = {
 
   playNewPostSound() {
     if (localStorage.getItem('newPostSound') !== 'true') return;
-    if (!this.sound) this.sound = new Audio('/sound/new-post.mp3');
+    if (!this.sound) {
+      const soundSrc = (window.siteThemeConfig && window.siteThemeConfig.newPostSound) || '/sound/new-post.mp3';
+      this.sound = new Audio(soundSrc);
+    }
     this.sound.currentTime = 0;
     const played = this.sound.play();
     if (played && played.catch) played.catch(() => {});
@@ -493,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.set('post-password', postPassword);
 
       formData.delete('image');
-      if (fileInput && fileInput.files && fileInput.files.length > 0) {
+      if (fileInput && !fileInput.disabled && fileInput.files && fileInput.files.length > 0) {
         for (let i = 0; i < fileInput.files.length; i++) {
           formData.append('image', fileInput.files[i]);
         }

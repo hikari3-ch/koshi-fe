@@ -3,8 +3,9 @@
 
   const KEY = 'framedBrowsing';
   const COLLAPSED_KEY = 'framedCollapsed';
+  const FRAMED_CFG = typeof window !== 'undefined' && window.framedBrowsingConfig ? window.framedBrowsingConfig : {};
 
-  const BOARD_SECTIONS = [];
+  const BOARD_SECTIONS = Array.isArray(FRAMED_CFG.boardSections) ? FRAMED_CFG.boardSections : [];
 
   const RESERVED = new Set([
     'search', 'news', 'mod', 'login', 'logout', 'register', 'account', 'settings',
@@ -106,10 +107,18 @@
     sidebar.className = 'frame-sidebar';
     sidebar.id = 'frameSidebar';
 
-    const logo = document.createElement('div');
-    logo.id = 'logo';
-    logo.className = 'section-header';
-    logo.textContent = 'Navigation';
+    let logo;
+    if (FRAMED_CFG.logo) {
+      logo = document.createElement('img');
+      logo.id = 'logo';
+      logo.src = FRAMED_CFG.logo;
+      logo.alt = FRAMED_CFG.logoAlt || 'Front page';
+    } else {
+      logo = document.createElement('div');
+      logo.id = 'logo';
+      logo.className = 'section-header';
+      logo.textContent = 'Navigation';
+    }
     sidebar.appendChild(logo);
 
     const top = document.createElement('ul');

@@ -1,11 +1,27 @@
+<%
+const footerCfg = (locals.themeConfig && locals.themeConfig.footer) || {};
+const footerLinks = Array.isArray(footerCfg.links) && footerCfg.links.length
+  ? footerCfg.links
+  : [
+      { href: '/faq', label: 'FAQ' },
+      { href: '/rules', label: 'Rules' },
+      { href: '/news', label: 'News' },
+      { href: '/stats', label: 'Stats' }
+    ];
+const footerDisclaimer = typeof footerCfg.disclaimerHtml === 'string' && footerCfg.disclaimerHtml
+  ? footerCfg.disclaimerHtml
+  : 'The stories and information posted here are artistic works of fiction and falsehood.<br />Only a fool would take anything posted here as fact.';
+const footerCreditLabel = footerCfg.creditLabel || 'koshi';
+const footerCreditUrl = footerCfg.creditUrl || 'https://github.com/koshi-chan/koshi';
+%>
 <footer id="footer">
   <% if (boardFooter) { %>
     <nav class="board-list footer-board-list">
-      [
+      <% if (footerCfg.showHomeAndAll) { %>[ <a href="/">home</a> ] <% } %>[
       <% if (navBoards.length) { navBoards.forEach(function(board, i) { %>
       <a href="/<%= board.boardUri %>/"><%= board.boardUri %></a><% if (i < navBoards.length - 1) { %> /<% } %>
       <% }); } %>
-      ]
+      ]<% if (footerCfg.showHomeAndAll) { %> [ <a href="/all">all</a> ]<% } %>
     </nav>
   <% } %>
     <div class="footer-nav-tools">
@@ -16,7 +32,7 @@
       <% } %>
     </div>
     <% if (boardFooter) { %>
-      <div class="footer-text">The stories and information posted here are artistic works of fiction and falsehood.<br />Only a fool would take anything posted here as fact.</div>
+      <div class="footer-text"><%- footerDisclaimer %></div>
     <% } %>
     <div id="footer-links">
       <% if (locals.torOnionHostname || locals.torKind === 'onion') { %>
@@ -25,7 +41,7 @@
         <% if (locals.torOnionHostname) { %>Onion Service: <a href="http://<%= locals.torOnionHostname %>/"><code><%= locals.torOnionHostname %></code></a><% } %>
       </div>
       <% } %>
-      <a href="/faq">FAQ</a> • <a href="/rules">Rules</a> • <a href="/news">News</a> • <a href="/stats">Stats</a><br>
-      - <a href="https://github.com/koshi-chan/koshi">koshi</a> -
+      <% footerLinks.forEach(function(item, i) { %><a href="<%= item.href %>"><%= item.label %></a><% if (i < footerLinks.length - 1) { %> • <% } %><% }); %><br>
+      - <a href="<%= footerCreditUrl %>"><%= footerCreditLabel %></a> -
     </div>
 </footer>

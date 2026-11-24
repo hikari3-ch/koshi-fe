@@ -436,6 +436,13 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (!response.ok) {
         const errorText = await response.text();
 
+        if (errorText.includes('/banned?id=')) {
+          const banIdMatch = errorText.match(/\/banned\?id=([a-f0-9]+)/i);
+          if (banIdMatch && banIdMatch[1]) {
+            window.location.href = `/banned?id=${banIdMatch[1]}`;
+            return;
+          }
+        }
         if (errorText.includes('/warned?id=')) {
           const warnIdMatch = errorText.match(/\/warned\?id=([a-f0-9]+)/i);
           if (warnIdMatch && warnIdMatch[1]) {
