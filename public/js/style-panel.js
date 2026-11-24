@@ -5,39 +5,36 @@
   const CUSTOM_STYLE_ID = 'custom-style';
 
   const STYLE_OPTION_DEFS = [
-    // Show / Hide Elements
-    { key: 'hideBanner', group: 'elements', label: 'Hide board banner', desc: 'Hide the top banner image above boards', bodyClass: 'oc-hide-banner', defaultValue: false },
-    { key: 'hideRotatingBanner', group: 'elements', label: 'Hide rotating promo banner', desc: 'Hide the rotating banner below the post form', bodyClass: 'oc-hide-rotating-banner', defaultValue: false },
-    { key: 'hideAnnouncement', group: 'elements', label: 'Hide announcement', desc: 'Hide the global announcement notice', bodyClass: 'oc-hide-announcement', defaultValue: false },
-    { key: 'hidePostForm', group: 'elements', label: 'Collapse post form by default', desc: 'Show a toggle button instead of the full post form', bodyClass: 'oc-hide-post-form', defaultValue: false },
-    { key: 'hideCheckboxes', group: 'elements', label: 'Hide post checkboxes', desc: 'Hide selection checkboxes next to post headers', bodyClass: 'oc-hide-checkboxes', defaultValue: false },
-    { key: 'hideSideArrows', group: 'elements', label: 'Hide >> reply arrows', desc: 'Hide the decorative >> arrows to the left of replies', bodyClass: 'oc-hide-side-arrows', defaultValue: false },
-    { key: 'hideFileInfo', group: 'elements', label: 'Hide file info line', desc: 'Hide filenames and dimensions above thumbnails', bodyClass: 'oc-hide-file-info', defaultValue: false },
-    { key: 'hideFlags', group: 'elements', label: 'Hide post flags', desc: 'Hide country and custom board flags on posts', bodyClass: 'oc-hide-flags', defaultValue: false },
-    { key: 'hideBacklinks', group: 'elements', label: 'Hide backlinks', desc: 'Hide >>reply backlink lists below post headers', bodyClass: 'oc-hide-backlinks', defaultValue: false },
-    { key: 'hideSubjects', group: 'elements', label: 'Hide post subjects', desc: 'Hide thread and post subject titles', bodyClass: 'oc-hide-subjects', defaultValue: false },
-    { key: 'hideAgree', group: 'elements', label: 'Hide Agree buttons', desc: 'Hide [+]/agree counters beside post numbers', bodyClass: 'oc-hide-agree', defaultValue: false },
-    { key: 'hideNavArrows', group: 'elements', label: 'Hide thread jump arrows', desc: 'Hide the up/down arrows on OP posts', bodyClass: 'oc-hide-nav-arrows', defaultValue: false },
-    { key: 'hideDeleteForm', group: 'elements', label: 'Hide bottom delete form', desc: 'Hide the post deletion bar at the bottom of boards', bodyClass: 'oc-hide-delete-form', defaultValue: false },
-    { key: 'hideFooterText', group: 'elements', label: 'Hide footer disclaimer', desc: 'Hide the legal disclaimer text in the page footer', bodyClass: 'oc-hide-footer-text', defaultValue: false },
+    { key: 'hideBanner', group: 'elements', label: 'Hide board banner', bodyClass: 'oc-hide-banner', defaultValue: false },
+    { key: 'hideRotatingBanner', group: 'elements', label: 'Hide rotating promo banner', bodyClass: 'oc-hide-rotating-banner', defaultValue: false },
+    { key: 'hideAnnouncement', group: 'elements', label: 'Hide announcement', bodyClass: 'oc-hide-announcement', defaultValue: false },
+    { key: 'hidePostForm', group: 'elements', label: 'Collapse post form by default', bodyClass: 'oc-hide-post-form', defaultValue: false },
+    { key: 'hideCheckboxes', group: 'elements', label: 'Hide post checkboxes', bodyClass: 'oc-hide-checkboxes', defaultValue: false },
+    { key: 'hideSideArrows', group: 'elements', label: 'Hide >> reply arrows', bodyClass: 'oc-hide-side-arrows', defaultValue: false },
+    { key: 'hideFileInfo', group: 'elements', label: 'Hide file info line', bodyClass: 'oc-hide-file-info', defaultValue: false },
+    { key: 'hideFlags', group: 'elements', label: 'Hide post flags', bodyClass: 'oc-hide-flags', defaultValue: false },
+    { key: 'hideBacklinks', group: 'elements', label: 'Hide backlinks', bodyClass: 'oc-hide-backlinks', defaultValue: false },
+    { key: 'hideSubjects', group: 'elements', label: 'Hide post subjects', bodyClass: 'oc-hide-subjects', defaultValue: false },
+    { key: 'hideAgree', group: 'elements', label: 'Hide Agree buttons', bodyClass: 'oc-hide-agree', defaultValue: false },
+    { key: 'hideNavArrows', group: 'elements', label: 'Hide thread jump arrows', bodyClass: 'oc-hide-nav-arrows', defaultValue: false },
+    { key: 'hideDeleteForm', group: 'elements', label: 'Hide bottom delete form', bodyClass: 'oc-hide-delete-form', defaultValue: false },
+    { key: 'hideFooterText', group: 'elements', label: 'Hide footer disclaimer', bodyClass: 'oc-hide-footer-text', defaultValue: false },
 
-    // Highlight Elements
-    { key: 'highlightOp', group: 'highlights', label: 'Highlight OP posts', desc: 'Add an accent tint and left bar to thread OPs', bodyClass: 'oc-highlight-op', defaultValue: false },
-    { key: 'highlightYou', group: 'highlights', label: 'Highlight your (You) posts', desc: 'Mark your own posts with a distinct side border', bodyClass: 'oc-highlight-you', defaultValue: true },
-    { key: 'highlightQuotesToYou', group: 'highlights', label: 'Highlight replies quoting (You)', desc: 'Tint posts that quote one of your posts', bodyClass: 'oc-highlight-quotes-you', defaultValue: true },
-    { key: 'highlightCapcodes', group: 'highlights', label: 'Highlight staff capcodes', desc: 'Accent posts made with a Mod/Admin capcode', bodyClass: 'oc-highlight-capcodes', defaultValue: false },
-    { key: 'highlightHover', group: 'highlights', label: 'Highlight hovered replies', desc: 'Tint reply boxes when moving the mouse over them', bodyClass: 'oc-highlight-hover', defaultValue: false },
-    { key: 'highlightSubject', group: 'highlights', label: 'Underline subjects', desc: 'Underline thread and post subjects for visibility', bodyClass: 'oc-highlight-subject', defaultValue: false },
+    { key: 'highlightOp', group: 'highlights', label: 'Highlight OP posts', bodyClass: 'oc-highlight-op', defaultValue: false },
+    { key: 'highlightYou', group: 'highlights', label: 'Highlight your (You) posts', bodyClass: 'oc-highlight-you', defaultValue: true },
+    { key: 'highlightQuotesToYou', group: 'highlights', label: 'Highlight replies quoting (You)', bodyClass: 'oc-highlight-quotes-you', defaultValue: true },
+    { key: 'highlightCapcodes', group: 'highlights', label: 'Highlight staff capcodes', bodyClass: 'oc-highlight-capcodes', defaultValue: false },
+    { key: 'highlightHover', group: 'highlights', label: 'Highlight hovered replies', bodyClass: 'oc-highlight-hover', defaultValue: false },
+    { key: 'highlightSubject', group: 'highlights', label: 'Underline subjects', bodyClass: 'oc-highlight-subject', defaultValue: false },
 
-    // Layout & Typography
-    { key: 'fixedHeader', group: 'layout', label: 'Sticky top board bar', desc: 'Keep the top board navigation pinned while scrolling', bodyClass: 'oc-fixed-header', defaultValue: false },
-    { key: 'centerPosts', group: 'layout', label: 'Center page content', desc: 'Constrain and center the main thread column', bodyClass: 'oc-center-posts', defaultValue: false },
-    { key: 'roundedCorners', group: 'layout', label: 'Rounded boxes', desc: 'Soften reply boxes, containers, and dialogs', bodyClass: 'oc-rounded', defaultValue: false },
-    { key: 'flatBorders', group: 'layout', label: 'Full 4-sided reply borders', desc: 'Draw complete borders around reply boxes', bodyClass: 'oc-flat-borders', defaultValue: false },
-    { key: 'compactPosts', group: 'layout', label: 'Compact post spacing', desc: 'Reduce margins inside replies and threads', bodyClass: 'oc-compact-posts', defaultValue: false },
-    { key: 'fullWidthReplies', group: 'layout', label: 'Full-width replies', desc: 'Stretch reply boxes to fill the column width', bodyClass: 'oc-full-width-replies', defaultValue: false },
-    { key: 'riceCheckboxes', group: 'layout', label: 'Theme-accent checkboxes', desc: 'Tint native checkboxes with your theme link color', bodyClass: 'oc-rice-checkboxes', defaultValue: true },
-    { key: 'customScrollbars', group: 'layout', label: 'Custom slim scrollbars', desc: 'Use thin theme-colored scrollbars in Chromium/WebKit', bodyClass: 'oc-custom-scrollbars', defaultValue: false }
+    { key: 'fixedHeader', group: 'layout', label: 'Sticky top board bar', bodyClass: 'oc-fixed-header', defaultValue: false },
+    { key: 'centerPosts', group: 'layout', label: 'Center page content', bodyClass: 'oc-center-posts', defaultValue: false },
+    { key: 'roundedCorners', group: 'layout', label: 'Rounded boxes', bodyClass: 'oc-rounded', defaultValue: false },
+    { key: 'flatBorders', group: 'layout', label: 'Full 4-sided reply borders', bodyClass: 'oc-flat-borders', defaultValue: false },
+    { key: 'compactPosts', group: 'layout', label: 'Compact post spacing', bodyClass: 'oc-compact-posts', defaultValue: false },
+    { key: 'fullWidthReplies', group: 'layout', label: 'Full-width replies', bodyClass: 'oc-full-width-replies', defaultValue: false },
+    { key: 'riceCheckboxes', group: 'layout', label: 'Theme-accent checkboxes', bodyClass: 'oc-rice-checkboxes', defaultValue: true },
+    { key: 'customScrollbars', group: 'layout', label: 'Custom slim scrollbars', bodyClass: 'oc-custom-scrollbars', defaultValue: false }
   ];
 
   const BOARD_BEHAVIOR_DEFS = [
@@ -45,7 +42,6 @@
       id: 'disable-you-tag',
       storageKey: 'disableYouTag',
       label: 'Disable (You) tags',
-      desc: 'Stop marking your own posts and the replies to them with (You)',
       read: () => safeStorageGet('disableYouTag') === 'true',
       write: (checked) => safeStorageSet('disableYouTag', String(Boolean(checked)))
     },
@@ -53,7 +49,6 @@
       id: 'image-preview-hover',
       storageKey: 'imagePreviewHover',
       label: 'Image preview on hover',
-      desc: 'Show the full image while the pointer is over a thumbnail',
       read: () => safeStorageGet('imagePreviewHover') === 'true',
       write: (checked) => safeStorageSet('imagePreviewHover', String(Boolean(checked)))
     },
@@ -61,7 +56,6 @@
       id: 'disable-auto-watch',
       storageKey: 'disableAutoWatch',
       label: 'Disable auto-watching',
-      desc: 'Stop automatically adding threads you post in to the Thread Watcher',
       read: () => safeStorageGet('disableAutoWatch') === 'true',
       write: (checked) => safeStorageSet('disableAutoWatch', String(Boolean(checked)))
     },
@@ -69,7 +63,6 @@
       id: 'disable-xchan-sync',
       storageKey: 'disableXchanSync',
       label: 'Disable 4chan-X sync',
-      desc: 'Keep this Thread Watcher separate from the thread watcher of the 4chan-X userscript',
       read: () => safeStorageGet('disableXchanSync') === 'true',
       write: (checked) => safeStorageSet('disableXchanSync', String(Boolean(checked)))
     },
@@ -77,7 +70,6 @@
       id: 'new-post-sound',
       storageKey: 'newPostSound',
       label: 'New post sound',
-      desc: 'Play a sound when an open thread gets a new post',
       read: () => safeStorageGet('newPostSound') === 'true',
       write: (checked) => safeStorageSet('newPostSound', String(Boolean(checked)))
     },
@@ -85,7 +77,6 @@
       id: 'post-inlining',
       storageKey: 'disablePostInlining',
       label: 'Inline quoted posts',
-      desc: 'Clicking a quote opens the quoted post inside the reply',
       read: () => safeStorageGet('disablePostInlining') !== 'true',
       write: (checked) => {
         safeStorageSet('disablePostInlining', String(!checked));
@@ -414,9 +405,6 @@
       });
     },
 
-    // =========================================================================
-    // Post Filters (migrated from legacy settings menu)
-    // =========================================================================
     addFilter() {
       const typeEl = document.getElementById('filter-type');
       const inputEl = document.getElementById('filter-input');
@@ -561,9 +549,6 @@
       });
     },
 
-    // =========================================================================
-    // Mascots
-    // =========================================================================
     getAvailableMascots() {
       const serverCfg = (typeof window !== 'undefined' && window.koshiMascotConfig) || {};
       const serverMascots = Array.isArray(serverCfg.mascots)
@@ -818,7 +803,6 @@
       document.body.appendChild(modal);
       this.modal = modal;
 
-      // Render Filters & Code DOM immediately so filter elements exist even before opening the tab
       this.renderFiltersTab();
     },
 
@@ -849,6 +833,16 @@
       if (this.modal) this.modal.classList.remove('oc-open');
     },
 
+    ensurePreviewFontsLoaded() {
+      if (typeof document === 'undefined') return;
+      if (document.getElementById('koshi-theme-preview-fonts')) return;
+      const link = document.createElement('link');
+      link.id = 'koshi-theme-preview-fonts';
+      link.rel = 'stylesheet';
+      link.href = '/css/theme-preview-fonts.css';
+      (document.head || document.documentElement).appendChild(link);
+    },
+
     buildThemePreviewCard({ id, label, group, palette, isCustom, customThemeObj, activeId }) {
       const p = palette || {};
       const bg = p['--background-color'] || '#eef2ff';
@@ -860,6 +854,8 @@
       const nameCol = p['--name-color'] || '#117743';
       const subCol = p['--subject-color'] || titleCol;
       const linkCol = p['--link-color'] || '#34345c';
+      const bodyFont = p['--theme-font'] || '';
+      const headingFont = p['--theme-heading-font'] || bodyFont;
 
       const card = document.createElement('div');
       card.className = 'theme-preview-card' + (id === activeId ? ' active' : '');
@@ -870,10 +866,12 @@
       stage.style.backgroundColor = bg;
       stage.style.backgroundImage = `linear-gradient(to bottom, ${grad} 0%, ${bg} 80%)`;
       stage.style.color = textCol;
+      if (bodyFont) stage.style.fontFamily = bodyFont;
 
       const stageTitle = document.createElement('div');
       stageTitle.className = 'theme-preview-title';
       stageTitle.style.color = titleCol;
+      if (headingFont) stageTitle.style.fontFamily = headingFont;
       stageTitle.textContent = `/${group || 'Site'}/ - ${label}`;
 
       const replyBox = document.createElement('div');
@@ -881,6 +879,7 @@
       replyBox.style.background = postBg;
       replyBox.style.borderColor = borderCol;
       replyBox.style.color = textCol;
+      if (bodyFont) replyBox.style.fontFamily = bodyFont;
 
       const subjSpan = document.createElement('span');
       subjSpan.style.color = subCol;
@@ -947,6 +946,7 @@
     renderThemesTab() {
       const panel = document.getElementById('style-panel-themes');
       if (!panel) return;
+      this.ensurePreviewFontsLoaded();
       panel.innerHTML = '';
 
       const builtInList = (window.themes && window.themes.list) || [];
@@ -1002,12 +1002,13 @@
           customList.forEach((ct) => {
             const label = ct.name || ct.id;
             if (q && !label.toLowerCase().includes(q)) return;
+            const basePalette = ct.baseTheme && window.themes ? getPalette(window.themes.byId(ct.baseTheme)) : {};
             grid.appendChild(
               this.buildThemePreviewCard({
                 id: 'custom:' + ct.id,
                 label,
                 group: 'Custom',
-                palette: ct.vars || {},
+                palette: { ...basePalette, ...(ct.vars || {}) },
                 isCustom: true,
                 customThemeObj: ct,
                 activeId
@@ -1070,10 +1071,13 @@
       const nameSpan = document.createElement('span');
       nameSpan.className = 'style-check-label';
       nameSpan.textContent = labelText;
-      const descSpan = document.createElement('span');
-      descSpan.className = 'style-check-desc';
-      descSpan.textContent = descText;
-      textWrap.append(nameSpan, descSpan);
+      textWrap.appendChild(nameSpan);
+      if (descText) {
+        const descSpan = document.createElement('span');
+        descSpan.className = 'style-check-desc';
+        descSpan.textContent = descText;
+        textWrap.appendChild(descSpan);
+      }
 
       row.append(cb, textWrap);
       return row;
@@ -1136,7 +1140,7 @@
           box.appendChild(
             this.makeCheckRow(
               'Hide fortunes',
-              'Hide fortunes on posts that contain them',
+              '',
               safeStorageGet('hideFortunes') === 'true',
               (checked) => {
                 safeStorageSet('hideFortunes', String(Boolean(checked)));
@@ -1790,7 +1794,6 @@
       const grid = document.createElement('div');
       grid.className = 'style-filters-code-grid';
 
-      // Section 1: Filters & Post Hiding
       const filtersBox = document.createElement('div');
       filtersBox.className = 'style-options-box';
       const fTitle = document.createElement('h3');
@@ -1832,7 +1835,6 @@
 
       filtersBox.append(fTitle, filterControls, filtersList);
 
-      // Section 2: Custom CSS & JS
       const codeBox = document.createElement('div');
       codeBox.className = 'style-options-box';
       const cTitle = document.createElement('h3');

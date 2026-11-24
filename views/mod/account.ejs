@@ -16,8 +16,7 @@
 <fieldset>
 <legend>Email Address</legend>
 <p class="mod-hint">
-  Current email: <strong id="account-current-email"><%= locals.email || 'None' %></strong>.
-  Associated emails are used for password resets.<% if (!locals.mailConfigured) { %> (Outgoing email is currently unconfigured by the site admin.)<% } %>
+  Current email: <strong id="account-current-email"><%= locals.email || 'None' %></strong><% if (!locals.mailConfigured) { %> (outgoing mail unconfigured)<% } %>
 </p>
 <form id="account-email-form">
 <table class="mod-settings">

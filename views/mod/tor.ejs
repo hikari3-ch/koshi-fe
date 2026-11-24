@@ -62,40 +62,37 @@
 </fieldset>
 
 <fieldset>
-  <legend>Global Tor Policies &amp; Privacy</legend>
-  <p class="mod-hint">
-    Tor users are tagged with non-routable sentinel addresses (<code>0.0.0.1</code> for exits, <code>0.0.0.2</code> for <code>.onion</code>) so real exit IPs are never exposed or IP-banned, while per-browser isolation protects captcha passes, flood timers, agree votes, and polls across shared exits.
-  </p>
+  <legend>Global Tor Policies</legend>
   <form id="tor-settings-form">
     <table class="mod-settings">
       <tr><th>Default Tor posting</th><td>
-        <label><input type="checkbox" name="defaultAllowPosting" value="true"<%= cfg.defaultAllowPosting ? ' checked' : '' %>> Allow Tor users to post by default (boards can override individually)</label>
+        <label><input type="checkbox" name="defaultAllowPosting" value="true"<%= cfg.defaultAllowPosting ? ' checked' : '' %>> Allow Tor posting by default</label>
       </td></tr>
       <tr><th>Default Tor file uploads</th><td>
-        <label><input type="checkbox" name="allowFiles" value="true"<%= cfg.allowFiles ? ' checked' : '' %>> Allow file uploads from Tor by default (boards can override individually)</label>
+        <label><input type="checkbox" name="allowFiles" value="true"<%= cfg.allowFiles ? ' checked' : '' %>> Allow Tor file uploads by default</label>
       </td></tr>
       <tr><th>Tor captcha requirement</th><td>
-        <label><input type="checkbox" name="requireCaptcha" value="true"<%= cfg.requireCaptcha !== false ? ' checked' : '' %>> Require captcha verification for Tor posters even if clearnet captcha is off</label>
+        <label><input type="checkbox" name="requireCaptcha" value="true"<%= cfg.requireCaptcha !== false ? ' checked' : '' %>> Require captcha for Tor posters</label>
       </td></tr>
       <tr><th><label for="tor-captcha-min">Default Tor captcha cookie</label></th><td>
         <input id="tor-captcha-min" name="defaultCaptchaMinutes" type="number" min="1" max="1440" value="<%= cfg.defaultCaptchaMinutes || 15 %>">
-        <span class="mod-unit">minutes (per-board settings cap this or override when set)</span>
+        <span class="mod-unit">minutes</span>
       </td></tr>
       <tr><th><label for="tor-flood-sec">Tor flood cooldown</label></th><td>
         <input id="tor-flood-sec" name="floodCooldownSec" type="number" min="0" max="3600" value="<%= cfg.floodCooldownSec ?? 30 %>">
-        <span class="mod-unit">seconds (isolated per Tor Browser session via HMAC key; 0 disables)</span>
+        <span class="mod-unit">seconds (0 disables)</span>
       </td></tr>
       <tr><th><label for="tor-onion-host">Onion Service Hostname</label></th><td>
         <input id="tor-onion-host" name="onionHostname" class="mod-wide" value="<%= cfg.onionHostname || '' %>" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion">
       </td></tr>
-      <tr><th>Onion-Location discovery</th><td>
-        <label><input type="checkbox" name="advertiseOnionLocation" value="true"<%= cfg.advertiseOnionLocation !== false ? ' checked' : '' %>> Send <code>Onion-Location</code> HTTP header on clearnet pages and display footer <code>.onion</code> link</label>
+      <tr><th>Onion-Location</th><td>
+        <label><input type="checkbox" name="advertiseOnionLocation" value="true"<%= cfg.advertiseOnionLocation !== false ? ' checked' : '' %>> Send <code>Onion-Location</code> header and show footer link</label>
       </td></tr>
       <tr><th>Strict .onion CSP</th><td>
-        <label><input type="checkbox" name="stripExternalEmbedsOnOnion" value="true"<%= cfg.stripExternalEmbedsOnOnion ? ' checked' : '' %>> Tighten Content-Security-Policy on <code>.onion</code> requests to <code>'self'</code>-only (prevents Tor Browser third-party CDN/embed clearnet leaks)</label>
+        <label><input type="checkbox" name="stripExternalEmbedsOnOnion" value="true"<%= cfg.stripExternalEmbedsOnOnion ? ' checked' : '' %>> Restrict <code>.onion</code> CSP to <code>'self'</code></label>
       </td></tr>
       <tr><th>Trust reverse-proxy header</th><td>
-        <label><input type="checkbox" name="trustOnionHeader" value="true"<%= cfg.trustOnionHeader !== false ? ' checked' : '' %>> Accept <code>X-Tor-Onion: 1</code> from local loopback reverse proxy</label>
+        <label><input type="checkbox" name="trustOnionHeader" value="true"<%= cfg.trustOnionHeader !== false ? ' checked' : '' %>> Accept <code>X-Tor-Onion: 1</code> from loopback</label>
       </td></tr>
       <tr><th><label for="tor-hs-dir">HiddenServiceDir</label></th><td>
         <input id="tor-hs-dir" name="hiddenServiceDir" class="mod-wide" value="<%= cfg.hiddenServiceDir || '/var/lib/tor/koshi_onion' %>">
@@ -117,8 +114,8 @@
 </fieldset>
 
 <fieldset>
-  <legend>Starting Tor &amp; Configuring the Onion Service</legend>
-  <p class="mod-hint">Run this root command on the server to install Tor, configure <code>/etc/tor/torrc</code>, start the daemon, and reveal your <code>.onion</code> hostname:</p>
+  <legend>Onion Service Setup</legend>
+  <p class="mod-hint"><strong>Root setup command:</strong></p>
   <pre class="mod-code" id="tor-root-cmd"><%= g.rootCommand || '' %></pre>
   <div class="mod-actions"><button type="button" class="tor-copy-btn" data-copy-id="tor-root-cmd">Copy Root Command</button></div>
 

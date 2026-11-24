@@ -174,9 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const fileEl = item.querySelector('.catalog-file');
     const info = fileEl && fileInfo(fileEl);
     if (info) panel.appendChild(info);
-    Array.from(item.children)
-      .filter((child) => !child.classList.contains('watch-thread-toggle'))
-      .forEach((child) => panel.appendChild(child.cloneNode(true)));
+    Array.from(item.children).forEach((child) => panel.appendChild(child.cloneNode(true)));
     panel.querySelectorAll(FORTUNES).forEach((el) => el.remove());
 
     const replyCount = parseInt(item.dataset.replies, 10) || 0;

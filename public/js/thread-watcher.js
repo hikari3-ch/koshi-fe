@@ -16,7 +16,6 @@ const watchedThreads = {
     });
 
     document.querySelectorAll('.op').forEach((op) => this.processOP(op));
-    document.querySelectorAll('.catalog-thread').forEach((card) => this.processCatalogThread(card));
 
     this.bindEvents();
     this.createWatchList();
@@ -96,14 +95,6 @@ const watchedThreads = {
 
     const checkBox = info.querySelector('.post-checkbox, .mod-select');
     info.insertBefore(this.makeWatchButton(board, thread), checkBox || info.firstElementChild);
-  },
-
-  processCatalogThread(card) {
-    if (card.querySelector('.watch-thread-toggle')) return;
-    const board = card.dataset.board;
-    const thread = String(card.dataset.threadId || '');
-    if (!board || !thread) return;
-    card.appendChild(this.makeWatchButton(board, thread));
   },
 
   makeWatchButton(board, thread) {

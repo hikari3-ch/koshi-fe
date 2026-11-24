@@ -9,9 +9,6 @@
   margin: 0 0 8px;
 }
 
-/* ==========================================================================
-   Style Modal (#style-modal)
-   ========================================================================== */
 #style-modal {
   display: none;
   position: fixed;
@@ -129,9 +126,6 @@
   gap: 6px;
 }
 
-/* ==========================================================================
-   Tab 1: Theme Preview Grid
-   ========================================================================== */
 .style-themes-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -257,9 +251,6 @@
   cursor: pointer;
 }
 
-/* ==========================================================================
-   Tab 2: Options Checkboxes & Typography
-   ========================================================================== */
 .style-options-columns {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
@@ -321,9 +312,6 @@
   font-weight: bold;
 }
 
-/* ==========================================================================
-   Tab 3: Mascots
-   ========================================================================== */
 .mascot-prefs-bar {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -383,9 +371,6 @@
   margin-top: 6px;
 }
 
-/* ==========================================================================
-   Tab 4: Custom Theme Editor
-   ========================================================================== */
 .custom-theme-saved-bar {
   display: flex;
   flex-wrap: wrap;
@@ -454,9 +439,6 @@
   min-height: 180px;
 }
 
-/* ==========================================================================
-   Tab 5: Filters & Custom Code
-   ========================================================================== */
 .style-filters-code-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -500,9 +482,6 @@
   width: 100%;
 }
 
-/* ==========================================================================
-   Mascot Overlay on Boards/Threads
-   ========================================================================== */
 #koshi-mascot-container {
   position: fixed;
   z-index: 500;
@@ -556,9 +535,6 @@
   }
 }
 
-/* ==========================================================================
-   Show / Hide / Highlight / Layout Body Classes
-   ========================================================================== */
 body.oc-hide-banner #bannerCnt,
 body.oc-hide-banner .banner-img {
   display: none !important;
@@ -713,9 +689,6 @@ body.oc-custom-scrollbars ::-webkit-scrollbar-track {
   background: var(--background-color, #eef2ff);
 }
 
-/* ==========================================================================
-   Admin Server Logs & Admin Mascots Pages
-   ========================================================================== */
 .log-stats-bar {
   display: flex;
   flex-wrap: wrap;

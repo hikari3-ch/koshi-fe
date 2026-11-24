@@ -528,32 +528,6 @@ input[type="text"] {
   color: #ff5c6e;
 }
 
-.catalog-thread .watch-thread-toggle {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 3;
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  padding: 3px;
-  box-sizing: content-box;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  opacity: 0.85;
-}
-
-.catalog-thread .watch-thread-toggle:hover,
-.catalog-thread .watch-thread-toggle:focus-visible {
-  opacity: 1;
-  background-color: rgba(0, 0, 0, 0.8);
-}
-
-.catalog-thread .watch-thread-toggle.watch-thread-on {
-  color: #ff5c6e;
-}
-
 @media (max-width: 768px) {
   .watch-thread-toggle {
     width: 18px;
