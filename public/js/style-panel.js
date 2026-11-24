@@ -1062,18 +1062,6 @@
         });
       };
 
-      groups.forEach((g) => {
-        const pill = document.createElement('button');
-        pill.type = 'button';
-        pill.className = 'style-group-pill' + (g === activeGroup ? ' active' : '');
-        pill.textContent = g;
-        pill.addEventListener('click', () => {
-          this._themeFilterGroup = g;
-          pillsWrap.querySelectorAll('.style-group-pill').forEach((p) => p.classList.toggle('active', p.textContent === g));
-          drawGrid();
-        });
-        pillsWrap.appendChild(pill);
-      });
 
       search.addEventListener('input', () => {
         this._themeSearch = search.value;
