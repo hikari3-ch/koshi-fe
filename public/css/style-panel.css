@@ -254,8 +254,8 @@
 
 .style-options-columns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+  gap: 10px;
 }
 
 .style-options-box {
@@ -604,36 +604,7 @@ body.oc-highlight-hover .reply:hover {
   border-color: var(--marked-border-color, #ba9dbf);
 }
 
-body.oc-highlight-subject .subject {
-  text-decoration: underline;
-}
-
 /* Layout & Chrome */
-body.oc-fixed-header header.header {
-  position: sticky;
-  top: 0;
-  z-index: 900;
-  background: var(--background-color, #eef2ff);
-  border-bottom: 1px solid var(--border-color, #aaa);
-  padding: 3px 6px;
-}
-
-body.oc-center-posts main.content {
-  max-width: var(--oc-content-width, 1080px);
-  margin-left: auto;
-  margin-right: auto;
-}
-
-body.oc-rounded .reply,
-body.oc-rounded .box-outer,
-body.oc-rounded .post-dialog {
-  border-radius: 0;
-}
-
-body.oc-flat-borders .reply {
-  border: 1px solid var(--border-alt, #b7c5d9);
-}
-
 body.oc-compact-posts .reply {
   margin: 2px 0;
   padding: 2px 4px;

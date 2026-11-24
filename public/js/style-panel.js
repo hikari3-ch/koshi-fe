@@ -18,12 +18,7 @@
     { key: 'highlightQuotesToYou', group: 'highlights', label: 'Highlight replies quoting (You)', bodyClass: 'oc-highlight-quotes-you', defaultValue: true },
     { key: 'highlightCapcodes', group: 'highlights', label: 'Highlight staff capcodes', bodyClass: 'oc-highlight-capcodes', defaultValue: false },
     { key: 'highlightHover', group: 'highlights', label: 'Highlight hovered replies', bodyClass: 'oc-highlight-hover', defaultValue: false },
-    { key: 'highlightSubject', group: 'highlights', label: 'Underline subjects', bodyClass: 'oc-highlight-subject', defaultValue: false },
 
-    { key: 'fixedHeader', group: 'layout', label: 'Sticky top board bar', bodyClass: 'oc-fixed-header', defaultValue: false },
-    { key: 'centerPosts', group: 'layout', label: 'Center page content', bodyClass: 'oc-center-posts', defaultValue: false },
-    { key: 'roundedCorners', group: 'layout', label: 'Rounded boxes', bodyClass: 'oc-rounded', defaultValue: false },
-    { key: 'flatBorders', group: 'layout', label: 'Full 4-sided reply borders', bodyClass: 'oc-flat-borders', defaultValue: false },
     { key: 'compactPosts', group: 'layout', label: 'Compact post spacing', bodyClass: 'oc-compact-posts', defaultValue: false },
     { key: 'fullWidthReplies', group: 'layout', label: 'Full-width replies', bodyClass: 'oc-full-width-replies', defaultValue: false },
     { key: 'riceCheckboxes', group: 'layout', label: 'Theme-accent checkboxes', bodyClass: 'oc-rice-checkboxes', defaultValue: true },
@@ -100,22 +95,12 @@
     { key: '--quote-color', label: 'Greentext (>quote)', defaultVal: '#789922' }
   ];
 
-  const FONT_CHOICES = [
-    { value: '', label: 'Theme / Browser Default' },
-    { value: 'Arial, Helvetica, sans-serif', label: 'Arial / Helvetica' },
-    { value: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", label: 'Segoe UI / Sans' },
-    { value: 'Verdana, Geneva, sans-serif', label: 'Verdana' },
-    { value: "'MS PGothic', 'IPAMonaPGothic', sans-serif", label: 'MS PGothic (Shift_JIS art)' },
-    { value: "Georgia, 'Times New Roman', serif", label: 'Georgia Serif' },
-    { value: "'Courier New', Courier, monospace", label: 'Monospace' }
-  ];
-
   const DEFAULT_STYLE_OPTIONS = STYLE_OPTION_DEFS.reduce(
     (acc, def) => {
       acc[def.key] = def.defaultValue;
       return acc;
     },
-    { fontFamily: '', fontSizePt: 10, replyOpacity: 1, contentWidthPx: 1080 }
+    { fontSizePt: 10 }
   );
 
   const DEFAULT_MASCOT_PREFS = {
@@ -189,7 +174,6 @@
     STYLE_OPTION_DEFS,
     BOARD_BEHAVIOR_DEFS,
     THEME_VAR_DEFS,
-    FONT_CHOICES,
     activeTab: 'themes',
     modal: null,
     filters: [],
@@ -234,23 +218,9 @@
 
     buildStyleOptionsCss(opts) {
       const rules = [];
-      if (opts.fontFamily) {
-        const cleanFont = String(opts.fontFamily).replace(/[;{}</>]/g, '');
-        if (cleanFont) {
-          rules.push(`body { font-family: ${cleanFont} !important; }`);
-        }
-      }
       const pt = Number(opts.fontSizePt);
       if (Number.isFinite(pt) && pt >= 8 && pt <= 14 && pt !== 10) {
         rules.push(`body { font-size: ${pt}pt !important; }`);
-      }
-      const opacity = Number(opts.replyOpacity);
-      if (Number.isFinite(opacity) && opacity >= 0.4 && opacity < 1) {
-        rules.push(`.reply { opacity: ${opacity}; } .reply:hover { opacity: 1; }`);
-      }
-      const widthPx = Number(opts.contentWidthPx);
-      if (Number.isFinite(widthPx) && widthPx >= 640 && widthPx <= 1800) {
-        rules.push(`:root { --oc-content-width: ${Math.round(widthPx)}px; }`);
       }
       if (opts.hidePostForm) {
         rules.push(`body.oc-hide-post-form #post-form-container:not(.oc-form-expanded) { display: none !important; }`);
@@ -722,7 +692,7 @@
       header.className = 'style-modal-header';
       const title = document.createElement('span');
       title.className = 'style-modal-title';
-      title.textContent = 'Style & Preferences';
+      title.textContent = 'Settings';
       const closeBtn = document.createElement('button');
       closeBtn.type = 'button';
       closeBtn.className = 'style-modal-close';
@@ -808,7 +778,7 @@
       if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
         window.addEventListener('resize', () => {
           if (this.modal && this.modal.classList.contains('oc-open')) {
-            this.syncModalHeightToEditor();
+            this.syncModalHeightToLargestTab();
           }
         });
       }
@@ -816,30 +786,43 @@
       this.renderFiltersTab();
     },
 
-    syncModalHeightToEditor() {
+    syncModalHeightToLargestTab() {
       if (!this.modal) return;
       const content = this.modal.querySelector('.style-modal-content');
-      const editorPanel = document.getElementById('style-panel-editor');
-      if (this.getDisabledTabs().customThemes || !editorPanel) {
-        if (content) content.style.height = '';
-        return;
-      }
       if (!content || typeof content.getBoundingClientRect !== 'function') return;
 
+      const disabledTabs = this.getDisabledTabs();
       const panels = Array.from(this.modal.querySelectorAll('.style-tab-panel'));
+      if (!panels.length) return;
+
       const prevActive = panels.map((p) => p.classList.contains('active'));
       const prevHeight = content.style.height;
 
-      this.renderEditorTab();
-      content.style.height = '';
-      panels.forEach((p) => p.classList.toggle('active', p === editorPanel));
+      const enabledPanels = panels.filter((p) => {
+        const id = p.dataset.tab;
+        if (id === 'mascots' && disabledTabs.mascots) return false;
+        if (id === 'editor' && disabledTabs.customThemes) return false;
+        return true;
+      });
 
-      const rect = content.getBoundingClientRect();
-      const measured = rect && rect.height ? Math.ceil(rect.height) : 0;
+      this.renderThemesTab();
+      this.renderOptionsTab();
+      if (!disabledTabs.mascots) this.renderMascotsTab();
+      if (!disabledTabs.customThemes) this.renderEditorTab();
+      this.renderFiltersTab();
+
+      content.style.height = '';
+      let maxMeasured = 0;
+      enabledPanels.forEach((target) => {
+        panels.forEach((p) => p.classList.toggle('active', p === target));
+        const rect = content.getBoundingClientRect();
+        const h = rect && rect.height ? Math.ceil(rect.height) : 0;
+        if (h > maxMeasured) maxMeasured = h;
+      });
 
       panels.forEach((p, idx) => p.classList.toggle('active', prevActive[idx]));
-      if (measured > 0) {
-        content.style.height = `${measured}px`;
+      if (maxMeasured > 0) {
+        content.style.height = `${maxMeasured}px`;
       } else {
         content.style.height = prevHeight;
       }
@@ -870,7 +853,7 @@
     show(tabId) {
       this.createModal();
       this.modal.classList.add('oc-open');
-      this.syncModalHeightToEditor();
+      this.syncModalHeightToLargestTab();
       this.setTab(tabId || this.activeTab);
     },
 
@@ -1197,27 +1180,6 @@
         }
 
         if (sec.group === 'layout') {
-          const fontRow = document.createElement('div');
-          fontRow.className = 'style-range-row';
-          const fontLabel = document.createElement('label');
-          fontLabel.textContent = 'Font Family';
-          const fontSel = document.createElement('select');
-          FONT_CHOICES.forEach((fc) => {
-            const opt = document.createElement('option');
-            opt.value = fc.value;
-            opt.textContent = fc.label;
-            fontSel.appendChild(opt);
-          });
-          fontSel.value = opts.fontFamily || '';
-          fontSel.addEventListener('change', () => {
-            const next = this.getStyleOptions();
-            next.fontFamily = fontSel.value;
-            this.saveStyleOptions(next);
-            this.applyStyleOptions(next);
-          });
-          fontRow.append(fontLabel, fontSel);
-          box.appendChild(fontRow);
-
           const makeSlider = (labelText, key, min, max, step, unit) => {
             const row = document.createElement('div');
             row.className = 'style-range-row';
@@ -1245,11 +1207,7 @@
             return row;
           };
 
-          box.append(
-            makeSlider('Font Size', 'fontSizePt', 8, 14, 0.5, 'pt'),
-            makeSlider('Reply Opacity', 'replyOpacity', 0.5, 1, 0.05, ''),
-            makeSlider('Centered Max Width', 'contentWidthPx', 720, 1600, 40, 'px')
-          );
+          box.append(makeSlider('Font Size', 'fontSizePt', 8, 14, 0.5, 'pt'));
         }
 
         cols.appendChild(box);
@@ -1943,11 +1901,11 @@
         newPostSound: safeStorageGet('newPostSound') === 'true',
         disablePostInlining: safeStorageGet('disablePostInlining') === 'true'
       };
-      prompt('Copy your Koshi style & preferences backup JSON:', JSON.stringify(bundle, null, 2));
+      prompt('Copy this to backup your settings:', JSON.stringify(bundle, null, 2));
     },
 
     promptImportAllSettings() {
-      const raw = prompt('Paste Koshi style & preferences backup JSON:');
+      const raw = prompt('Paste your backup here:');
       if (!raw) return;
       try {
         const bundle = JSON.parse(raw);
