@@ -41,6 +41,10 @@ document.addEventListener('DOMContentLoaded', function () {
         nameElement.classList.add('youName');
       }
     });
+
+    if (window.stylePanel && typeof window.stylePanel.annotatePosts === 'function') {
+      window.stylePanel.annotatePosts();
+    }
   } catch (e) {
     console.error('Error checking post ownership:', e);
   }

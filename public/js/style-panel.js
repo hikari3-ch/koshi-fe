@@ -10,15 +10,8 @@
     { key: 'hideAnnouncement', group: 'elements', label: 'Hide announcement', bodyClass: 'oc-hide-announcement', defaultValue: false },
     { key: 'hidePostForm', group: 'elements', label: 'Collapse post form by default', bodyClass: 'oc-hide-post-form', defaultValue: false },
     { key: 'hideCheckboxes', group: 'elements', label: 'Hide post checkboxes', bodyClass: 'oc-hide-checkboxes', defaultValue: false },
-    { key: 'hideSideArrows', group: 'elements', label: 'Hide >> reply arrows', bodyClass: 'oc-hide-side-arrows', defaultValue: false },
-    { key: 'hideFileInfo', group: 'elements', label: 'Hide file info line', bodyClass: 'oc-hide-file-info', defaultValue: false },
     { key: 'hideFlags', group: 'elements', label: 'Hide post flags', bodyClass: 'oc-hide-flags', defaultValue: false },
     { key: 'hideBacklinks', group: 'elements', label: 'Hide backlinks', bodyClass: 'oc-hide-backlinks', defaultValue: false },
-    { key: 'hideSubjects', group: 'elements', label: 'Hide post subjects', bodyClass: 'oc-hide-subjects', defaultValue: false },
-    { key: 'hideAgree', group: 'elements', label: 'Hide Agree buttons', bodyClass: 'oc-hide-agree', defaultValue: false },
-    { key: 'hideNavArrows', group: 'elements', label: 'Hide thread jump arrows', bodyClass: 'oc-hide-nav-arrows', defaultValue: false },
-    { key: 'hideDeleteForm', group: 'elements', label: 'Hide bottom delete form', bodyClass: 'oc-hide-delete-form', defaultValue: false },
-    { key: 'hideFooterText', group: 'elements', label: 'Hide footer disclaimer', bodyClass: 'oc-hide-footer-text', defaultValue: false },
 
     { key: 'highlightOp', group: 'highlights', label: 'Highlight OP posts', bodyClass: 'oc-highlight-op', defaultValue: false },
     { key: 'highlightYou', group: 'highlights', label: 'Highlight your (You) posts', bodyClass: 'oc-highlight-you', defaultValue: true },
@@ -391,7 +384,7 @@
     annotatePosts(optsInput) {
       if (typeof document === 'undefined') return;
       const opts = optsInput || this.getStyleOptions();
-      const posts = document.querySelectorAll('.post');
+      const posts = document.querySelectorAll('.post, .op');
       posts.forEach((post) => {
         const isYou = Boolean(post.querySelector('.you, .youName'));
         const quotesYou = Boolean(
@@ -708,6 +701,14 @@
       }
     },
 
+    getDisabledTabs() {
+      const cfg = (typeof window !== 'undefined' && window.boardDisabledTabs) || {};
+      return {
+        mascots: Boolean(cfg.mascots),
+        customThemes: Boolean(cfg.customThemes)
+      };
+    },
+
     createModal() {
       if (this.modal || typeof document === 'undefined' || !document.body) return;
 
@@ -732,13 +733,14 @@
 
       const tabsBar = document.createElement('div');
       tabsBar.className = 'style-modal-tabs';
+      const disabledTabs = this.getDisabledTabs();
       const tabs = [
         { id: 'themes', label: 'Themes' },
         { id: 'options', label: 'Options' },
-        { id: 'mascots', label: 'Mascots' },
-        { id: 'editor', label: 'Custom Themes' },
+        !disabledTabs.mascots && { id: 'mascots', label: 'Mascots' },
+        !disabledTabs.customThemes && { id: 'editor', label: 'Custom Themes' },
         { id: 'filters', label: 'Filters & Code' }
-      ];
+      ].filter(Boolean);
       tabs.forEach((t) => {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -818,7 +820,11 @@
       if (!this.modal) return;
       const content = this.modal.querySelector('.style-modal-content');
       const editorPanel = document.getElementById('style-panel-editor');
-      if (!content || !editorPanel || typeof content.getBoundingClientRect !== 'function') return;
+      if (this.getDisabledTabs().customThemes || !editorPanel) {
+        if (content) content.style.height = '';
+        return;
+      }
+      if (!content || typeof content.getBoundingClientRect !== 'function') return;
 
       const panels = Array.from(this.modal.querySelectorAll('.style-tab-panel'));
       const prevActive = panels.map((p) => p.classList.contains('active'));
@@ -840,7 +846,12 @@
     },
 
     setTab(tabId) {
-      this.activeTab = tabId || 'themes';
+      const disabledTabs = this.getDisabledTabs();
+      let nextTab = tabId || 'themes';
+      if ((nextTab === 'mascots' && disabledTabs.mascots) || (nextTab === 'editor' && disabledTabs.customThemes)) {
+        nextTab = 'themes';
+      }
+      this.activeTab = nextTab;
       if (!this.modal) return;
       this.modal.querySelectorAll('.style-tab-btn').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.tab === this.activeTab);
@@ -956,7 +967,7 @@
       const actions = document.createElement('div');
       actions.className = 'theme-preview-actions';
 
-      if (id !== 'default') {
+      if (id !== 'default' && !this.getDisabledTabs().customThemes) {
         const cloneBtn = document.createElement('button');
         cloneBtn.type = 'button';
         cloneBtn.textContent = isCustom ? 'Edit' : 'Clone';

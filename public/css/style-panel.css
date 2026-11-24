@@ -562,41 +562,11 @@ body.oc-hide-checkboxes .post-checkbox {
   display: none !important;
 }
 
-body.oc-hide-side-arrows .side-arrows {
-  display: none !important;
-}
-
-body.oc-hide-file-info .file-info {
-  display: none !important;
-}
-
 body.oc-hide-flags .post-flag {
   display: none !important;
 }
 
 body.oc-hide-backlinks .backlinks {
-  display: none !important;
-}
-
-body.oc-hide-subjects .subject {
-  display: none !important;
-}
-
-body.oc-hide-agree .agree-button,
-body.oc-hide-agree .agree-toggle,
-body.oc-hide-agree .agree-count {
-  display: none !important;
-}
-
-body.oc-hide-nav-arrows .nav-arrows {
-  display: none !important;
-}
-
-body.oc-hide-delete-form #delete-form {
-  display: none !important;
-}
-
-body.oc-hide-footer-text .footer-text {
   display: none !important;
 }
 
@@ -607,9 +577,16 @@ body.oc-highlight-op .op {
   padding-left: 6px;
 }
 
-body.oc-highlight-you .oc-post-you,
-body.oc-highlight-you .post.oc-post-you {
+body.oc-highlight-you .oc-post-you:not(.op),
+body.oc-highlight-you .post.oc-post-you:not(.op) {
   border-left: 4px solid var(--name-color, #117743) !important;
+}
+
+body.oc-highlight-you .op.oc-post-you .thread-content {
+  background: var(--marked-color, #d6bad0);
+  border-left: 4px solid var(--name-color, #117743);
+  padding: 4px 8px;
+  display: flow-root;
 }
 
 body.oc-highlight-quotes-you .oc-post-quotes-you,
