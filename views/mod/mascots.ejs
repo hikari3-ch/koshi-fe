@@ -1,0 +1,165 @@
+<% title = 'Mascots'; %>
+<h1>Mascots</h1>
+<p class="mod-intro">Define site mascots and assign default mascots sitewide or per board. All enabled mascots become available for visitors in the OneeChan-style <strong>[Style]</strong> panel.</p>
+
+<fieldset class="reportFieldset">
+<legend>Upload New Mascot</legend>
+<form id="mascot-upload-form" enctype="multipart/form-data">
+  <table class="mod-settings">
+    <tr>
+      <th><label for="mascot-image">Image (PNG/JPEG/GIF/WebP, max 5 MB)</label></th>
+      <td>
+        <input type="file" id="mascot-image" name="image" accept="image/png,image/jpeg,image/gif,image/webp" required />
+        <div id="mascot-upload-preview-wrap" style="margin-top:6px;display:none;">
+          <img id="mascot-upload-preview" alt="Mascot preview" style="max-height:140px;max-width:200px;border:1px solid var(--border-color);padding:2px;" />
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <th><label for="mascot-name">Display Name</label></th>
+      <td><input type="text" id="mascot-name" name="name" maxlength="64" placeholder="e.g. Miku Wave" required /></td>
+    </tr>
+    <tr>
+      <th><label for="mascot-position">Default Position</label></th>
+      <td>
+        <select id="mascot-position" name="position">
+          <% positions.forEach(function (pos) { %>
+          <option value="<%= pos %>"><%= pos %></option>
+          <% }) %>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <th><label for="mascot-width">Width (px)</label></th>
+      <td><input type="number" id="mascot-width" name="width" min="40" max="800" value="220" /></td>
+    </tr>
+    <tr>
+      <th><label for="mascot-opacity">Opacity (0.05 - 1.0)</label></th>
+      <td><input type="number" id="mascot-opacity" name="opacity" min="0.05" max="1" step="0.05" value="0.9" /></td>
+    </tr>
+    <tr>
+      <th>Offset X / Y (px)</th>
+      <td>
+        X: <input type="number" id="mascot-offset-x" name="offsetX" min="-200" max="400" value="12" style="width:70px;" />
+        Y: <input type="number" id="mascot-offset-y" name="offsetY" min="-200" max="400" value="0" style="width:70px;" />
+      </td>
+    </tr>
+    <tr>
+      <th><label for="mascot-boards">Board Scope</label></th>
+      <td>
+        <input type="text" id="mascot-boards" name="boards" placeholder="Leave blank for all boards, or comma-separated URIs e.g. cel,lum" class="mod-wide" />
+      </td>
+    </tr>
+    <tr>
+      <th>Options</th>
+      <td>
+        <label><input type="checkbox" id="mascot-flip" name="flip" value="true" /> Flip horizontally</label>
+        <label style="margin-left:12px;"><input type="checkbox" id="mascot-enabled" name="enabled" value="true" checked /> Enabled</label>
+      </td>
+    </tr>
+  </table>
+  <div class="mod-actions">
+    <button type="submit">Upload Mascot</button>
+    <span id="mascot-upload-status" class="mod-hint"></span>
+  </div>
+</form>
+</fieldset>
+
+<fieldset class="reportFieldset">
+<legend>Default Mascot Assignments</legend>
+<form id="mascot-defaults-form">
+  <table class="mod-settings">
+    <tr>
+      <th><label for="mascot-sitewide-default">Sitewide Default</label></th>
+      <td>
+        <select id="mascot-sitewide-default" name="sitewide">
+          <option value=""<%= !defaults.sitewide ? ' selected' : '' %>>None (no default mascot)</option>
+          <option value="random"<%= defaults.sitewide === 'random' ? ' selected' : '' %>>Random enabled mascot</option>
+          <% mascots.forEach(function (m) { %>
+          <option value="<%= m.id %>"<%= defaults.sitewide === m.id ? ' selected' : '' %>><%= m.name %> (<%= m.position %><%= m.enabled === false ? ', disabled' : '' %>)</option>
+          <% }) %>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <th>Per-Board Overrides</th>
+      <td>
+        <div id="mascot-board-overrides">
+          <% const boardEntries = Object.entries(defaults.boards || {}); %>
+          <% boardEntries.forEach(function ([bUri, mVal]) { %>
+          <div class="mascot-board-row">
+            <select class="mascot-board-select">
+              <% allBoards.forEach(function (b) { %>
+              <option value="<%= b.boardUri %>"<%= b.boardUri === bUri ? ' selected' : '' %>>/<%= b.boardUri %>/ - <%= b.boardName || b.boardUri %></option>
+              <% }) %>
+            </select>
+            <select class="mascot-board-value">
+              <option value="none"<%= mVal === 'none' ? ' selected' : '' %>>Disable mascot on this board</option>
+              <option value="random"<%= mVal === 'random' ? ' selected' : '' %>>Random enabled mascot</option>
+              <% mascots.forEach(function (m) { %>
+              <option value="<%= m.id %>"<%= mVal === m.id ? ' selected' : '' %>><%= m.name %></option>
+              <% }) %>
+            </select>
+            <button type="button" class="mascot-remove-board-row">Remove</button>
+          </div>
+          <% }) %>
+        </div>
+        <button type="button" id="mascot-add-board-override" style="margin-top:6px;">+ Add Board Override</button>
+      </td>
+    </tr>
+  </table>
+  <div class="mod-actions">
+    <button type="submit">Save Default Assignments</button>
+    <span id="mascot-defaults-status" class="mod-hint"></span>
+  </div>
+</form>
+</fieldset>
+
+<fieldset class="reportFieldset">
+<legend>Defined Mascots (<span id="mascot-count"><%= mascots.length %></span>)</legend>
+<div id="mascot-admin-list" class="mascot-admin-grid">
+  <% if (!mascots.length) { %>
+  <p class="mod-hint" id="mascot-empty-hint">No mascots uploaded yet.</p>
+  <% } %>
+  <% mascots.forEach(function (m) { %>
+  <div class="mascot-admin-card" data-mascot-id="<%= m.id %>">
+    <div class="mascot-admin-thumb-wrap">
+      <img src="<%= m.url %>" alt="<%= m.name %>" class="mascot-admin-thumb" />
+    </div>
+    <form class="mascot-edit-form" data-mascot-id="<%= m.id %>">
+      <label>Name <input type="text" name="name" value="<%= m.name %>" maxlength="64" required /></label>
+      <label>Position
+        <select name="position">
+          <% positions.forEach(function (pos) { %>
+          <option value="<%= pos %>"<%= m.position === pos ? ' selected' : '' %>><%= pos %></option>
+          <% }) %>
+        </select>
+      </label>
+      <div class="mascot-edit-row">
+        <label>Width <input type="number" name="width" min="40" max="800" value="<%= m.width %>" /></label>
+        <label>Opacity <input type="number" name="opacity" min="0.05" max="1" step="0.05" value="<%= m.opacity %>" /></label>
+      </div>
+      <div class="mascot-edit-row">
+        <label>Offset X <input type="number" name="offsetX" min="-200" max="400" value="<%= m.offsetX %>" /></label>
+        <label>Offset Y <input type="number" name="offsetY" min="-200" max="400" value="<%= m.offsetY %>" /></label>
+      </div>
+      <label>Boards <input type="text" name="boards" value="<%= (m.boards || []).join(', ') %>" placeholder="All boards" /></label>
+      <div class="mascot-edit-checks">
+        <label><input type="checkbox" name="flip"<%= m.flip ? ' checked' : '' %> /> Flip</label>
+        <label><input type="checkbox" name="enabled"<%= m.enabled !== false ? ' checked' : '' %> /> Enabled</label>
+      </div>
+      <div class="mascot-card-actions">
+        <button type="submit">Save</button>
+        <button type="button" class="mascot-delete-btn" data-mascot-id="<%= m.id %>">Delete</button>
+        <span class="mascot-card-status mod-hint"></span>
+      </div>
+    </form>
+  </div>
+  <% }) %>
+</div>
+</fieldset>
+
+<script>
+window.mascotAdminData = <%- JSON.stringify({ mascots, defaults, allBoards, positions }).replace(/</g, '\\u003c') %>;
+</script>
+<script src="/js/mod-mascots.js?v=<%= locals.assetVersion('js/mod-mascots.js') %>"></script>

@@ -1,0 +1,148 @@
+<% title = 'Server Logs'; %>
+<h1>Server Logs</h1>
+<p class="mod-intro">Application, HTTP request, authentication, and error logs written by Koshi in structured JSONL format. Visible to Root and Admins only.</p>
+
+<fieldset class="reportFieldset">
+<legend>Summary (<span id="log-active-file"><%= initial.file || 'in-memory buffer' %></span>)</legend>
+<div class="log-stats-bar" id="log-stats-bar">
+  <span class="log-stat-pill">Total: <strong id="log-stat-total"><%= initial.stats.total %></strong></span>
+  <span class="log-stat-pill log-level-fatal">FATAL: <strong id="log-stat-fatal"><%= initial.stats.fatal %></strong></span>
+  <span class="log-stat-pill log-level-error">ERROR: <strong id="log-stat-error"><%= initial.stats.error %></strong></span>
+  <span class="log-stat-pill log-level-warn">WARN: <strong id="log-stat-warn"><%= initial.stats.warn %></strong></span>
+  <span class="log-stat-pill log-level-info">INFO: <strong id="log-stat-info"><%= initial.stats.info %></strong></span>
+  <span class="log-stat-pill log-level-debug">DEBUG: <strong id="log-stat-debug"><%= initial.stats.debug %></strong></span>
+</div>
+</fieldset>
+
+<fieldset class="reportFieldset">
+<legend>Filter &amp; Tail</legend>
+<form id="server-logs-filter" class="log-filter-form">
+  <label>File
+    <select id="log-file" name="file">
+      <% if (!initial.files || !initial.files.length) { %>
+      <option value="">In-memory buffer</option>
+      <% } %>
+      <% (initial.files || []).forEach(function (f) { %>
+      <option value="<%= f.name %>"<%= f.name === initial.file ? ' selected' : '' %>><%= f.name %> (<%= (f.size / 1024).toFixed(1) %> KB)</option>
+      <% }) %>
+    </select>
+  </label>
+  <label>Min Level
+    <select id="log-min-level" name="minLevel">
+      <option value="">Any level</option>
+      <% levels.forEach(function (lvl) { %>
+      <option value="<%= lvl %>"><%= lvl.toUpperCase() %>+</option>
+      <% }) %>
+    </select>
+  </label>
+  <label>Exact Level
+    <select id="log-level" name="level">
+      <option value="">All</option>
+      <% levels.forEach(function (lvl) { %>
+      <option value="<%= lvl %>"><%= lvl.toUpperCase() %></option>
+      <% }) %>
+    </select>
+  </label>
+  <label>Category
+    <select id="log-category" name="category">
+      <option value="">All categories</option>
+      <% (initial.categories || []).forEach(function (cat) { %>
+      <option value="<%= cat %>"><%= cat %></option>
+      <% }) %>
+    </select>
+  </label>
+  <label>Search
+    <input type="text" id="log-search" name="search" placeholder="message, path, user, stack..." />
+  </label>
+  <label>Per Page
+    <select id="log-limit" name="limit">
+      <option value="50">50</option>
+      <option value="100" selected>100</option>
+      <option value="250">250</option>
+      <option value="500">500</option>
+    </select>
+  </label>
+  <button type="submit">Apply</button>
+  <button type="button" id="log-refresh-btn">Refresh</button>
+  <label class="log-inline-check"><input type="checkbox" id="log-auto-refresh" /> Auto-refresh (5s)</label>
+  <a id="log-download-link" class="button" href="<%= initial.file ? '/mod/api/server-logs/download?file=' + encodeURIComponent(initial.file) : '#' %>"<% if (!initial.file) { %> style="display:none"<% } %>>Download File</a>
+</form>
+</fieldset>
+
+<div class="log-pagination">
+  <button type="button" id="log-prev-btn" disabled>&larr; Newer</button>
+  <span id="log-page-info">Showing <%= initial.entries.length %> of <%= initial.total %></span>
+  <button type="button" id="log-next-btn"<%= initial.offset + initial.entries.length >= initial.total ? ' disabled' : '' %>>Older &rarr;</button>
+</div>
+
+<table class="mod-table log-table" id="server-logs-table">
+  <thead>
+    <tr>
+      <th>Time (UTC)</th>
+      <th>Level</th>
+      <th>Category</th>
+      <th>Message</th>
+    </tr>
+  </thead>
+  <tbody id="server-logs-body">
+    <% if (!initial.entries.length) { %>
+    <tr><td colspan="4" class="mod-hint">No log entries matched the current filters.</td></tr>
+    <% } %>
+    <% initial.entries.forEach(function (entry) { %>
+    <tr class="log-row log-row-<%= entry.level %>">
+      <td class="log-ts"><code><%= entry.ts || '-' %></code></td>
+      <td><span class="log-level-badge log-level-<%= entry.level %>"><%= entry.level.toUpperCase() %></span></td>
+      <td><code><%= entry.category %></code></td>
+      <td class="log-msg-cell">
+        <div class="log-msg-text"><%= entry.msg %></div>
+        <% if (entry.meta) { %>
+        <details class="log-details"><summary>Metadata</summary><pre class="mod-code"><%= JSON.stringify(entry.meta, null, 2) %></pre></details>
+        <% } %>
+        <% if (entry.stack) { %>
+        <details class="log-details"><summary>Stack Trace</summary><pre class="mod-code"><%= entry.stack %></pre></details>
+        <% } %>
+      </td>
+    </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<details class="mod-settings-collapsible" style="margin-top: 14px;">
+  <summary><strong>Logging Configuration</strong> (<code><%= logConfig.dir %></code>)</summary>
+  <form id="logging-settings-form" style="margin-top: 8px;">
+    <table class="mod-settings">
+      <tr>
+        <th><label for="cfg-log-level">Minimum Log Level</label></th>
+        <td>
+          <select id="cfg-log-level" name="level">
+            <% levels.forEach(function (lvl) { %>
+            <option value="<%= lvl %>"<%= logConfig.level === lvl ? ' selected' : '' %>><%= lvl.toUpperCase() %></option>
+            <% }) %>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <th><label for="cfg-log-size">Rotate Size (MB)</label></th>
+        <td><input type="number" id="cfg-log-size" name="maxFileSizeMB" min="1" max="500" value="<%= logConfig.maxFileSizeMB %>" /></td>
+      </tr>
+      <tr>
+        <th><label for="cfg-log-files">Retention (Files)</label></th>
+        <td><input type="number" id="cfg-log-files" name="maxFiles" min="1" max="365" value="<%= logConfig.maxFiles %>" /></td>
+      </tr>
+      <tr>
+        <th>Options</th>
+        <td>
+          <label class="mod-block"><input type="checkbox" name="logRequests" value="true"<%= logConfig.logRequests ? ' checked' : '' %> /> Log HTTP requests</label>
+          <label class="mod-block"><input type="checkbox" name="console" value="true"<%= logConfig.console ? ' checked' : '' %> /> Echo logs to stdout/stderr</label>
+          <label class="mod-block"><input type="checkbox" name="redactIps" value="true"<%= logConfig.redactIps ? ' checked' : '' %> /> Redact visitor IPs in log metadata</label>
+        </td>
+      </tr>
+    </table>
+    <div class="mod-actions">
+      <button type="submit">Save Logging Settings</button>
+      <span id="logging-settings-status" class="mod-hint"></span>
+    </div>
+  </form>
+</details>
+
+<script src="/js/mod-server-logs.js?v=<%= locals.assetVersion('js/mod-server-logs.js') %>"></script>

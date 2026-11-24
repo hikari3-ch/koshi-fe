@@ -3,6 +3,9 @@
 <p class="mod-subnav">Logged in as <strong><%= user.login %></strong><% if (locals.roleLabel) { %> (<%= roleLabel %>)<% } %></p>
 <fieldset class="reportFieldset">
 <legend>Status</legend>
+<% if (locals.koshiVersion) { %>
+<p class="mod-version">Koshi <strong><%= koshiVersion.displayName %></strong><% if (koshiVersion.tag) { %> &middot; <code><%= koshiVersion.tag %></code><% } %><% if (koshiVersion.commit && !koshiVersion.isTaggedRelease) { %> (<code><%= koshiVersion.commit %></code>)<% } %></p>
+<% } %>
 <ul class="mod-stats">
 <li><a href="/mod/reports"><strong><%= openReports %></strong> open reports</a></li>
 <li><a href="/mod/bans/appeals"><strong><%= appealedBans %></strong> ban appeals</a></li>
