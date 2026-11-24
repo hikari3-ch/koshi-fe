@@ -1,4 +1,4 @@
-/* OneeChan-Inspired Styling, Modals, Mascots & Admin Utilities */
+/* Style Panel, Modals, Mascots & Admin Utilities */
 
 .koshi-version {
   font-size: 0.9em;
@@ -183,12 +183,10 @@
   flex-direction: column;
   background: var(--post-color, #d6daf0);
   cursor: pointer;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 
 .theme-preview-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+  border-color: var(--hover-link-color, #d00);
 }
 
 .theme-preview-card.active {
@@ -260,11 +258,11 @@
 }
 
 /* ==========================================================================
-   Tab 2: Style Options Checkboxes & Typography
+   Tab 2: Options Checkboxes & Typography
    ========================================================================== */
 .style-options-columns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
   gap: 12px;
 }
 
@@ -386,7 +384,7 @@
 }
 
 /* ==========================================================================
-   Tab 4: Custom Theme Editor (OneeChan-style)
+   Tab 4: Custom Theme Editor
    ========================================================================== */
 .custom-theme-saved-bar {
   display: flex;
@@ -457,6 +455,52 @@
 }
 
 /* ==========================================================================
+   Tab 5: Filters & Custom Code
+   ========================================================================== */
+.style-filters-code-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+#style-modal .filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+#style-modal .filters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#style-modal .filter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px;
+  background: var(--background-color, #eef2ff);
+  border: 1px solid var(--border-alt, #b7c5d9);
+  overflow-wrap: anywhere;
+}
+
+#style-modal textarea.settings-code {
+  background: var(--input, #fff);
+  border: 1px solid var(--border-color, #aaa);
+  box-sizing: border-box;
+  color: var(--text-color, #000);
+  font-family: monospace;
+  height: 140px;
+  padding: 6px;
+  resize: vertical;
+  width: 100%;
+}
+
+/* ==========================================================================
    Mascot Overlay on Boards/Threads
    ========================================================================== */
 #koshi-mascot-container {
@@ -513,7 +557,7 @@
 }
 
 /* ==========================================================================
-   OneeChan Show / Hide / Highlight / Layout Body Classes
+   Show / Hide / Highlight / Layout Body Classes
    ========================================================================== */
 body.oc-hide-banner #bannerCnt,
 body.oc-hide-banner .banner-img {

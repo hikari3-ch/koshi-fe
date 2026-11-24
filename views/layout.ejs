@@ -15,7 +15,7 @@ for (let i = 0; i < 5; i++) {
 <title><%= pageTitle %></title>
 <% if (locals.og && locals.og.description) { %><meta name="description" content="<%= locals.og.description %>"><% } %>
 <link rel="stylesheet" href="/css/global.css?v=<%= locals.assetVersion('css/global.css') %>">
-<link rel="stylesheet" href="/css/oneechan.css?v=<%= locals.assetVersion('css/oneechan.css') %>">
+<link rel="stylesheet" href="/css/style-panel.css?v=<%= locals.assetVersion('css/style-panel.css') %>">
 <% (themeCfg.extraCss || []).forEach(function (cssHref) { const hrefStr = String(cssHref || ''); if (!hrefStr) return; %>
 <link rel="stylesheet" href="<%= hrefStr %>?v=<%= hrefStr.startsWith('/') ? locals.assetVersion(hrefStr.slice(1)) : '1' %>">
 <% }) %>
@@ -50,8 +50,7 @@ for (let i = 0; i < 5; i++) {
 <script src="/js/captcha.js?v=<%= locals.assetVersion('js/captcha.js') %>"></script>
 <script src="/js/thumb.js?v=<%= locals.assetVersion('js/thumb.js') %>"></script>
 <script src="/js/thread-watcher.js?v=<%= locals.assetVersion('js/thread-watcher.js') %>"></script>
-<script src="/js/settings.js?v=<%= locals.assetVersion('js/settings.js') %>"></script>
-<script src="/js/oneechan.js?v=<%= locals.assetVersion('js/oneechan.js') %>"></script>
+<script src="/js/style-panel.js?v=<%= locals.assetVersion('js/style-panel.js') %>"></script>
 <script>
 window.reportCategories = <%- JSON.stringify(locals.reportCategories || []).replace(/</g, '\\u003c') %>;
 window.deletedPostDisplay = '<%= locals.deletedPostDisplay %>';

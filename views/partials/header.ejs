@@ -15,7 +15,6 @@
     <% if (locals.user) { %>[Logged in as <%= locals.user.login %>] <% } %>[<a href="/">Home</a>]
     [<a href="/stats">Stats</a>]
     [<a href="#" id="watch-list-btn" class="watch-list-btn">Thread Watcher</a>]
-    [<a href="#" id="settings-btn" class="settings-btn">Settings</a>]
     [<a href="#" id="style-btn" class="style-btn">Style</a>]
     [<a href="/mod">Moderation</a>]<% if (locals.modUser) { const isModMode = Boolean(locals.modView || locals.modViewEnabled !== false); %> [<a href="#" class="mod-view-toggle" data-target-mode="<%= isModMode ? 'regular' : 'mod' %>"<% if (locals.modView && locals.boardUri) { %> data-regular-url="<%= locals.isThread && locals.threadId ? '/' + locals.boardUri + '/thread/' + locals.threadId : '/' + locals.boardUri + (locals.page && locals.page > 1 ? '/' + locals.page : '/') %>"<% } %> title="Switch between mod view (IPs &amp; mod options) and regular user view"><%= isModMode ? 'Regular View' : 'Mod View' %></a>]<% } %>
   </div>

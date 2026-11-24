@@ -415,7 +415,7 @@ const threadAutoRefresh = {
         if (window.initializePostMenus) window.initializePostMenus(el);
       }
       if (window.initializePolls) window.initializePolls();
-      if (window.settings?.applyFilters) window.settings.applyFilters();
+      if (window.stylePanel?.applyFilters) window.stylePanel.applyFilters();
 
       if (!wasAtBottom && unreadDelta > 0) {
         unreadCount += unreadDelta;

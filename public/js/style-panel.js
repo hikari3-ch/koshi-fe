@@ -1,7 +1,8 @@
 (function () {
   const STYLE_OPTIONS_KEY = 'koshiStyleOptions';
   const MASCOT_PREFS_KEY = 'koshiMascotPrefs';
-  const EXTRA_STYLE_ID = 'koshi-oneechan-style';
+  const STYLE_PANEL_CSS_ID = 'koshi-style-panel-css';
+  const CUSTOM_STYLE_ID = 'custom-style';
 
   const STYLE_OPTION_DEFS = [
     // Show / Hide Elements
@@ -39,6 +40,60 @@
     { key: 'customScrollbars', group: 'layout', label: 'Custom slim scrollbars', desc: 'Use thin theme-colored scrollbars in Chromium/WebKit', bodyClass: 'oc-custom-scrollbars', defaultValue: false }
   ];
 
+  const BOARD_BEHAVIOR_DEFS = [
+    {
+      id: 'disable-you-tag',
+      storageKey: 'disableYouTag',
+      label: 'Disable (You) tags',
+      desc: 'Stop marking your own posts and the replies to them with (You)',
+      read: () => safeStorageGet('disableYouTag') === 'true',
+      write: (checked) => safeStorageSet('disableYouTag', String(Boolean(checked)))
+    },
+    {
+      id: 'image-preview-hover',
+      storageKey: 'imagePreviewHover',
+      label: 'Image preview on hover',
+      desc: 'Show the full image while the pointer is over a thumbnail',
+      read: () => safeStorageGet('imagePreviewHover') === 'true',
+      write: (checked) => safeStorageSet('imagePreviewHover', String(Boolean(checked)))
+    },
+    {
+      id: 'disable-auto-watch',
+      storageKey: 'disableAutoWatch',
+      label: 'Disable auto-watching',
+      desc: 'Stop automatically adding threads you post in to the Thread Watcher',
+      read: () => safeStorageGet('disableAutoWatch') === 'true',
+      write: (checked) => safeStorageSet('disableAutoWatch', String(Boolean(checked)))
+    },
+    {
+      id: 'disable-xchan-sync',
+      storageKey: 'disableXchanSync',
+      label: 'Disable 4chan-X sync',
+      desc: 'Keep this Thread Watcher separate from the thread watcher of the 4chan-X userscript',
+      read: () => safeStorageGet('disableXchanSync') === 'true',
+      write: (checked) => safeStorageSet('disableXchanSync', String(Boolean(checked)))
+    },
+    {
+      id: 'new-post-sound',
+      storageKey: 'newPostSound',
+      label: 'New post sound',
+      desc: 'Play a sound when an open thread gets a new post',
+      read: () => safeStorageGet('newPostSound') === 'true',
+      write: (checked) => safeStorageSet('newPostSound', String(Boolean(checked)))
+    },
+    {
+      id: 'post-inlining',
+      storageKey: 'disablePostInlining',
+      label: 'Inline quoted posts',
+      desc: 'Clicking a quote opens the quoted post inside the reply',
+      read: () => safeStorageGet('disablePostInlining') !== 'true',
+      write: (checked) => {
+        safeStorageSet('disablePostInlining', String(!checked));
+        if (!checked && typeof window !== 'undefined') window.postInline?.closeAll();
+      }
+    }
+  ];
+
   const THEME_VAR_DEFS = [
     { key: '--background-color', label: 'Page Background', defaultVal: '#eef2ff' },
     { key: '--background-gradient', label: 'Top Gradient', defaultVal: '#d6daf0' },
@@ -65,7 +120,7 @@
     { value: '', label: 'Theme / Browser Default' },
     { value: 'Arial, Helvetica, sans-serif', label: 'Arial / Helvetica' },
     { value: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", label: 'Segoe UI / Sans' },
-    { value: "Verdana, Geneva, sans-serif", label: 'Verdana' },
+    { value: 'Verdana, Geneva, sans-serif', label: 'Verdana' },
     { value: "'MS PGothic', 'IPAMonaPGothic', sans-serif", label: 'MS PGothic (Shift_JIS art)' },
     { value: "Georgia, 'Times New Roman', serif", label: 'Georgia Serif' },
     { value: "'Courier New', Courier, monospace", label: 'Monospace' }
@@ -80,9 +135,9 @@
   );
 
   const DEFAULT_MASCOT_PREFS = {
-    mode: 'default', // 'default' | 'specific' | 'random' | 'off'
+    mode: 'default',
     selectedId: '',
-    position: 'default', // 'default' | 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
+    position: 'default',
     scale: 100,
     opacity: 100,
     clickToCycle: true,
@@ -100,6 +155,15 @@
       return parsed && typeof parsed === 'object' ? parsed : fallback;
     } catch {
       return fallback;
+    }
+  }
+
+  function safeParseFilters() {
+    try {
+      const parsed = JSON.parse(safeStorageGet('filters') || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
     }
   }
 
@@ -137,16 +201,18 @@
     return (themeObj && themeObj.palette && typeof themeObj.palette === 'object' ? themeObj.palette : {}) || {};
   }
 
-  const oneechan = {
+  const stylePanel = {
     STYLE_OPTION_DEFS,
+    BOARD_BEHAVIOR_DEFS,
     THEME_VAR_DEFS,
     FONT_CHOICES,
     activeTab: 'themes',
     modal: null,
+    filters: [],
     editingThemeId: null,
-    previewTimer: null,
     sessionRandomId: null,
     sessionLastMascotId: null,
+    _customJsRan: false,
 
     getStyleOptions() {
       const saved = safeJsonParse(safeStorageGet(STYLE_OPTIONS_KEY), {});
@@ -175,11 +241,11 @@
     },
 
     getCustomThemes() {
-      return window.themes?.getCustomThemes ? window.themes.getCustomThemes() : [];
+      return typeof window !== 'undefined' && window.themes?.getCustomThemes ? window.themes.getCustomThemes() : [];
     },
 
     saveCustomThemes(list) {
-      return window.themes?.saveCustomThemes ? window.themes.saveCustomThemes(list) : list;
+      return typeof window !== 'undefined' && window.themes?.saveCustomThemes ? window.themes.saveCustomThemes(list) : list;
     },
 
     buildStyleOptionsCss(opts) {
@@ -208,6 +274,71 @@
       return rules.join('\n');
     },
 
+    applyCustomCodeAndFlags() {
+      if (typeof document === 'undefined') return;
+      const customCSS = safeStorageGet('customCSS') || '';
+      const disableYouTag = safeStorageGet('disableYouTag') === 'true';
+      const hideFortunes = safeStorageGet('hideFortunes') === 'true';
+
+      let styleElement = document.getElementById(CUSTOM_STYLE_ID);
+      if (!styleElement) {
+        styleElement = document.createElement('style');
+        styleElement.id = CUSTOM_STYLE_ID;
+        document.head.appendChild(styleElement);
+      }
+
+      let combinedCSS = customCSS;
+
+      if (disableYouTag) {
+        combinedCSS += `
+          .youName::after,
+          .you::after,
+          .you.opReply::after {
+            display: none !important;
+          }
+
+          .you.opReply::after {
+            content: ' (OP)' !important;
+            display: inline !important;
+          }
+        `;
+      }
+
+      if (hideFortunes) {
+        combinedCSS += `
+          .fortune,
+          .excellentLuck,
+          .goodLuck,
+          .averageLuck,
+          .badLuck,
+          .tellYouNow,
+          .outlookGood,
+          .veryBadLuck,
+          .godlyLuck,
+          .youAreBanned,
+          .divFortune {
+            display: none !important;
+          }
+        `;
+      }
+
+      styleElement.textContent = combinedCSS;
+
+      if (typeof window !== 'undefined' && window.imagePreview) {
+        window.imagePreview.update();
+      }
+    },
+
+    runCustomJS() {
+      const customJS = safeStorageGet('customJS');
+      if (!customJS) return;
+      try {
+        eval(customJS);
+      } catch (error) {
+        console.error('Error in custom JavaScript:', error);
+      }
+    },
+
     applyStyleOptions(optsInput) {
       const opts = optsInput || this.getStyleOptions();
       if (typeof document === 'undefined' || !document.body) return opts;
@@ -216,16 +347,17 @@
         document.body.classList.toggle(def.bodyClass, Boolean(opts[def.key]));
       });
 
-      let styleEl = document.getElementById(EXTRA_STYLE_ID);
+      let styleEl = document.getElementById(STYLE_PANEL_CSS_ID);
       if (!styleEl) {
         styleEl = document.createElement('style');
-        styleEl.id = EXTRA_STYLE_ID;
+        styleEl.id = STYLE_PANEL_CSS_ID;
         document.head.appendChild(styleEl);
       }
       styleEl.textContent = this.buildStyleOptionsCss(opts);
 
       this.syncPostFormToggle(Boolean(opts.hidePostForm));
       this.annotatePosts(opts);
+      this.applyCustomCodeAndFlags();
       return opts;
     },
 
@@ -271,7 +403,9 @@
       const posts = document.querySelectorAll('.post');
       posts.forEach((post) => {
         const isYou = Boolean(post.querySelector('.you, .youName'));
-        const quotesYou = Boolean(post.querySelector('.quoteYou') || Array.from(post.querySelectorAll('a')).some((a) => /\(You\)/.test(a.textContent || '')));
+        const quotesYou = Boolean(
+          post.querySelector('.quoteYou') || Array.from(post.querySelectorAll('a') || []).some((a) => /\(You\)/.test(a.textContent || ''))
+        );
         const hasCapcode = Boolean(post.querySelector('[data-capcode], .capcode-label'));
 
         post.classList.toggle('oc-post-you', Boolean(opts.highlightYou && isYou));
@@ -280,6 +414,156 @@
       });
     },
 
+    // =========================================================================
+    // Post Filters (migrated from legacy settings menu)
+    // =========================================================================
+    addFilter() {
+      const typeEl = document.getElementById('filter-type');
+      const inputEl = document.getElementById('filter-input');
+      const regexEl = document.getElementById('filter-regex');
+      const type = typeEl ? typeEl.value : 'name';
+      const pattern = inputEl ? inputEl.value.trim() : '';
+      const isRegex = Boolean(regexEl && regexEl.checked);
+
+      if (!pattern) return;
+
+      if (isRegex) {
+        try {
+          new RegExp(pattern, 'i');
+        } catch (e) {
+          alert(`Invalid regular expression: ${e.message}`);
+          return;
+        }
+      }
+
+      if (type === 'name' && pattern.toLowerCase() === 'anonymous') {
+        alert("Cannot create name filter on 'Anonymous'");
+        return;
+      }
+
+      this.filters.push({
+        id: Date.now(),
+        type,
+        pattern,
+        isRegex
+      });
+
+      safeStorageSet('filters', JSON.stringify(this.filters));
+      this.updateFiltersList();
+      this.applyFilters();
+
+      if (inputEl) inputEl.value = '';
+    },
+
+    removeFilter(id) {
+      this.filters = this.filters.filter((filter) => filter.id !== id);
+      safeStorageSet('filters', JSON.stringify(this.filters));
+      this.updateFiltersList();
+      this.applyFilters();
+    },
+
+    updateFiltersList() {
+      const filtersList = document.getElementById('filters-list');
+      if (!filtersList) return;
+      filtersList.innerHTML = '';
+
+      if (this.filters.length === 0) {
+        const p = document.createElement('p');
+        p.textContent = 'No filters added yet.';
+        filtersList.appendChild(p);
+        return;
+      }
+
+      this.filters.forEach((filter) => {
+        const filterItem = document.createElement('div');
+        filterItem.className = 'filter-item';
+
+        const filterInfo = document.createElement('span');
+        filterInfo.textContent = `${filter.type}: ${filter.pattern} ${filter.isRegex ? '(regex)' : ''}`;
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.textContent = 'Remove';
+        removeButton.onclick = () => this.removeFilter(filter.id);
+
+        filterItem.appendChild(filterInfo);
+        filterItem.appendChild(removeButton);
+        filtersList.appendChild(filterItem);
+      });
+    },
+
+    applyFilters() {
+      if (typeof document === 'undefined') return;
+      const posts = document.querySelectorAll('.post, .reply, .op, .thread');
+
+      posts.forEach((post) => {
+        if (post.classList.contains('op') && post.closest('.thread')) return;
+        const existingButton = post.previousElementSibling;
+        if (existingButton && existingButton.classList.contains('filter-unhide-button')) {
+          existingButton.remove();
+          post.classList.remove('filtered-post');
+        }
+
+        const shouldFilter = this.filters.some((filter) => {
+          let content = '';
+
+          if (filter.type === 'name') {
+            const nameElement = post.querySelector('.name') || post.querySelector('.post-name') || post.querySelector('.author');
+            content = nameElement ? nameElement.textContent.trim() : '';
+          } else if (filter.type === 'tripcode') {
+            const nameElement = post.querySelector('.name') || post.querySelector('.post-name') || post.querySelector('.author');
+            if (nameElement) {
+              const fullNameText = nameElement.innerHTML;
+              if (fullNameText.includes('!!')) {
+                const tripcodeMatch = fullNameText.match(/([^<]+)<span[^>]*>!!([^<]+)<\/span>/);
+                if (tripcodeMatch) {
+                  content = tripcodeMatch[1] + '!!' + tripcodeMatch[2];
+                }
+              }
+            }
+          } else if (filter.type === 'subject') {
+            const subjectElement = post.querySelector('.subject') || post.querySelector('.post-subject') || post.querySelector('.thread-subject');
+            content = subjectElement ? subjectElement.textContent.trim() : '';
+          } else if (filter.type === 'message') {
+            const messageElement =
+              post.querySelector('.thread-content') ||
+              post.querySelector('.reply-content') ||
+              post.querySelector('.message') ||
+              post.querySelector('.post-content');
+            content = messageElement ? messageElement.textContent.trim() : '';
+          }
+
+          if (filter.isRegex) {
+            try {
+              const regex = new RegExp(filter.pattern, 'i');
+              return regex.test(content);
+            } catch {
+              return false;
+            }
+          }
+          return content.toLowerCase().includes(String(filter.pattern || '').toLowerCase());
+        });
+
+        if (shouldFilter) {
+          const boardUri = (typeof window !== 'undefined' && window.location?.pathname?.split('/')[1]) || 'unknown';
+          const postId = post.dataset.postId || post.id || 'unknown';
+
+          const unhideButton = document.createElement('button');
+          unhideButton.className = 'filter-unhide-button';
+          unhideButton.textContent = `[Unhide post /${boardUri}/${postId} (Filtered)]`;
+          unhideButton.onclick = function () {
+            post.classList.toggle('filtered-post');
+          };
+
+          post.classList.add('filtered-post');
+          post.parentNode.insertBefore(unhideButton, post);
+        }
+      });
+    },
+
+    // =========================================================================
+    // Mascots
+    // =========================================================================
     getAvailableMascots() {
       const serverCfg = (typeof window !== 'undefined' && window.koshiMascotConfig) || {};
       const serverMascots = Array.isArray(serverCfg.mascots)
@@ -333,7 +617,7 @@
     },
 
     isCatalogOrModPage() {
-      if (typeof window === 'undefined' || !window.location) return false;
+      if (typeof window === 'undefined' || !window.location) return { isMod: false, isCatalog: false };
       const p = String(window.location.pathname || '');
       return {
         isMod: p === '/mod' || p.startsWith('/mod/'),
@@ -399,7 +683,6 @@
       imgEl.style.transform = chosen.flip ? 'scaleX(-1)' : '';
       container.style.opacity = String(effOpacity);
 
-      // Apply offsets relative to selected corner
       container.style.left = '';
       container.style.right = '';
       container.style.top = '';
@@ -429,11 +712,11 @@
     },
 
     currentSelectedThemeId() {
-      return window.themes?.saved() || 'default';
+      return typeof window !== 'undefined' && window.themes?.saved ? window.themes.saved() || 'default' : 'default';
     },
 
     applyThemeSelection(id) {
-      if (!window.themes) return;
+      if (typeof window === 'undefined' || !window.themes) return;
       window.themes.select(id);
       if (this.modal && this.modal.classList.contains('oc-open')) {
         this.renderThemesTab();
@@ -453,7 +736,7 @@
       header.className = 'style-modal-header';
       const title = document.createElement('span');
       title.className = 'style-modal-title';
-      title.textContent = 'Style & Appearance (OneeChan)';
+      title.textContent = 'Style & Preferences';
       const closeBtn = document.createElement('button');
       closeBtn.type = 'button';
       closeBtn.className = 'style-modal-close';
@@ -466,9 +749,10 @@
       tabsBar.className = 'style-modal-tabs';
       const tabs = [
         { id: 'themes', label: 'Themes' },
-        { id: 'options', label: 'Style Options' },
+        { id: 'options', label: 'Options' },
         { id: 'mascots', label: 'Mascots' },
-        { id: 'editor', label: 'Custom Theme Editor' }
+        { id: 'editor', label: 'Custom Themes' },
+        { id: 'filters', label: 'Filters & Code' }
       ];
       tabs.forEach((t) => {
         const btn = document.createElement('button');
@@ -497,19 +781,19 @@
       leftGroup.className = 'style-footer-group';
       const exportBtn = document.createElement('button');
       exportBtn.type = 'button';
-      exportBtn.textContent = 'Export Style JSON';
+      exportBtn.textContent = 'Export Backup JSON';
       exportBtn.addEventListener('click', () => this.exportAllSettings());
 
       const importBtn = document.createElement('button');
       importBtn.type = 'button';
-      importBtn.textContent = 'Import Style JSON';
+      importBtn.textContent = 'Import Backup JSON';
       importBtn.addEventListener('click', () => this.promptImportAllSettings());
 
       const resetBtn = document.createElement('button');
       resetBtn.type = 'button';
       resetBtn.textContent = 'Reset All Defaults';
       resetBtn.addEventListener('click', () => {
-        if (confirm('Reset all style checkboxes, mascot preferences, and theme selection?')) {
+        if (confirm('Reset all style checkboxes, mascot preferences, board options, and theme selection?')) {
           this.resetAll();
         }
       });
@@ -533,6 +817,9 @@
 
       document.body.appendChild(modal);
       this.modal = modal;
+
+      // Render Filters & Code DOM immediately so filter elements exist even before opening the tab
+      this.renderFiltersTab();
     },
 
     setTab(tabId) {
@@ -549,6 +836,7 @@
       else if (this.activeTab === 'options') this.renderOptionsTab();
       else if (this.activeTab === 'mascots') this.renderMascotsTab();
       else if (this.activeTab === 'editor') this.renderEditorTab();
+      else if (this.activeTab === 'filters') this.renderFiltersTab();
     },
 
     show(tabId) {
@@ -695,7 +983,6 @@
         const q = String(this._themeSearch || '').trim().toLowerCase();
         const grp = this._themeFilterGroup || 'All';
 
-        // Board/Site default card
         const boardDefId = window.themes ? window.themes.boardDefaultId() : '';
         const defaultTargetId = boardDefId || (window.themes ? window.themes.defaultId : 'yotsuba-b');
         const defaultThemeObj = (window.themes && window.themes.byId(defaultTargetId)) || { label: 'Default', palette: {} };
@@ -769,6 +1056,29 @@
       drawGrid();
     },
 
+    makeCheckRow(labelText, descText, checked, onChange, id) {
+      const row = document.createElement('label');
+      row.className = 'style-check-row';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      if (id) cb.id = id;
+      cb.checked = Boolean(checked);
+      cb.addEventListener('change', () => onChange(cb.checked));
+
+      const textWrap = document.createElement('span');
+      textWrap.className = 'style-check-text';
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'style-check-label';
+      nameSpan.textContent = labelText;
+      const descSpan = document.createElement('span');
+      descSpan.className = 'style-check-desc';
+      descSpan.textContent = descText;
+      textWrap.append(nameSpan, descSpan);
+
+      row.append(cb, textWrap);
+      return row;
+    },
+
     renderOptionsTab() {
       const panel = document.getElementById('style-panel-options');
       if (!panel) return;
@@ -781,7 +1091,8 @@
       const sections = [
         { group: 'elements', title: 'Show / Hide Elements' },
         { group: 'highlights', title: 'Highlight Elements' },
-        { group: 'layout', title: 'Layout & Typography' }
+        { group: 'layout', title: 'Layout & Typography' },
+        { group: 'posts', title: 'Posts & Threads' }
       ];
 
       sections.forEach((sec) => {
@@ -791,35 +1102,52 @@
         h3.textContent = sec.title;
         box.appendChild(h3);
 
-        STYLE_OPTION_DEFS.filter((d) => d.group === sec.group).forEach((def) => {
-          const row = document.createElement('label');
-          row.className = 'style-check-row';
-          const cb = document.createElement('input');
-          cb.type = 'checkbox';
-          cb.checked = Boolean(opts[def.key]);
-          cb.addEventListener('change', () => {
-            const next = this.getStyleOptions();
-            next[def.key] = cb.checked;
-            this.saveStyleOptions(next);
-            this.applyStyleOptions(next);
+        if (sec.group === 'posts') {
+          BOARD_BEHAVIOR_DEFS.forEach((bdef) => {
+            box.appendChild(
+              this.makeCheckRow(
+                bdef.label,
+                bdef.desc,
+                bdef.read(),
+                (checked) => {
+                  bdef.write(checked);
+                  this.applyCustomCodeAndFlags();
+                },
+                bdef.id
+              )
+            );
           });
+          cols.appendChild(box);
+          return;
+        }
 
-          const textWrap = document.createElement('span');
-          textWrap.className = 'style-check-text';
-          const nameSpan = document.createElement('span');
-          nameSpan.className = 'style-check-label';
-          nameSpan.textContent = def.label;
-          const descSpan = document.createElement('span');
-          descSpan.className = 'style-check-desc';
-          descSpan.textContent = def.desc;
-          textWrap.append(nameSpan, descSpan);
-
-          row.append(cb, textWrap);
-          box.appendChild(row);
+        STYLE_OPTION_DEFS.filter((d) => d.group === sec.group).forEach((def) => {
+          box.appendChild(
+            this.makeCheckRow(def.label, def.desc, opts[def.key], (checked) => {
+              const next = this.getStyleOptions();
+              next[def.key] = checked;
+              this.saveStyleOptions(next);
+              this.applyStyleOptions(next);
+            })
+          );
         });
 
+        if (sec.group === 'elements') {
+          box.appendChild(
+            this.makeCheckRow(
+              'Hide fortunes',
+              'Hide fortunes on posts that contain them',
+              safeStorageGet('hideFortunes') === 'true',
+              (checked) => {
+                safeStorageSet('hideFortunes', String(Boolean(checked)));
+                this.applyCustomCodeAndFlags();
+              },
+              'hide-fortunes'
+            )
+          );
+        }
+
         if (sec.group === 'layout') {
-          // Font Family selector
           const fontRow = document.createElement('div');
           fontRow.className = 'style-range-row';
           const fontLabel = document.createElement('label');
@@ -841,7 +1169,6 @@
           fontRow.append(fontLabel, fontSel);
           box.appendChild(fontRow);
 
-          // Font size slider
           const makeSlider = (labelText, key, min, max, step, unit) => {
             const row = document.createElement('div');
             row.className = 'style-range-row';
@@ -894,7 +1221,6 @@
       const bar = document.createElement('div');
       bar.className = 'mascot-prefs-bar';
 
-      // Mode & Position Column
       const col1 = document.createElement('div');
       const modeLbl = document.createElement('label');
       modeLbl.textContent = 'Mascot Mode: ';
@@ -946,7 +1272,6 @@
       posLbl.appendChild(posSel);
       col1.append(modeLbl, posLbl);
 
-      // Sliders Column
       const col2 = document.createElement('div');
       const makeRange = (title, key, min, max, step, unit) => {
         const wrap = document.createElement('div');
@@ -975,7 +1300,6 @@
       };
       col2.append(makeRange('Mascot Size Scale', 'scale', 30, 200, 5, '%'), makeRange('Mascot Opacity', 'opacity', 10, 100, 5, '%'));
 
-      // Checkboxes Column
       const col3 = document.createElement('div');
       [
         { key: 'clickToCycle', label: 'Click mascot to cycle' },
@@ -1003,7 +1327,6 @@
       bar.append(col1, col2, col3);
       panel.appendChild(bar);
 
-      // Mascot Grid
       const grid = document.createElement('div');
       grid.className = 'mascot-picker-grid';
       if (!allMascots.length) {
@@ -1065,7 +1388,6 @@
         panel.appendChild(grid);
       }
 
-      // Personal Custom Mascot Form
       const addBox = document.createElement('div');
       addBox.className = 'style-options-box';
       const h3 = document.createElement('h3');
@@ -1139,10 +1461,7 @@
         THEME_VAR_DEFS.forEach((def) => {
           vars[def.key] = sanitizeHex(existing.vars?.[def.key] || def.defaultVal, def.defaultVal);
         });
-        return {
-          ...existing,
-          vars
-        };
+        return { ...existing, vars };
       }
       const vars = {};
       THEME_VAR_DEFS.forEach((def) => {
@@ -1151,7 +1470,7 @@
       return {
         id: 'ct_' + Date.now(),
         name: 'My Custom Theme',
-        baseTheme: window.themes?.defaultId || 'yotsuba-b',
+        baseTheme: (typeof window !== 'undefined' && window.themes?.defaultId) || 'yotsuba-b',
         vars,
         bgImage: '',
         bgRepeat: 'no-repeat',
@@ -1169,12 +1488,12 @@
 
       const customList = this.getCustomThemes();
       const editingExisting = this.editingThemeId ? customList.find((t) => t.id === this.editingThemeId) : null;
-      const draft = this.editorDraft && (!this.editingThemeId || this.editorDraft.id === this.editingThemeId)
-        ? this.editorDraft
-        : this.makeDefaultDraft(editingExisting);
+      const draft =
+        this.editorDraft && (!this.editingThemeId || this.editorDraft.id === this.editingThemeId)
+          ? this.editorDraft
+          : this.makeDefaultDraft(editingExisting);
       this.editorDraft = draft;
 
-      // Saved Custom Themes Bar
       const savedBar = document.createElement('div');
       savedBar.className = 'custom-theme-saved-bar';
       const savedSel = document.createElement('select');
@@ -1233,7 +1552,6 @@
       savedBar.append(savedSel, cloneSel, importThemeBtn);
       panel.appendChild(savedBar);
 
-      // Name & Base Row
       const topFields = document.createElement('div');
       topFields.className = 'mascot-custom-add';
       const nameInput = document.createElement('input');
@@ -1259,7 +1577,6 @@
       topFields.append(document.createTextNode('Name: '), nameInput, document.createTextNode(' Structural Base: '), baseSel);
       panel.appendChild(topFields);
 
-      // Editor + Live Preview Columns
       const layout = document.createElement('div');
       layout.className = 'custom-theme-editor-layout';
 
@@ -1314,7 +1631,7 @@
         pBody.style.marginTop = '5px';
         const pQuote = document.createElement('div');
         pQuote.style.color = v['--quote-color'];
-        pQuote.textContent = '>be me creating custom themes';
+        pQuote.textContent = '>creating custom themes';
         const pNorm = document.createElement('div');
         pNorm.textContent = 'Normal reply text looks like this.';
         pBody.append(pQuote, pNorm);
@@ -1369,7 +1686,6 @@
         colorsGrid.appendChild(field);
       });
 
-      // Background image + custom CSS
       const bgRow = document.createElement('div');
       bgRow.className = 'mascot-custom-add';
       const bgUrlIn = document.createElement('input');
@@ -1407,7 +1723,6 @@
 
       leftCol.append(colorsGrid, bgRow, extraCssArea);
 
-      // Action Buttons under Preview
       const editorActions = document.createElement('div');
       editorActions.className = 'style-footer-group';
       editorActions.style.marginTop = '8px';
@@ -1467,25 +1782,138 @@
       panel.appendChild(layout);
     },
 
+    renderFiltersTab() {
+      const panel = document.getElementById('style-panel-filters');
+      if (!panel) return;
+      panel.innerHTML = '';
+
+      const grid = document.createElement('div');
+      grid.className = 'style-filters-code-grid';
+
+      // Section 1: Filters & Post Hiding
+      const filtersBox = document.createElement('div');
+      filtersBox.className = 'style-options-box';
+      const fTitle = document.createElement('h3');
+      fTitle.textContent = 'Filters & Post Hiding';
+
+      const filterControls = document.createElement('div');
+      filterControls.className = 'filter-controls';
+
+      const filterTypeSelect = document.createElement('select');
+      filterTypeSelect.id = 'filter-type';
+      ['Name', 'Tripcode', 'Subject', 'Message'].forEach((type) => {
+        const option = document.createElement('option');
+        option.value = type.toLowerCase();
+        option.textContent = type;
+        filterTypeSelect.appendChild(option);
+      });
+
+      const filterInput = document.createElement('input');
+      filterInput.type = 'text';
+      filterInput.id = 'filter-input';
+      filterInput.placeholder = 'filter';
+
+      const regexContainer = document.createElement('label');
+      const regexCheckbox = document.createElement('input');
+      regexCheckbox.type = 'checkbox';
+      regexCheckbox.id = 'filter-regex';
+      regexContainer.append(regexCheckbox, ' Regex');
+
+      const addFilterButton = document.createElement('button');
+      addFilterButton.type = 'button';
+      addFilterButton.textContent = 'Add filter';
+      addFilterButton.onclick = () => this.addFilter();
+
+      filterControls.append(filterTypeSelect, filterInput, regexContainer, addFilterButton);
+
+      const filtersList = document.createElement('div');
+      filtersList.id = 'filters-list';
+      filtersList.className = 'filters-list';
+
+      filtersBox.append(fTitle, filterControls, filtersList);
+
+      // Section 2: Custom CSS & JS
+      const codeBox = document.createElement('div');
+      codeBox.className = 'style-options-box';
+      const cTitle = document.createElement('h3');
+      cTitle.textContent = 'Custom CSS & JavaScript';
+
+      const cssDesc = document.createElement('p');
+      cssDesc.className = 'style-check-desc';
+      cssDesc.textContent = 'Your own CSS rules, added to every page.';
+      const cssArea = document.createElement('textarea');
+      cssArea.id = 'custom-css';
+      cssArea.className = 'settings-code';
+      cssArea.placeholder = 'Enter your custom CSS here...';
+      cssArea.spellcheck = false;
+      cssArea.value = safeStorageGet('customCSS') || '';
+
+      const jsDesc = document.createElement('p');
+      jsDesc.className = 'style-check-desc';
+      jsDesc.style.marginTop = '8px';
+      jsDesc.textContent = 'Your own JavaScript, run on every page.';
+      const jsArea = document.createElement('textarea');
+      jsArea.id = 'custom-js';
+      jsArea.className = 'settings-code';
+      jsArea.placeholder = 'Enter your custom JavaScript here...';
+      jsArea.spellcheck = false;
+      jsArea.value = safeStorageGet('customJS') || '';
+
+      const codeActions = document.createElement('div');
+      codeActions.className = 'style-footer-group';
+      codeActions.style.marginTop = '8px';
+
+      const saveCodeBtn = document.createElement('button');
+      saveCodeBtn.type = 'button';
+      saveCodeBtn.textContent = 'Save & Apply Custom Code';
+      const statusSpan = document.createElement('span');
+      statusSpan.className = 'style-check-desc';
+      statusSpan.style.alignSelf = 'center';
+
+      saveCodeBtn.addEventListener('click', () => {
+        safeStorageSet('customCSS', cssArea.value);
+        safeStorageSet('customJS', jsArea.value);
+        this.applyCustomCodeAndFlags();
+        this.runCustomJS();
+        statusSpan.textContent = 'Saved and applied.';
+      });
+
+      codeActions.append(saveCodeBtn, statusSpan);
+      codeBox.append(cTitle, cssDesc, cssArea, jsDesc, jsArea, codeActions);
+
+      grid.append(filtersBox, codeBox);
+      panel.appendChild(grid);
+      this.updateFiltersList();
+    },
+
     exportAllSettings() {
       const bundle = {
         selectedTheme: safeStorageGet('selectedTheme') || '',
         styleOptions: this.getStyleOptions(),
         mascotPrefs: this.getMascotPrefs(),
-        customThemes: this.getCustomThemes()
+        customThemes: this.getCustomThemes(),
+        filters: this.filters,
+        customCSS: safeStorageGet('customCSS') || '',
+        customJS: safeStorageGet('customJS') || '',
+        disableYouTag: safeStorageGet('disableYouTag') === 'true',
+        imagePreviewHover: safeStorageGet('imagePreviewHover') === 'true',
+        disableAutoWatch: safeStorageGet('disableAutoWatch') === 'true',
+        disableXchanSync: safeStorageGet('disableXchanSync') === 'true',
+        hideFortunes: safeStorageGet('hideFortunes') === 'true',
+        newPostSound: safeStorageGet('newPostSound') === 'true',
+        disablePostInlining: safeStorageGet('disablePostInlining') === 'true'
       };
-      prompt('Copy your Koshi / OneeChan style backup JSON:', JSON.stringify(bundle, null, 2));
+      prompt('Copy your Koshi style & preferences backup JSON:', JSON.stringify(bundle, null, 2));
     },
 
     promptImportAllSettings() {
-      const raw = prompt('Paste Koshi / OneeChan style backup JSON:');
+      const raw = prompt('Paste Koshi style & preferences backup JSON:');
       if (!raw) return;
       try {
         const bundle = JSON.parse(raw);
         if (!bundle || typeof bundle !== 'object') throw new Error('Invalid JSON object');
         if (bundle.styleOptions && typeof bundle.styleOptions === 'object') {
           this.saveStyleOptions(bundle.styleOptions);
-          this.applyStyleOptions();
         }
         if (bundle.mascotPrefs && typeof bundle.mascotPrefs === 'object') {
           this.saveMascotPrefs(bundle.mascotPrefs);
@@ -1495,9 +1923,20 @@
           this.saveCustomThemes(bundle.customThemes);
           window.themes?.rebuildSelector();
         }
+        if (Array.isArray(bundle.filters)) {
+          this.filters = bundle.filters;
+          safeStorageSet('filters', JSON.stringify(this.filters));
+        }
+        if (typeof bundle.customCSS === 'string') safeStorageSet('customCSS', bundle.customCSS);
+        if (typeof bundle.customJS === 'string') safeStorageSet('customJS', bundle.customJS);
+        ['disableYouTag', 'imagePreviewHover', 'disableAutoWatch', 'disableXchanSync', 'hideFortunes', 'newPostSound', 'disablePostInlining'].forEach((k) => {
+          if (typeof bundle[k] === 'boolean') safeStorageSet(k, String(bundle[k]));
+        });
         if (typeof bundle.selectedTheme === 'string' && bundle.selectedTheme) {
           window.themes?.select(bundle.selectedTheme);
         }
+        this.applyStyleOptions();
+        this.applyFilters();
         this.setTab(this.activeTab);
       } catch (err) {
         alert('Import failed: ' + err.message);
@@ -1507,6 +1946,9 @@
     resetAll() {
       this.saveStyleOptions({ ...DEFAULT_STYLE_OPTIONS });
       this.saveMascotPrefs({ ...DEFAULT_MASCOT_PREFS });
+      ['disableYouTag', 'imagePreviewHover', 'disableAutoWatch', 'disableXchanSync', 'hideFortunes', 'newPostSound', 'disablePostInlining'].forEach((k) => {
+        safeStorageSet(k, 'false');
+      });
       window.themes?.select('default');
       this.applyStyleOptions();
       this.renderMascot();
@@ -1514,8 +1956,19 @@
     },
 
     init() {
+      this.filters = safeParseFilters();
+      this.createModal();
       this.applyStyleOptions();
       this.renderMascot();
+
+      if (!this._customJsRan) {
+        this._customJsRan = true;
+        this.runCustomJS();
+      }
+
+      if (typeof setTimeout === 'function') {
+        setTimeout(() => this.applyFilters(), 100);
+      }
 
       if (typeof document !== 'undefined') {
         document.querySelectorAll('.style-btn').forEach((btn) => {
@@ -1527,6 +1980,7 @@
 
         document.addEventListener('contentAdded', () => {
           this.annotatePosts();
+          this.applyFilters();
         });
 
         document.addEventListener('koshiThemeChanged', () => {
@@ -1544,12 +1998,12 @@
     }
   };
 
-  if (typeof window !== 'undefined') window.oneechan = oneechan;
+  if (typeof window !== 'undefined') window.stylePanel = stylePanel;
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => oneechan.init());
+      document.addEventListener('DOMContentLoaded', () => stylePanel.init());
     } else {
-      oneechan.init();
+      stylePanel.init();
     }
   }
 })();
