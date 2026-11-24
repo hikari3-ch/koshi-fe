@@ -1626,6 +1626,11 @@ details:not([open]) .hide-file-button::before {
   margin: 0;
 }
 
+.sage-label {
+  color: var(--hover-link-color, #d00);
+  font-weight: bold;
+}
+
 #postformTable > tbody > tr > td {
   vertical-align: middle;
 }

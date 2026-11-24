@@ -64,6 +64,7 @@
                         <label><input type="checkbox" id="fortune" name="fortune" value="true" /> Fortune</label>
                         <% if (isThread) { %>
                         <label><input type="checkbox" id="sage" name="sage" value="true" /> Sage</label>
+                        <label><input type="checkbox" id="visible-sage" name="visibleSage" value="true" /> Visible SAGE!</label>
                         <label><input type="checkbox" id="nonoko" name="nonoko" value="true" /> Nonoko</label>
                         <% } %>
                     </div>
@@ -202,7 +203,20 @@
             label.textContent = ticked.length ? ticked.join(', ') : 'None';
         }
         document.addEventListener('change', function(e) {
-            if (e.target instanceof HTMLInputElement && e.target.type === 'checkbox') updateLabel();
+            if (e.target instanceof HTMLInputElement && e.target.type === 'checkbox') {
+                if (e.target.id === 'sage' && e.target.checked) {
+                    const vs = document.getElementById('visible-sage');
+                    const vsQr = document.getElementById('visible-sage-qr');
+                    if (vs) vs.checked = false;
+                    if (vsQr) vsQr.checked = false;
+                } else if (e.target.id === 'visible-sage' && e.target.checked) {
+                    const s = document.getElementById('sage');
+                    const sQr = document.getElementById('sage-qr');
+                    if (s) s.checked = false;
+                    if (sQr) sQr.checked = false;
+                }
+                updateLabel();
+            }
         });
         dropdown.closest('form')?.addEventListener('reset', function() { setTimeout(updateLabel); });
         document.addEventListener('click', function(e) {
