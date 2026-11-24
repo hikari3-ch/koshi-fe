@@ -1335,7 +1335,7 @@
       grid.className = 'mascot-picker-grid';
       if (!allMascots.length) {
         const empty = document.createElement('p');
-        empty.textContent = 'No mascots are currently defined. Admins can upload mascots in /mod/mascots, or you can add a personal mascot URL below.';
+        empty.textContent = 'No mascots available.';
         panel.appendChild(empty);
       } else {
         allMascots.forEach((m) => {
