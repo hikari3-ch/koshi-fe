@@ -1874,9 +1874,6 @@
       const cTitle = document.createElement('h3');
       cTitle.textContent = 'Custom CSS & JavaScript';
 
-      const cssDesc = document.createElement('p');
-      cssDesc.className = 'style-check-desc';
-      cssDesc.textContent = 'Your own CSS rules, added to every page.';
       const cssArea = document.createElement('textarea');
       cssArea.id = 'custom-css';
       cssArea.className = 'settings-code';
@@ -1884,10 +1881,6 @@
       cssArea.spellcheck = false;
       cssArea.value = safeStorageGet('customCSS') || '';
 
-      const jsDesc = document.createElement('p');
-      jsDesc.className = 'style-check-desc';
-      jsDesc.style.marginTop = '8px';
-      jsDesc.textContent = 'Your own JavaScript, run on every page.';
       const jsArea = document.createElement('textarea');
       jsArea.id = 'custom-js';
       jsArea.className = 'settings-code';
@@ -1915,7 +1908,7 @@
       });
 
       codeActions.append(saveCodeBtn, statusSpan);
-      codeBox.append(cTitle, cssDesc, cssArea, jsDesc, jsArea, codeActions);
+      codeBox.append(cTitle, cssArea, jsArea, codeActions);
 
       grid.append(filtersBox, codeBox);
       panel.appendChild(grid);
