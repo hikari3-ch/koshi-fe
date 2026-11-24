@@ -803,7 +803,40 @@
       document.body.appendChild(modal);
       this.modal = modal;
 
+      if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+        window.addEventListener('resize', () => {
+          if (this.modal && this.modal.classList.contains('oc-open')) {
+            this.syncModalHeightToEditor();
+          }
+        });
+      }
+
       this.renderFiltersTab();
+    },
+
+    syncModalHeightToEditor() {
+      if (!this.modal) return;
+      const content = this.modal.querySelector('.style-modal-content');
+      const editorPanel = document.getElementById('style-panel-editor');
+      if (!content || !editorPanel || typeof content.getBoundingClientRect !== 'function') return;
+
+      const panels = Array.from(this.modal.querySelectorAll('.style-tab-panel'));
+      const prevActive = panels.map((p) => p.classList.contains('active'));
+      const prevHeight = content.style.height;
+
+      this.renderEditorTab();
+      content.style.height = '';
+      panels.forEach((p) => p.classList.toggle('active', p === editorPanel));
+
+      const rect = content.getBoundingClientRect();
+      const measured = rect && rect.height ? Math.ceil(rect.height) : 0;
+
+      panels.forEach((p, idx) => p.classList.toggle('active', prevActive[idx]));
+      if (measured > 0) {
+        content.style.height = `${measured}px`;
+      } else {
+        content.style.height = prevHeight;
+      }
     },
 
     setTab(tabId) {
@@ -826,6 +859,7 @@
     show(tabId) {
       this.createModal();
       this.modal.classList.add('oc-open');
+      this.syncModalHeightToEditor();
       this.setTab(tabId || this.activeTab);
     },
 
