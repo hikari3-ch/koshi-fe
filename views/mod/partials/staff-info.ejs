@@ -1,4 +1,6 @@
-<% if (post.ipDisplay) { %>
+<% if (post.isTor) { %>
+<p class="mod-tor-info"><span class="tor-badge">TOR &middot; <%= post.torKind === 'onion' ? 'Onion Service' : 'Exit Node' %></span> <span class="mod-tor-note">IP hidden &mdash; delete posts only</span></p>
+<% } else if (post.ipDisplay) { %>
 
 <p>Ip: <% if (showIp && post.ipRaw) { %><a href="/mod/ip/<%= encodeURIComponent(post.ipRaw) %>" title="IP information"><%= post.ipDisplay %></a><% } else { %><%= post.ipDisplay %><% } %><% if (post.asn) { %> /ASN <%= post.asn %><% } %><% if (post.bypassDisplay) { %> /Bypass <%= post.bypassDisplay %><% } %></p>
 <% } %>

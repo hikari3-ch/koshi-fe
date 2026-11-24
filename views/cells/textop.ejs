@@ -4,7 +4,7 @@ var href = '/' + boardUri + '/' + archivePrefix + 'thread/' + thread.threadId;
 var threadHref = modView ? '/mod/thread/' + boardUri + '/' + thread.threadId : href;
 var controls = modView || locals.modControls;
 %>
-<div class="op" data-post-id="<%= thread.threadId %>" data-board="<%= boardUri %>" data-thread-id="<%= thread.threadId %>" data-pinned="<%= thread.pinned ? 1 : 0 %>" data-locked="<%= thread.locked ? 1 : 0 %>" data-autosage="<%= thread.autoSage ? 1 : 0 %>" data-cyclic="<%= thread.cyclic ? 1 : 0 %>"<% if (locals.replyNumber != null) { %> data-reply-number="<%= replyNumber %>"<% } %>>
+<div class="op<%= controls && thread.isTor ? ' mod-tor-post' : '' %>" data-post-id="<%= thread.threadId %>" data-board="<%= boardUri %>" data-thread-id="<%= thread.threadId %>" data-pinned="<%= thread.pinned ? 1 : 0 %>" data-locked="<%= thread.locked ? 1 : 0 %>" data-autosage="<%= thread.autoSage ? 1 : 0 %>" data-cyclic="<%= thread.cyclic ? 1 : 0 %>"<% if (controls && thread.isTor) { %> data-tor="1" data-tor-kind="<%= thread.torKind || 'exit' %>"<% } %><% if (locals.replyNumber != null) { %> data-reply-number="<%= replyNumber %>"<% } %>>
     <div class="thread-header">
       <div class="post-info">
         <% if (locals.replyNumber != null) { %><span class="reply-number" title="Reply #<%= replyNumber %>"><%= replyNumber %></span> <% } %>

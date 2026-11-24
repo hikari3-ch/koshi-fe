@@ -12,6 +12,9 @@
     id="quick-reply-form"
     data-max-files="<%= maxUploadFiles || 3 %>"
   >
+    <% if (locals.isTor && locals.torPostingAllowed === false) { %>
+    <div class="tor-notice-banner">Posting via Tor is disabled on this board.</div>
+    <% } %>
     <div class="qr-row qr-fields">
       <input type="text" id="name-qr" name="name" placeholder="<%= anonymousName || 'Anonymous' %>" title="Name" />
       <input type="text" id="post-password-qr" name="post-password" autocomplete="off" spellcheck="false" value="<%= locals.formPassword %>" placeholder="Password" title="Password (for deletion)" />

@@ -9,7 +9,7 @@ var threadHref = modView ? '/mod/thread/' + boardUri + '/' + id : href;
 var controls = modView || locals.modControls;
 %>
 <div class="post-container op-container" id="pc<%= id %>">
-<div class="post op" id="p<%= id %>" data-post-id="<%= id %>" data-board="<%= boardUri %>" data-thread-id="<%= id %>" data-pinned="<%= thread.pinned ? 1 : 0 %>" data-locked="<%= thread.locked ? 1 : 0 %>" data-autosage="<%= thread.autoSage ? 1 : 0 %>" data-cyclic="<%= thread.cyclic ? 1 : 0 %>">
+<div class="post op<%= controls && thread.isTor ? ' mod-tor-post' : '' %>" id="p<%= id %>" data-post-id="<%= id %>" data-board="<%= boardUri %>" data-thread-id="<%= id %>" data-pinned="<%= thread.pinned ? 1 : 0 %>" data-locked="<%= thread.locked ? 1 : 0 %>" data-autosage="<%= thread.autoSage ? 1 : 0 %>" data-cyclic="<%= thread.cyclic ? 1 : 0 %>"<% if (controls && thread.isTor) { %> data-tor="1" data-tor-kind="<%= thread.torKind || 'exit' %>"<% } %>>
 <% if (thread.files && thread.files.length) { %>
 <%- include('../partials/post-files', { files: thread.files, imageClass: 'thread-image', maxWidth: 235, maxHeight: 235, boardUri, threadId: id, postId: id, modView }) %>
 <% } %>

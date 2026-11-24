@@ -1,0 +1,140 @@
+<% title = 'Tor & Onion Service Settings'; %>
+<h1>Tor &amp; Onion Service Settings</h1>
+
+<% const st = locals.torStatus || {}; %>
+<% const cfg = locals.tor || {}; %>
+<% const g = locals.guides || {}; %>
+
+<fieldset>
+  <legend>Live Tor Diagnostics</legend>
+  <div class="tor-status-grid" id="tor-status-grid">
+    <div class="tor-status-item">
+      <span class="tor-status-label">Tor Binary</span>
+      <span id="st-tor-installed" class="tor-pill <%= st.torInstalled ? 'tor-status-ok' : 'tor-status-fail' %>">
+        <%= st.torInstalled ? ('Installed (' + (st.torVersion || 'detected') + ')') : 'Not installed' %>
+      </span>
+    </div>
+    <div class="tor-status-item">
+      <span class="tor-status-label">Tor Daemon</span>
+      <span id="st-tor-running" class="tor-pill <%= st.torRunning ? 'tor-status-ok' : 'tor-status-fail' %>">
+        <%= st.torRunning ? 'Running' : 'Not running' %>
+      </span>
+    </div>
+    <div class="tor-status-item">
+      <span class="tor-status-label">Local SOCKS5 (<%= st.socksPort || 9050 %>)</span>
+      <span id="st-tor-socks" class="tor-pill <%= st.socksOpen ? 'tor-status-ok' : 'tor-status-warn' %>">
+        <%= st.socksOpen ? 'Listening' : 'Closed / Unreachable' %>
+      </span>
+    </div>
+    <div class="tor-status-item">
+      <span class="tor-status-label">torrc Hidden Service</span>
+      <span id="st-tor-torrc" class="tor-pill <%= st.torrcConfigured ? 'tor-status-ok' : 'tor-status-warn' %>">
+        <%= st.torrcConfigured ? 'Configured' : (st.torrcReadable ? 'Missing HiddenServiceDir' : 'Not readable (root owned)') %>
+      </span>
+    </div>
+    <div class="tor-status-item">
+      <span class="tor-status-label">Onion Service Hostname</span>
+      <span id="st-tor-onion" class="tor-pill <%= st.onionValid ? 'tor-status-ok' : 'tor-status-warn' %>">
+        <%= st.effectiveOnion || 'Not configured / unreadable' %>
+      </span>
+    </div>
+    <div class="tor-status-item">
+      <span class="tor-status-label">Exit Node List</span>
+      <span id="st-tor-exits" class="tor-pill <%= (st.exitList && st.exitList.totalCount > 0) ? 'tor-status-ok' : 'tor-status-warn' %>">
+        <%= (st.exitList ? st.exitList.totalCount : 0) %> IPs<% if (st.exitList && st.exitList.lastUpdated) { %> (<%= new Date(st.exitList.lastUpdated).toLocaleString() %>)<% } %>
+      </span>
+    </div>
+  </div>
+
+  <% if (st.notes && st.notes.length) { %>
+  <ul class="mod-hint" id="tor-status-notes">
+    <% st.notes.forEach(function (note) { %><li><%= note %></li><% }); %>
+  </ul>
+  <% } %>
+
+  <div class="mod-actions">
+    <button type="button" id="tor-refresh-status">Refresh Status</button>
+    <button type="button" id="tor-test-onion">Test Working Onion Service</button>
+    <button type="button" id="tor-detect-onion">Auto-Detect .onion Hostname</button>
+    <button type="button" id="tor-refresh-exits">Refresh Exit Node List</button>
+  </div>
+  <div id="tor-probe-result" class="mod-notice" hidden></div>
+</fieldset>
+
+<fieldset>
+  <legend>Global Tor Policies &amp; Privacy</legend>
+  <p class="mod-hint">
+    Tor users are tagged with non-routable sentinel addresses (<code>0.0.0.1</code> for exits, <code>0.0.0.2</code> for <code>.onion</code>) so real exit IPs are never exposed or IP-banned, while per-browser isolation protects captcha passes, flood timers, agree votes, and polls across shared exits.
+  </p>
+  <form id="tor-settings-form">
+    <table class="mod-settings">
+      <tr><th>Default Tor posting</th><td>
+        <label><input type="checkbox" name="defaultAllowPosting" value="true"<%= cfg.defaultAllowPosting ? ' checked' : '' %>> Allow Tor users to post by default (boards can override individually)</label>
+      </td></tr>
+      <tr><th>Default Tor file uploads</th><td>
+        <label><input type="checkbox" name="allowFiles" value="true"<%= cfg.allowFiles ? ' checked' : '' %>> Allow file uploads from Tor by default (boards can override individually)</label>
+      </td></tr>
+      <tr><th>Tor captcha requirement</th><td>
+        <label><input type="checkbox" name="requireCaptcha" value="true"<%= cfg.requireCaptcha !== false ? ' checked' : '' %>> Require captcha verification for Tor posters even if clearnet captcha is off</label>
+      </td></tr>
+      <tr><th><label for="tor-captcha-min">Default Tor captcha cookie</label></th><td>
+        <input id="tor-captcha-min" name="defaultCaptchaMinutes" type="number" min="1" max="1440" value="<%= cfg.defaultCaptchaMinutes || 15 %>">
+        <span class="mod-unit">minutes (per-board settings cap this or override when set)</span>
+      </td></tr>
+      <tr><th><label for="tor-flood-sec">Tor flood cooldown</label></th><td>
+        <input id="tor-flood-sec" name="floodCooldownSec" type="number" min="0" max="3600" value="<%= cfg.floodCooldownSec ?? 30 %>">
+        <span class="mod-unit">seconds (isolated per Tor Browser session via HMAC key; 0 disables)</span>
+      </td></tr>
+      <tr><th><label for="tor-onion-host">Onion Service Hostname</label></th><td>
+        <input id="tor-onion-host" name="onionHostname" class="mod-wide" value="<%= cfg.onionHostname || '' %>" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.onion">
+      </td></tr>
+      <tr><th>Onion-Location discovery</th><td>
+        <label><input type="checkbox" name="advertiseOnionLocation" value="true"<%= cfg.advertiseOnionLocation !== false ? ' checked' : '' %>> Send <code>Onion-Location</code> HTTP header on clearnet pages and display footer <code>.onion</code> link</label>
+      </td></tr>
+      <tr><th>Strict .onion CSP</th><td>
+        <label><input type="checkbox" name="stripExternalEmbedsOnOnion" value="true"<%= cfg.stripExternalEmbedsOnOnion ? ' checked' : '' %>> Tighten Content-Security-Policy on <code>.onion</code> requests to <code>'self'</code>-only (prevents Tor Browser third-party CDN/embed clearnet leaks)</label>
+      </td></tr>
+      <tr><th>Trust reverse-proxy header</th><td>
+        <label><input type="checkbox" name="trustOnionHeader" value="true"<%= cfg.trustOnionHeader !== false ? ' checked' : '' %>> Accept <code>X-Tor-Onion: 1</code> from local loopback reverse proxy</label>
+      </td></tr>
+      <tr><th><label for="tor-hs-dir">HiddenServiceDir</label></th><td>
+        <input id="tor-hs-dir" name="hiddenServiceDir" class="mod-wide" value="<%= cfg.hiddenServiceDir || '/var/lib/tor/koshi_onion' %>">
+      </td></tr>
+      <tr><th><label for="tor-socks-port">Local Tor SOCKS5 port</label></th><td>
+        <input id="tor-socks-port" name="socksPort" type="number" min="1" max="65535" value="<%= cfg.socksPort || 9050 %>">
+        <span class="mod-unit">ControlPort:</span>
+        <input id="tor-control-port" name="controlPort" type="number" min="1" max="65535" value="<%= cfg.controlPort || 9051 %>">
+      </td></tr>
+      <tr><th><label for="tor-exit-url">Exit node list URL</label></th><td>
+        <input id="tor-exit-url" name="exitListUrl" class="mod-wide" value="<%= cfg.exitListUrl || 'https://check.torproject.org/exit-addresses' %>">
+      </td></tr>
+      <tr><th><label for="tor-exit-hours">Exit list refresh interval</label></th><td>
+        <input id="tor-exit-hours" name="exitListRefreshHours" type="number" min="1" max="168" value="<%= cfg.exitListRefreshHours || 6 %>"> <span class="mod-unit">hours</span>
+      </td></tr>
+    </table>
+    <div class="mod-actions"><button type="submit">Save Tor Settings</button></div>
+  </form>
+</fieldset>
+
+<fieldset>
+  <legend>Starting Tor &amp; Configuring the Onion Service</legend>
+  <p class="mod-hint">Run this root command on the server to install Tor, configure <code>/etc/tor/torrc</code>, start the daemon, and reveal your <code>.onion</code> hostname:</p>
+  <pre class="mod-code" id="tor-root-cmd"><%= g.rootCommand || '' %></pre>
+  <div class="mod-actions"><button type="button" class="tor-copy-btn" data-copy-id="tor-root-cmd">Copy Root Command</button></div>
+
+  <p class="mod-hint"><strong>/etc/tor/torrc snippet:</strong></p>
+  <pre class="mod-code" id="tor-torrc-pre"><%= g.torrcSnippet || '' %></pre>
+
+  <p class="mod-hint">
+    <strong>Reverse proxy snippet:</strong>
+    <select id="tor-web-snippet-select">
+      <option value="angie"<%= g.detectedServer === 'angie' ? ' selected' : '' %>>Angie</option>
+      <option value="nginx"<%= g.detectedServer === 'nginx' ? ' selected' : '' %>>Nginx</option>
+      <option value="apache"<%= g.detectedServer === 'apache' ? ' selected' : '' %>>Apache</option>
+      <option value="caddy"<%= g.detectedServer === 'caddy' ? ' selected' : '' %>>Caddy</option>
+    </select>
+  </p>
+  <% Object.entries(g.webSnippets || {}).forEach(function ([srv, code]) { %>
+  <pre class="mod-code tor-web-snippet" data-server="<%= srv %>"<%= srv === g.detectedServer ? '' : ' hidden' %>><%= code %></pre>
+  <% }); %>
+</fieldset>

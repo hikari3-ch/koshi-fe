@@ -1,6 +1,7 @@
 <% title = 'Login'; %>
 <div class="mod-login">
 <h1>Moderation</h1>
+<% if (locals.resetSuccess) { %><p class="mod-notice">Your password has been reset. Sign in with your new password.</p><% } %>
 <form id="mod-login-form">
 <fieldset>
 <legend>Staff Login</legend>
@@ -11,7 +12,25 @@
 <tr><th></th><td><label><input type="checkbox" name="remember"> Remember me</label></td></tr>
 </table>
 <input type="hidden" name="redirect" value="<%= redirect %>">
-<div class="mod-actions"><button type="submit">Login</button></div>
+<div class="mod-actions">
+  <button type="submit">Login</button>
+  <a href="/mod/forgot-password">Forgot password?</a>
+</div>
+</fieldset>
+</form>
+
+<form id="mod-totp-form" hidden>
+<fieldset>
+<legend>Two-Factor Authentication</legend>
+<p class="mod-hint">Enter the 6-digit code from your authenticator app, or an 8-character recovery code.</p>
+<table class="mod-settings">
+<tr><th><label for="mod-totp-code">Verification code</label></th><td><input type="text" id="mod-totp-code" name="code" required maxlength="32" autocomplete="one-time-code" inputmode="numeric"></td></tr>
+</table>
+<input type="hidden" id="mod-totp-challenge" name="challengeToken" value="">
+<div class="mod-actions">
+  <button type="submit">Verify &amp; Login</button>
+  <button type="button" id="mod-totp-back">Back to login</button>
+</div>
 </fieldset>
 </form>
 </div>

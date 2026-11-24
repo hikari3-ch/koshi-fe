@@ -587,6 +587,12 @@ document.addEventListener('DOMContentLoaded', () => {
               } else {
                 alert('You are banned from posting.');
               }
+            } else if (result.error === 'warned') {
+              if (result.redirectUrl) {
+                window.location.href = result.redirectUrl;
+              } else {
+                alert('You have been warned.');
+              }
             } else {
               const errorMsg = result.error.message || result.message || result.error || 'Unknown error';
               alert(errorMsg);
@@ -599,6 +605,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const banIdMatch = errorText.match(/\/banned\?id=([a-f0-9]+)/i);
             if (banIdMatch && banIdMatch[1]) {
               window.location.href = `/banned?id=${banIdMatch[1]}`;
+              return;
+            }
+          }
+          if (errorText.includes('/warned?id=')) {
+            const warnIdMatch = errorText.match(/\/warned\?id=([a-f0-9]+)/i);
+            if (warnIdMatch && warnIdMatch[1]) {
+              window.location.href = `/warned?id=${warnIdMatch[1]}`;
               return;
             }
           }

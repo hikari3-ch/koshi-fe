@@ -205,7 +205,7 @@
     if (syncing) return syncing;
     syncing = (async () => {
       try {
-        const res = await fetch('/captcha/status', {
+        const res = await fetch(`/captcha/status${board ? `?board=${encodeURIComponent(board)}` : ''}`, {
           credentials: 'same-origin',
           cache: 'no-store',
           headers: { Accept: 'application/json' }
@@ -239,7 +239,7 @@
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ token, answer: text })
+        body: JSON.stringify({ token, answer: text, board })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) {

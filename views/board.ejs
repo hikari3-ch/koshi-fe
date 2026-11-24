@@ -21,7 +21,7 @@
 <div style="text-align: center"><%- boardMessage %></div>
 <% } %>
 <hr>
-<input type="text" id="search-op" placeholder="Search OP"> [<a href="/<%= boardUri %>/catalog">Catalog</a>] [<a href="/<%= boardUri %>/archive">Archive</a>]<% if (modUser) { %> [<a href="/mod/board/<%= boardUri %>">Moderate</a>]<% } %> <a href="/<%= boardUri %>/rss.xml" title="RSS" class="feed-link"><img src="/img/feed.svg" alt="RSS" width="16" height="16" class="feed-icon"></a>
+<input type="text" id="search-op" placeholder="Search OP"> [<a href="/<%= boardUri %>/catalog">Catalog</a>] [<a href="/<%= boardUri %>/archive">Archive</a>]<% if (modUser) { const isModMode = Boolean(modView || locals.modViewEnabled !== false); %> [<a href="/mod/board/<%= boardUri %>">Moderate</a>] [<a href="#" class="mod-view-toggle" data-target-mode="<%= isModMode ? 'regular' : 'mod' %>"<% if (modView) { %> data-regular-url="/<%= boardUri %>/<%= page && page > 1 ? page : '' %>"<% } %> title="Switch between mod view (IPs &amp; mod options) and regular user view"><%= isModMode ? 'Regular View' : 'Mod View' %></a>]<% } %> <a href="/<%= boardUri %>/rss.xml" title="RSS" class="feed-link"><img src="/img/feed.svg" alt="RSS" width="16" height="16" class="feed-icon"></a>
 <hr>
 <div id="thread-container">
   <div class="threads">

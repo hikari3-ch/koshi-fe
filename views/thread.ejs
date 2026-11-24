@@ -24,7 +24,7 @@
 <div style="text-align: center"><%- boardMessage %></div>
 <% } %>
 <hr>
-<% if (!modView) { %>[<a href="#" id="gallery-btn">Gallery</a>] <% } %>[<a href="/<%= boardUri %>/">Return</a>] [<a href="/<%= boardUri %>/catalog">Catalog</a>] [<a href="#bottom">Bottom</a>]
+<% if (!modView) { %>[<a href="#" id="gallery-btn">Gallery</a>] <% } %>[<a href="/<%= boardUri %>/">Return</a>] [<a href="/<%= boardUri %>/catalog">Catalog</a>] [<a href="#bottom">Bottom</a>]<% if (modUser) { const isModMode = Boolean(modView || locals.modViewEnabled !== false); %> <% if (!modView) { %>[<a href="/mod/thread/<%= boardUri %>/<%= thread.threadId %>">Moderate</a>] <% } %>[<a href="#" class="mod-view-toggle" data-target-mode="<%= isModMode ? 'regular' : 'mod' %>"<% if (modView) { %> data-regular-url="/<%= boardUri %>/thread/<%= thread.threadId %>"<% } %> title="Switch between mod view (IPs &amp; mod options) and regular user view"><%= isModMode ? 'Regular View' : 'Mod View' %></a>]<% } %>
 <hr>
 <div class="thread" id="<%= thread.threadId %>">
 <%- include('cells/op', { thread, boardUri, isThread: true, modView, showIp, globalStaff }) %>

@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('form[action*="/thread"]').forEach((form) => {
     let posting = false;
     form.addEventListener('submit', async function (e) {
+      if (e.defaultPrevented) return;
       e.preventDefault();
       if (posting) return;
       posting = true;
@@ -111,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
           : String(formData.get('post-password') || '').trim() || generateRandomPassword();
 
         formData.delete('image');
-        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        if (fileInput && !fileInput.disabled && fileInput.files && fileInput.files.length > 0) {
           for (let i = 0; i < fileInput.files.length; i++) {
             formData.append('image', fileInput.files[i]);
           }
@@ -172,6 +173,12 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
               alert('You are banned from posting.');
             }
+          } else if (result.error === 'warned') {
+            if (result.redirectUrl) {
+              window.location.href = result.redirectUrl;
+            } else {
+              alert('You have been warned.');
+            }
           } else {
             alert(result.message || result.error || 'Error creating thread');
           }
@@ -182,6 +189,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const banIdMatch = errorText.match(/\/banned\?id=([a-f0-9]+)/i);
             if (banIdMatch && banIdMatch[1]) {
               window.location.href = `/banned?id=${banIdMatch[1]}`;
+              return;
+            }
+          }
+          if (errorText.includes('/warned?id=')) {
+            const warnIdMatch = errorText.match(/\/warned\?id=([a-f0-9]+)/i);
+            if (warnIdMatch && warnIdMatch[1]) {
+              window.location.href = `/warned?id=${warnIdMatch[1]}`;
               return;
             }
           }

@@ -29,7 +29,68 @@ document.getElementById('mod-login-form')?.addEventListener('submit', async (e) 
   const fd = new FormData(e.target);
   try {
     const data = await modPost('/mod/api/login', Object.fromEntries(fd));
+    if (data.totpRequired && data.challengeToken) {
+      document.getElementById('mod-totp-challenge').value = data.challengeToken;
+      e.target.hidden = true;
+      const totpForm = document.getElementById('mod-totp-form');
+      if (totpForm) {
+        totpForm.hidden = false;
+        document.getElementById('mod-totp-code')?.focus();
+      }
+      return;
+    }
     location.href = data.redirect || '/mod';
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('mod-totp-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await modPost('/mod/api/login/totp', Object.fromEntries(fd));
+    if (data.usedRecoveryCode) {
+      await alert(`Signed in using a recovery code. ${data.recoveryCodesRemaining} recovery code(s) remaining.`);
+    }
+    location.href = data.redirect || '/mod';
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('mod-totp-back')?.addEventListener('click', () => {
+  const totpForm = document.getElementById('mod-totp-form');
+  const loginForm = document.getElementById('mod-login-form');
+  if (totpForm) totpForm.hidden = true;
+  if (loginForm) loginForm.hidden = false;
+  document.getElementById('mod-totp-code').value = '';
+  document.getElementById('mod-totp-challenge').value = '';
+});
+
+document.getElementById('forgot-password-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await modPost('/mod/api/forgot-password', Object.fromEntries(fd));
+    const status = document.getElementById('forgot-password-status');
+    if (status) {
+      status.textContent = data.message || 'Check your email for a reset link.';
+      status.hidden = false;
+    } else {
+      await alert(data.message || 'Check your email for a reset link.');
+    }
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('reset-password-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await modPost('/mod/api/reset-password', Object.fromEntries(fd));
+    location.href = data.redirect || '/mod/login?reset=1';
   } catch (err) {
     alert(err.message);
   }
@@ -69,6 +130,46 @@ document.getElementById('mod-ban')?.addEventListener('click', async () => {
 document.getElementById('mod-ban-delete')?.addEventListener('click', async () => {
   try {
     await modPost('/mod/api/content', banPayload('ban-delete'));
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+function updateTorSelectionState() {
+  const checked = [...document.querySelectorAll('.mod-select:checked')];
+  const hasTor = checked.some((el) => el.closest('[data-tor="1"]'));
+  for (const id of ['mod-ban', 'mod-ban-delete', 'mod-ip-delete-board', 'mod-ip-delete-thread']) {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = hasTor;
+  }
+  const warning = document.getElementById('mod-tor-ban-warning');
+  if (warning) warning.hidden = !hasTor;
+}
+
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.classList && e.target.classList.contains('mod-select')) {
+    updateTorSelectionState();
+  }
+});
+
+document.getElementById('mod-delete-selected')?.addEventListener('click', async () => {
+  const selections = selectedKeys();
+  if (!selections.length) return alert('Select posts');
+  if (!confirm(`Delete ${selections.length} selected post(s)?`)) return;
+  try {
+    await modPost('/mod/api/content', { action: 'delete', selections });
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('mod-trash-selected')?.addEventListener('click', async () => {
+  const selections = selectedKeys();
+  if (!selections.length) return alert('Select posts');
+  try {
+    await modPost('/mod/api/content', { action: 'trash', selections });
     location.reload();
   } catch (err) {
     alert(err.message);
@@ -596,5 +697,241 @@ document.querySelectorAll('.delete-thumb').forEach((btn) => {
     } catch (err) {
       alert(err.message);
     }
+  });
+});
+
+function showRecoveryCodes(codes) {
+  const box = document.getElementById('totp-recovery-output');
+  const list = document.getElementById('totp-recovery-list');
+  if (!box || !list) return;
+  list.textContent = '';
+  for (const code of codes || []) {
+    const li = document.createElement('li');
+    const el = document.createElement('code');
+    el.textContent = code;
+    li.appendChild(el);
+    list.appendChild(li);
+  }
+  box.hidden = false;
+}
+
+document.getElementById('account-email-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await modPost('/mod/api/account/email', Object.fromEntries(fd));
+    await alert(data.email ? `Email updated to ${data.email}` : 'Email removed.');
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('totp-setup-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await modPost('/mod/api/account/totp/setup', Object.fromEntries(fd));
+    const qrImg = document.getElementById('totp-qr-img');
+    const secretEl = document.getElementById('totp-secret-text');
+    const confirmPanel = document.getElementById('totp-confirm-panel');
+    if (qrImg) qrImg.src = data.qrDataUri;
+    if (secretEl) secretEl.textContent = data.secret;
+    if (confirmPanel) confirmPanel.hidden = false;
+    e.target.hidden = true;
+    document.getElementById('totp-enable-code')?.focus();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('totp-enable-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await modPost('/mod/api/account/totp/enable', Object.fromEntries(fd));
+    const confirmPanel = document.getElementById('totp-confirm-panel');
+    if (confirmPanel) confirmPanel.hidden = true;
+    showRecoveryCodes(data.recoveryCodes);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('totp-regen-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await modPost('/mod/api/account/totp/recovery-codes', Object.fromEntries(fd));
+    showRecoveryCodes(data.recoveryCodes);
+    e.target.reset();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('totp-disable-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!confirm('Disable two-factor authentication on your account?')) return;
+  const fd = new FormData(e.target);
+  try {
+    await modPost('/mod/api/account/totp/disable', Object.fromEntries(fd));
+    await alert('Two-factor authentication disabled.');
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('totp-copy-codes')?.addEventListener('click', () => {
+  const codes = [...document.querySelectorAll('#totp-recovery-list code')].map((el) => el.textContent).join('\n');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(codes);
+  }
+});
+
+document.getElementById('totp-recovery-done')?.addEventListener('click', () => {
+  location.reload();
+});
+
+document.querySelectorAll('.admin-disable-totp').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    if (!confirm(`Disable 2FA for ${btn.dataset.login}?`)) return;
+    try {
+      await modPost('/mod/api/global/totp-disable', { login: btn.dataset.login });
+      location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+});
+
+document.getElementById('mail-settings-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const payload = Object.fromEntries(fd);
+  payload.secure = fd.get('secure') === 'true';
+  payload.clearPass = fd.get('clearPass') === 'true';
+  try {
+    const data = await modPost('/mod/api/global/mail', payload);
+    const badge = document.getElementById('mail-active-transport');
+    if (badge && data.activeTransport) badge.textContent = data.activeTransport;
+    await alert('Mail settings saved.');
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('mail-test-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await modPost('/mod/api/global/mail/test', Object.fromEntries(fd));
+    await alert(data.message || 'Test email sent.');
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+function setTorPill(id, ok, okText, failText, warnWhenFalse = false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = ok ? okText : failText;
+  el.className = 'tor-pill ' + (ok ? 'tor-status-ok' : warnWhenFalse ? 'tor-status-warn' : 'tor-status-fail');
+}
+
+function renderTorStatus(st) {
+  if (!st) return;
+  setTorPill('st-tor-installed', st.torInstalled, 'Installed (' + (st.torVersion || 'detected') + ')', 'Not installed');
+  setTorPill('st-tor-running', st.torRunning, 'Running', 'Not running');
+  setTorPill('st-tor-socks', st.socksOpen, 'Listening', 'Closed / Unreachable', true);
+  setTorPill('st-tor-torrc', st.torrcConfigured, 'Configured', st.torrcReadable ? 'Missing HiddenServiceDir' : 'Not readable (root owned)', true);
+  setTorPill('st-tor-onion', st.onionValid, st.effectiveOnion, 'Not configured / unreadable', true);
+  const exits = st.exitList || {};
+  const exitText = (exits.totalCount || 0) + ' IPs' + (exits.lastUpdated ? ' (' + new Date(exits.lastUpdated).toLocaleString() + ')' : '');
+  setTorPill('st-tor-exits', (exits.totalCount || 0) > 0, exitText, exitText, true);
+}
+
+document.getElementById('tor-settings-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const payload = Object.fromEntries(fd);
+  for (const key of ['defaultAllowPosting', 'allowFiles', 'requireCaptcha', 'advertiseOnionLocation', 'stripExternalEmbedsOnOnion', 'trustOnionHeader']) {
+    payload[key] = fd.get(key) === 'true';
+  }
+  try {
+    await modPost('/mod/api/tor/settings', payload);
+    await alert('Tor settings saved.');
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('tor-refresh-status')?.addEventListener('click', async () => {
+  try {
+    const res = await fetch('/mod/api/tor/status', { headers: { Accept: 'application/json' } });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to refresh status');
+    renderTorStatus(data.torStatus);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('tor-test-onion')?.addEventListener('click', async () => {
+  const out = document.getElementById('tor-probe-result');
+  const hostInput = document.getElementById('tor-onion-host');
+  if (out) {
+    out.hidden = false;
+    out.textContent = 'Testing .onion hidden service over local Tor SOCKS5 proxy (this can take a few seconds)...';
+  }
+  try {
+    const res = await modPost('/mod/api/tor/test-onion', { onionHostname: hostInput?.value || '' });
+    if (out) {
+      out.textContent = res.reachable
+        ? `Reachable: http://${res.hostname}/ responded with "${res.statusLine || res.statusCode}" in ${res.latencyMs}ms.`
+        : `Unreachable: ${res.error || 'Probe failed'} (${res.latencyMs || 0}ms).`;
+    }
+  } catch (err) {
+    if (out) out.textContent = `Test failed: ${err.message}`;
+  }
+});
+
+document.getElementById('tor-detect-onion')?.addEventListener('click', async () => {
+  const dir = document.getElementById('tor-hs-dir')?.value || '';
+  try {
+    const res = await modPost('/mod/api/tor/detect-onion', { hiddenServiceDir: dir });
+    const hostInput = document.getElementById('tor-onion-host');
+    if (hostInput && res.hostname) hostInput.value = res.hostname;
+    await alert(`Detected onion hostname: ${res.hostname}`);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('tor-refresh-exits')?.addEventListener('click', async () => {
+  try {
+    const res = await modPost('/mod/api/tor/refresh-exits', {});
+    await alert(`Updated Tor exit node list: ${res.count} addresses (${res.ipv4Count} IPv4, ${res.ipv6Count} IPv6).`);
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('tor-web-snippet-select')?.addEventListener('change', (e) => {
+  const val = e.target.value;
+  document.querySelectorAll('.tor-web-snippet').forEach((el) => {
+    el.hidden = el.dataset.server !== val;
+  });
+});
+
+document.querySelectorAll('.tor-copy-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const target = document.getElementById(btn.dataset.copyId);
+    if (!target || !navigator.clipboard?.writeText) return;
+    navigator.clipboard.writeText(target.textContent || '');
   });
 });

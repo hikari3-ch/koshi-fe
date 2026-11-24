@@ -295,8 +295,12 @@ if (form) {
     form.id !== 'quick-reply-form' &&
     form.getAttribute('data-requires-file') !== 'false';
 
-  if (uploadWidget && !fileInput.files.length && requiresFile) {
+  const youtubeInput = form.querySelector('#youtube-url') || document.getElementById('youtube-url');
+  const hasEmbedUrl = Boolean(youtubeInput && String(youtubeInput.value || '').trim().length > 0);
+
+  if (uploadWidget && !fileInput.files.length && !hasEmbedUrl && requiresFile) {
     e.preventDefault();
+    e.stopImmediatePropagation();
     alert('Please select at least one file before submitting.');
     return;
   }

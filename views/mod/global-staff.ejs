@@ -1,9 +1,16 @@
 <% title = 'Global Staff'; %>
 <table class="mod-table">
-<tr><th>Login</th><th>Role</th><th></th></tr>
+<tr><th>Login</th><th>Email</th><th>2FA</th><th>Role</th><th></th></tr>
 <% staff.forEach(s => { %>
 <tr>
 <td><%= s.login %></td>
+<td><%= s.email || '—' %></td>
+<td>
+  <%= s.totpEnabled ? 'Enabled' : 'Off' %>
+  <% if (s.totpEnabled && user.globalRole < Number(s.globalRole)) { %>
+  <button type="button" class="admin-disable-totp" data-login="<%= s.login %>">Disable 2FA</button>
+  <% } %>
+</td>
 <td><%= s.globalRole %></td>
 <td>
 <select class="set-role" data-login="<%= s.login %>">
@@ -21,6 +28,7 @@
 <h2>Add account</h2>
 <form id="add-account-form">
 <input name="login" placeholder="Login" maxlength="16" required>
+<input name="email" type="email" placeholder="Email (optional)" maxlength="254">
 <input name="password" type="password" placeholder="Password" required>
 <select name="globalRole">
 <% if (user.globalRole < 1) { %><option value="1">Admin</option><% } %>

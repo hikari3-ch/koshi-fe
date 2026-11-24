@@ -12,13 +12,19 @@
       [<a href="#" class="watch-list-btn">Thread Watcher</a>]
       <% if (boardFooter) { %>
       [<a href="#" class="settings-btn">Settings</a>]
-      [<a href="/mod">Moderation</a>]
+      [<a href="/mod">Moderation</a>]<% if (locals.modUser) { const isModMode = Boolean(locals.modView || locals.modViewEnabled !== false); %> [<a href="#" class="mod-view-toggle" data-target-mode="<%= isModMode ? 'regular' : 'mod' %>"<% if (locals.modView && locals.boardUri) { %> data-regular-url="<%= locals.isThread && locals.threadId ? '/' + locals.boardUri + '/thread/' + locals.threadId : '/' + locals.boardUri + (locals.page && locals.page > 1 ? '/' + locals.page : '/') %>"<% } %> title="Switch between mod view (IPs &amp; mod options) and regular user view"><%= isModMode ? 'Regular View' : 'Mod View' %></a>]<% } %>
       <% } %>
     </div>
     <% if (boardFooter) { %>
       <div class="footer-text">The stories and information posted here are artistic works of fiction and falsehood.<br />Only a fool would take anything posted here as fact.</div>
     <% } %>
     <div id="footer-links">
+      <% if (locals.torOnionHostname || locals.torKind === 'onion') { %>
+      <div class="tor-footer-info">
+        <% if (locals.torKind === 'onion') { %><span class="tor-badge">Connected via .onion</span> <% } %>
+        <% if (locals.torOnionHostname) { %>Onion Service: <a href="http://<%= locals.torOnionHostname %>/"><code><%= locals.torOnionHostname %></code></a><% } %>
+      </div>
+      <% } %>
       <a href="/faq">FAQ</a> • <a href="/rules">Rules</a> • <a href="/news">News</a> • <a href="/stats">Stats</a><br>
       - <a href="https://github.com/koshi-chan/koshi">koshi</a> -
     </div>

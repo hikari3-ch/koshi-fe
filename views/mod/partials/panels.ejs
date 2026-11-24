@@ -27,9 +27,12 @@ Ban type:
 <label><input type="checkbox" id="mod-ban-global"> Global</label>
 <button type="button" id="mod-ban">Ban</button>
 <button type="button" id="mod-ban-delete">Ban and delete</button>
+<p id="mod-tor-ban-warning" class="mod-tor-warning" hidden>Selection includes Tor post(s): IP banning and IP deletion are disabled. Use Delete selected instead.</p>
 </fieldset>
 <fieldset class="reportFieldset">
 <legend>Misc</legend>
+<button type="button" id="mod-delete-selected">Delete selected</button>
+<button type="button" id="mod-trash-selected">Trash selected</button>
 <label><input type="checkbox" id="mod-ip-delete-confirm"> Confirm ip deletion</label>
 <% if (showIp) { %>
 <button type="button" id="mod-ip-delete-board">Delete by ip/bypass on this board</button>

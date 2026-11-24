@@ -112,6 +112,7 @@ function getPostContext(dropdown) {
       threadId,
       postId: Number(replyElement.dataset.postId),
       isThread: false,
+      isTor: replyElement.dataset.tor === '1',
       postEl: replyElement,
       hasFiles: !!replyElement.querySelector('.file-info, .op-upload-cell')
     };
@@ -126,6 +127,7 @@ function getPostContext(dropdown) {
       threadId: Number(threadElement.dataset.postId),
       postId: Number(threadElement.dataset.postId),
       isThread: true,
+      isTor: threadElement.dataset.tor === '1',
       postEl: threadElement,
       hasFiles: !!threadElement.querySelector('.file-info, .op-upload-cell'),
       pinned: threadElement.dataset.pinned === '1',
@@ -160,8 +162,9 @@ function buildPostMenu(ctx) {
     menu.appendChild(createMenuButton('Delete Post and Media', 'delete-media', true));
     menu.appendChild(createMenuButton('Trash Post', 'trash', true));
     if (ctx.hasFiles) menu.appendChild(createMenuButton('Unlink Files', 'unlink', true));
-    if (window.modShowIp) menu.appendChild(createMenuButton('Delete by IP/bypass', 'ip-delete', true));
-    menu.appendChild(createMenuButton('Ban', 'ban', true));
+    if (window.modShowIp && !ctx.isTor) menu.appendChild(createMenuButton('Delete by IP/bypass', 'ip-delete', true));
+    if (!ctx.isTor) menu.appendChild(createMenuButton('Ban', 'ban', true));
+    if (!ctx.isTor) menu.appendChild(createMenuButton('Warn', 'warn', true));
     menu.appendChild(createMenuButton('Edit', 'edit', true));
     if (ctx.isThread) {
       if (window.modIsGlobalMod) menu.appendChild(createMenuButton('Transfer Thread', 'transfer', true));
@@ -248,6 +251,7 @@ document.addEventListener('DOMContentLoaded', function () {
   window.initializePostMenus();
   createModal();
   createBanModal();
+  createWarnModal();
   initializeHiddenPosts();
 });
 
@@ -319,6 +323,7 @@ window.modStaffDeletePost = async function (postId, isThread, boardUri, threadId
 };
 
 let banModalContext = null;
+let warnModalContext = null;
 
 function dialogMarkup(title, body, buttons) {
   return `
@@ -378,7 +383,7 @@ function clampDialog(overlay) {
 }
 
 function showDialog(overlay) {
-  document.querySelectorAll('#delete-modal, #report-modal, #mod-ban-modal').forEach((other) => {
+  document.querySelectorAll('#delete-modal, #report-modal, #mod-ban-modal, #mod-warn-modal').forEach((other) => {
     if (other !== overlay) other.style.display = 'none';
   });
   overlay.style.display = 'block';
@@ -415,7 +420,6 @@ function createBanModal() {
           <option value="1">/16 range</option>
           <option value="2">/24 range</option>
           <option value="3">ASN</option>
-          <option value="4">Warning</option>
         </select>
         <span></span>
         <span class="post-dialog-checks">
@@ -430,19 +434,43 @@ function createBanModal() {
     `
   );
   document.body.appendChild(modal);
-  const banNotice = '(USER WAS BANNED FOR THIS POST)';
-  const warnNotice = '(USER WAS WARNED FOR THIS POST)';
-  const typeSelect = document.getElementById('mod-menu-ban-type');
-  const messageInput = document.getElementById('mod-menu-ban-message');
-  typeSelect.addEventListener('change', () => {
-    if (messageInput.value !== banNotice && messageInput.value !== warnNotice) return;
-    messageInput.value = typeSelect.value === '4' ? warnNotice : banNotice;
-  });
   wireDialog(modal, () => {
     banModalContext = null;
   });
   document.getElementById('mod-menu-ban-submit').addEventListener('click', () => runBanFromModal('ban'));
   document.getElementById('mod-menu-ban-delete-submit').addEventListener('click', () => runBanFromModal('ban-delete'));
+}
+
+function createWarnModal() {
+  if (document.getElementById('mod-warn-modal')) return;
+  const modal = document.createElement('div');
+  modal.id = 'mod-warn-modal';
+  modal.style.display = 'none';
+  modal.innerHTML = dialogMarkup(
+    'Warn Post',
+    `
+      <div class="post-dialog-form">
+        <label for="mod-menu-warn-message">Message</label>
+        <input type="text" id="mod-menu-warn-message" value="(USER WAS WARNED FOR THIS POST)" title="Shown on the post">
+        <label for="mod-menu-warn-reason">Reason</label>
+        <input type="text" id="mod-menu-warn-reason" title="Shown to the warned user">
+        <span></span>
+        <span class="post-dialog-checks">
+          <label><input type="checkbox" id="mod-menu-warn-global"> Global</label>
+        </span>
+      </div>
+    `,
+    `
+      <button type="button" id="mod-menu-warn-submit">Warn</button>
+      <button type="button" id="mod-menu-warn-delete-submit">Warn and delete</button>
+    `
+  );
+  document.body.appendChild(modal);
+  wireDialog(modal, () => {
+    warnModalContext = null;
+  });
+  document.getElementById('mod-menu-warn-submit').addEventListener('click', () => runWarnFromModal('warn'));
+  document.getElementById('mod-menu-warn-delete-submit').addEventListener('click', () => runWarnFromModal('warn-delete'));
 }
 
 function banPayload(action) {
@@ -460,6 +488,18 @@ function banPayload(action) {
   };
 }
 
+function warnPayload(action) {
+  if (!warnModalContext) throw new Error('No post selected');
+  return {
+    action,
+    selections: [selectionKey(warnModalContext)],
+    reason: document.getElementById('mod-menu-warn-reason')?.value,
+    banMessage: document.getElementById('mod-menu-warn-message')?.value,
+    banType: 4,
+    globalBan: document.getElementById('mod-menu-warn-global')?.checked
+  };
+}
+
 async function runBanFromModal(action) {
   try {
     await modPost('/mod/api/content', banPayload(action));
@@ -473,6 +513,19 @@ async function runBanFromModal(action) {
   }
 }
 
+async function runWarnFromModal(action) {
+  try {
+    await modPost('/mod/api/content', warnPayload(action));
+    document.getElementById('mod-warn-modal').style.display = 'none';
+    if (action === 'warn-delete') removePostFromDom(warnModalContext);
+    warnModalContext = null;
+    if (action === 'warn-delete') return;
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
 function showBanModal(ctx) {
   createBanModal();
   banModalContext = ctx;
@@ -480,6 +533,15 @@ function showBanModal(ctx) {
   setDialogPost(modal, ctx.postId, ctx.boardUri);
   showDialog(modal);
   document.getElementById('mod-menu-ban-reason')?.focus();
+}
+
+function showWarnModal(ctx) {
+  createWarnModal();
+  warnModalContext = ctx;
+  const modal = document.getElementById('mod-warn-modal');
+  setDialogPost(modal, ctx.postId, ctx.boardUri);
+  showDialog(modal);
+  document.getElementById('mod-menu-warn-reason')?.focus();
 }
 
 async function runContentAction(ctx, action) {
@@ -539,6 +601,9 @@ async function handleModAction(action, dropdown) {
       }
       case 'ban':
         showBanModal(ctx);
+        break;
+      case 'warn':
+        showWarnModal(ctx);
         break;
       case 'edit': {
         const contentEl = ctx.postEl.querySelector('.reply-content, .thread-content');

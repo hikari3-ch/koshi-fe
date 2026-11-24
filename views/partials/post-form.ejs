@@ -30,6 +30,9 @@
     
 
 <% const textBoard = locals.textBoard === true; %>
+<% if (locals.isTor && locals.torPostingAllowed === false) { %>
+<div class="tor-notice-banner">Posting via Tor is currently disabled on /<%= boardUri %>/.</div>
+<% } %>
 <table id="postformTable">
     <tbody>
         <tr>

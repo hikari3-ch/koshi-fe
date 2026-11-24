@@ -8,6 +8,7 @@
         <div style="padding: 5px;padding-bottom: 0px;">
         <a class="small-button" href="/<%= boardUri %>/"><%= boardName %></a>
         <a class="small-button" href="#footer">▼</a>
+        <% if (modUser) { const isModMode = Boolean(modView || locals.modViewEnabled !== false); %><% if (!modView) { %> <a class="small-button" href="/mod/thread/<%= boardUri %>/<%= thread.threadId %>">Moderate</a><% } %> <a class="small-button mod-view-toggle" href="#" data-target-mode="<%= isModMode ? 'regular' : 'mod' %>"<% if (modView) { %> data-regular-url="/<%= boardUri %>/thread/<%= thread.threadId %>"<% } %> title="Switch between mod view (IPs &amp; mod options) and regular user view"><%= isModMode ? 'Regular View' : 'Mod View' %></a><% } %>
         </div>
         <hr>
         <%- include('partials/announcement') %>

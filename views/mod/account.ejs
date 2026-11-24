@@ -1,13 +1,83 @@
 <% title = 'Account'; %>
 <h1>Account</h1>
+<p class="mod-hint">Signed in as <strong><%= user.login %></strong> (<%= roleLabel %>).</p>
+
 <fieldset>
 <legend>Change Password</legend>
-<p class="mod-hint">Signed in as <strong><%= user.login %></strong> (<%= roleLabel %>).</p>
 <form id="change-password-form">
 <table class="mod-settings">
 <tr><th><label for="current-password">Current password</label></th><td><input type="password" id="current-password" name="currentPassword" required autocomplete="current-password"></td></tr>
-<tr><th><label for="new-password">New password</label></th><td><input type="password" id="new-password" name="newPassword" required autocomplete="new-password"></td></tr>
+<tr><th><label for="new-password">New password</label></th><td><input type="password" id="new-password" name="newPassword" required minlength="8" autocomplete="new-password"></td></tr>
 </table>
 <div class="mod-actions"><button type="submit">Change password</button></div>
 </form>
+</fieldset>
+
+<fieldset>
+<legend>Email Address</legend>
+<p class="mod-hint">
+  Current email: <strong id="account-current-email"><%= locals.email || 'None' %></strong>.
+  Associated emails are used for password resets.<% if (!locals.mailConfigured) { %> (Outgoing email is currently unconfigured by the site admin.)<% } %>
+</p>
+<form id="account-email-form">
+<table class="mod-settings">
+<tr><th><label for="account-email">Email address</label></th><td><input type="email" id="account-email" name="email" value="<%= locals.email || '' %>" maxlength="254" placeholder="Leave blank to remove" autocomplete="email"></td></tr>
+<tr><th><label for="email-current-password">Current password</label></th><td><input type="password" id="email-current-password" name="currentPassword" required autocomplete="current-password"></td></tr>
+</table>
+<div class="mod-actions"><button type="submit">Save email</button></div>
+</form>
+</fieldset>
+
+<fieldset>
+<legend>Two-Factor Authentication (TOTP)</legend>
+<p class="mod-hint">
+  Status: <strong><%= locals.totpEnabled ? 'Enabled' : 'Disabled' %></strong>
+  <% if (locals.totpEnabled) { %> &mdash; Recovery codes remaining: <strong><%= locals.recoveryCodesRemaining || 0 %></strong><% } %>
+</p>
+
+<% if (!locals.totpEnabled) { %>
+<form id="totp-setup-form">
+<table class="mod-settings">
+<tr><th><label for="totp-setup-password">Current password</label></th><td><input type="password" id="totp-setup-password" name="currentPassword" required autocomplete="current-password"></td></tr>
+</table>
+<div class="mod-actions"><button type="submit">Set up 2FA</button></div>
+</form>
+
+<div id="totp-confirm-panel" hidden>
+  <p class="mod-hint">Scan this QR code with your authenticator app, or enter the Base32 secret manually:</p>
+  <img id="totp-qr-img" class="totp-qr" alt="TOTP QR Code">
+  <p class="mod-hint">Secret: <code id="totp-secret-text" class="totp-secret"></code></p>
+  <form id="totp-enable-form">
+    <table class="mod-settings">
+      <tr><th><label for="totp-enable-code">6-digit code</label></th><td><input type="text" id="totp-enable-code" name="code" required maxlength="16" autocomplete="one-time-code" inputmode="numeric"></td></tr>
+    </table>
+    <div class="mod-actions"><button type="submit">Verify &amp; Enable 2FA</button></div>
+  </form>
+</div>
+<% } else { %>
+<form id="totp-regen-form">
+<table class="mod-settings">
+<tr><th><label for="totp-regen-password">Current password</label></th><td><input type="password" id="totp-regen-password" name="currentPassword" required autocomplete="current-password"></td></tr>
+<tr><th><label for="totp-regen-code">Authenticator code</label></th><td><input type="text" id="totp-regen-code" name="code" required maxlength="16" autocomplete="one-time-code" inputmode="numeric"></td></tr>
+</table>
+<div class="mod-actions"><button type="submit">Regenerate recovery codes</button></div>
+</form>
+
+<form id="totp-disable-form">
+<table class="mod-settings">
+<tr><th><label for="totp-disable-password">Current password</label></th><td><input type="password" id="totp-disable-password" name="currentPassword" required autocomplete="current-password"></td></tr>
+<tr><th><label for="totp-disable-code">Authenticator or recovery code</label></th><td><input type="text" id="totp-disable-code" name="code" required maxlength="32" autocomplete="one-time-code"></td></tr>
+</table>
+<div class="mod-actions"><button type="submit">Disable 2FA</button></div>
+</form>
+<% } %>
+
+<div id="totp-recovery-output" hidden>
+  <p class="mod-notice">Save these single-use recovery codes somewhere safe. They will not be shown again.</p>
+  <ul id="totp-recovery-list" class="recovery-codes"></ul>
+  <div class="mod-actions">
+    <button type="button" id="totp-copy-codes">Copy recovery codes</button>
+    <button type="button" id="totp-recovery-done">Done</button>
+  </div>
+</div>
 </fieldset>

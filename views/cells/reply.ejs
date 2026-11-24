@@ -7,7 +7,7 @@ var controls = modView || locals.modControls;
 %>
 <div class="post-container reply-container" id="pc<%= reply.postId %>">
 <div class="side-arrows" id="sa<%= reply.postId %>"><% if (!modView) { %>&gt;&gt;<% } %></div>
-<div class="post reply" id="p<%= reply.postId %>" data-post-id="<%= reply.postId %>" data-thread-id="<%= thread.threadId %>" data-board="<%= boardUri %>">
+<div class="post reply<%= controls && reply.isTor ? ' mod-tor-post' : '' %>" id="p<%= reply.postId %>" data-post-id="<%= reply.postId %>" data-thread-id="<%= thread.threadId %>" data-board="<%= boardUri %>"<% if (controls && reply.isTor) { %> data-tor="1" data-tor-kind="<%= reply.torKind || 'exit' %>"<% } %>>
 <div class="post-info" id="pi<%= reply.postId %>">
   <% if (!locals.isSearchResult) { %><input type="checkbox" class="<%= modView ? 'mod-select' : 'post-checkbox' %>" <% if (modView) { %>value="<%= boardUri %>-<%= thread.threadId %>-<%= reply.postId %>"<% } else { %>name="posts" form="delete-form" value="<%= reply.postId %>-false"<% } %>><% } %>
   <span class="name-block">

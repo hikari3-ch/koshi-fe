@@ -68,6 +68,32 @@
 </td></tr>
 </table>
 </fieldset>
+
+<% const tp = locals.boardTorPolicy || { posting: 'inherit', captchaMinutes: 0, files: 'inherit' }; %>
+<% const torDefaults = locals.siteTorDefaults || {}; %>
+<fieldset>
+<legend>Tor Access</legend>
+<table class="mod-settings">
+<tr><th><label for="bs-tor-posting">Tor posting</label></th><td>
+<select id="bs-tor-posting" name="torPosting">
+  <option value="inherit"<%= tp.posting === 'inherit' ? ' selected' : '' %>>Inherit site default (<%= torDefaults.defaultAllowPosting ? 'Allow' : 'Block' %>)</option>
+  <option value="allow"<%= tp.posting === 'allow' ? ' selected' : '' %>>Allow Tor posting on this board</option>
+  <option value="block"<%= tp.posting === 'block' ? ' selected' : '' %>>Block Tor posting on this board</option>
+</select>
+</td></tr>
+<tr><th><label for="bs-tor-captcha">Tor captcha cookie duration</label></th><td>
+<input id="bs-tor-captcha" name="torCaptchaMinutes" type="number" min="0" max="1440" value="<%= tp.captchaMinutes || 0 %>">
+<span class="mod-unit">minutes (0 uses site default: <%= torDefaults.defaultCaptchaMinutes || 15 %> min)</span>
+</td></tr>
+<tr><th><label for="bs-tor-files">Tor file uploads</label></th><td>
+<select id="bs-tor-files" name="torFiles">
+  <option value="inherit"<%= tp.files === 'inherit' ? ' selected' : '' %>>Inherit site default (<%= torDefaults.allowFiles ? 'Allow' : 'Block' %>)</option>
+  <option value="allow"<%= tp.files === 'allow' ? ' selected' : '' %>>Allow file uploads from Tor</option>
+  <option value="block"<%= tp.files === 'block' ? ' selected' : '' %>>Block file uploads from Tor</option>
+</select>
+</td></tr>
+</table>
+</fieldset>
 <div class="mod-actions"><button type="submit">Save changes</button></div>
 </form>
 

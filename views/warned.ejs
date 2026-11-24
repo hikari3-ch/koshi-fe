@@ -1,24 +1,33 @@
-<% title = 'Warning'; %>
+<% title = 'Warned!'; %>
 <div class="box-layout">
   <div class="box-outer top-box" style="display: flow-root;">
-    <div class="boxbar"><h2>You have been warned</h2></div>
-    <div class="boxcontent">
-      <% if (warning.message) { %>
-      <%- include('partials/warning-message', { message: warning.message }) %>
-      <br>
-      <% } %>
-      You have received a warning<% if (warning.boardUri !== 'all boards') { %> on <b>/<%= warning.boardUri %>/</b><% } %> for the following reason:
+    <div class="boxbar"><h2>You have been warned!</h2></div>
+    <div class="boxcontent" style="display: flow-root;">
+      <img src="/img/gtfo.webp" class="ban-image" width="400" alt="">
+      You have been warned on <b><%= warning.boardUri === 'all boards' ? 'all boards' : '/' + warning.boardUri + '/' %></b> for the following reason:
       <br><br>
       <b><%= warning.reason %></b>
       <br><br>
-      Acknowledge this warning to continue posting.
+      Now that you have viewed this warning, it has expired and you may continue posting.
       <br><br>
-      <form action="/warned/dismiss" method="POST">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <input type="hidden" name="banId" value="<%= warning.id %>">
-        <input type="hidden" name="returnUrl" value="<%= returnUrl %>">
-        <button type="submit">I understand</button>
-      </form>
+      This page will auto redirect in <span id="warn-redirect-seconds">10</span> seconds.
     </div>
   </div>
 </div>
+<script>
+  (function () {
+    var targetUrl = <%- JSON.stringify(returnUrl || '/').replace(/</g, '\\u003c') %>;
+    var secondsLeft = 10;
+    var countdownEl = document.getElementById('warn-redirect-seconds');
+    var timer = setInterval(function () {
+      secondsLeft -= 1;
+      if (countdownEl && secondsLeft >= 0) {
+        countdownEl.textContent = String(secondsLeft);
+      }
+      if (secondsLeft <= 0) {
+        clearInterval(timer);
+        window.location.href = targetUrl;
+      }
+    }, 1000);
+  })();
+</script>

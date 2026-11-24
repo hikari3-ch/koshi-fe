@@ -423,12 +423,26 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
               alert('You are banned from posting.');
             }
+          } else if (result.error === 'warned') {
+            if (result.redirectUrl) {
+              window.location.href = result.redirectUrl;
+            } else {
+              alert('You have been warned.');
+            }
           } else {
             alert(result.error.message || result.message || result.error || 'Error posting reply');
           }
         }
       } else if (!response.ok) {
         const errorText = await response.text();
+
+        if (errorText.includes('/warned?id=')) {
+          const warnIdMatch = errorText.match(/\/warned\?id=([a-f0-9]+)/i);
+          if (warnIdMatch && warnIdMatch[1]) {
+            window.location.href = `/warned?id=${warnIdMatch[1]}`;
+            return;
+          }
+        }
 
         let errorMessage = 'Error posting reply';
 

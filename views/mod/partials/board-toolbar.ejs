@@ -4,6 +4,8 @@
 <span>/</span>
 <a href="/<%= boardUri %>/">Public</a>
 <span>/</span>
+<a href="#" class="mod-view-toggle" data-target-mode="regular" data-regular-url="/<%= boardUri %>/<%= locals.page && locals.page > 1 ? locals.page : '' %>" title="Switch to regular view without IPs or moderation options">Regular View</a>
+<span>/</span>
 <a href="/mod/board/<%= boardUri %>/settings">Settings</a>
 <span>/</span>
 <a href="/mod/trash/<%= boardUri %>">Trash</a>

@@ -7,6 +7,7 @@
 <li><a href="/mod/global/filters">Global filters</a></li>
 <li><a href="/mod/global/banners">Global banners</a></li>
 <li><a href="/mod/global/staff">Global staff</a></li>
+<li><a href="/mod/tor">Tor &amp; Onion Service</a></li>
 <li><a href="/mod/news">News</a></li>
 <li><a href="/mod/featured">Featured threads</a></li>
 <li><a href="/mod/media">Media management</a></li>
@@ -58,5 +59,36 @@ Require a captcha before posting (all boards)</label>
 <a href="/mod/captcha">the captcha page</a>.</p>
 </td></tr>
 </table>
+</form>
+</fieldset>
+
+<% const mailCfg = locals.mail || {}; %>
+<fieldset>
+<legend>Email / Password Reset (SMTP)</legend>
+<p class="mod-hint">Active transport: <strong id="mail-active-transport"><%= mailCfg.activeTransport || 'disabled' %></strong>.</p>
+<form id="mail-settings-form">
+<table class="mod-settings">
+<tr><th><label for="mail-transport">Transport</label></th><td>
+<select id="mail-transport" name="transport">
+  <option value="auto"<%= mailCfg.transport === 'auto' ? ' selected' : '' %>>Auto (SMTP -> sendmail -> dev console)</option>
+  <option value="smtp"<%= mailCfg.transport === 'smtp' ? ' selected' : '' %>>SMTP</option>
+  <option value="sendmail"<%= mailCfg.transport === 'sendmail' ? ' selected' : '' %>>Local sendmail</option>
+  <option value="console"<%= mailCfg.transport === 'console' ? ' selected' : '' %>>Console log only</option>
+  <option value="disabled"<%= mailCfg.transport === 'disabled' ? ' selected' : '' %>>Disabled</option>
+</select>
+</td></tr>
+<tr><th><label for="mail-host">SMTP host</label></th><td><input id="mail-host" name="host" value="<%= mailCfg.host || '' %>" placeholder="smtp.example.com"></td></tr>
+<tr><th><label for="mail-port">SMTP port</label></th><td><input id="mail-port" name="port" type="number" min="1" max="65535" value="<%= mailCfg.port || 587 %>"> <label><input type="checkbox" name="secure" value="true"<%= mailCfg.secure ? ' checked' : '' %>> Implicit TLS (465)</label></td></tr>
+<tr><th><label for="mail-user">SMTP username</label></th><td><input id="mail-user" name="user" value="<%= mailCfg.user || '' %>" autocomplete="off"></td></tr>
+<tr><th><label for="mail-pass">SMTP password</label></th><td><input id="mail-pass" name="pass" type="password" placeholder="<%= mailCfg.hasPass ? '(saved — leave blank to keep)' : '' %>" autocomplete="new-password"><% if (mailCfg.hasPass) { %> <label><input type="checkbox" name="clearPass" value="true"> Clear</label><% } %></td></tr>
+<tr><th><label for="mail-from">From address</label></th><td><input id="mail-from" name="from" value="<%= mailCfg.from || '' %>" placeholder="noreply@example.com"></td></tr>
+<tr><th><label for="mail-public-url">Site public URL</label></th><td><input id="mail-public-url" name="publicUrl" value="<%= mailCfg.publicUrl || '' %>" placeholder="https://example.com"></td></tr>
+</table>
+<div class="mod-actions"><button type="submit">Save mail settings</button></div>
+</form>
+<form id="mail-test-form" class="mod-inline-form">
+  <label for="mail-test-to">Send test email to</label>
+  <input id="mail-test-to" name="to" type="email" placeholder="you@example.com" required>
+  <button type="submit">Send test</button>
 </form>
 </fieldset>
