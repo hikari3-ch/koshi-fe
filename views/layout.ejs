@@ -24,7 +24,7 @@ for (let i = 0; i < 5; i++) {
 <script src="/js/dom.js?v=<%= locals.assetVersion('js/dom.js') %>"></script>
 <script src="/js/alert.js?v=<%= locals.assetVersion('js/alert.js') %>"></script>
 <script>window.boardDefaultTheme = <%- JSON.stringify(locals.boardDefaultTheme || '').replace(/</g, '\\u003c') %>;</script>
-<script>window.boardDisabledTabs = <%- JSON.stringify(locals.boardDisabledTabs || { mascots: false, customThemes: false }).replace(/</g, '\\u003c') %>;</script>
+<script>window.siteDisabledTabs = <%- JSON.stringify(locals.siteDisabledTabs || { mascots: false, customThemes: false }).replace(/</g, '\\u003c') %>;</script>
 <script>window.currentBoardUri = <%- JSON.stringify(locals.boardUri || '').replace(/</g, '\\u003c') %>;</script>
 <script>window.koshiMascotConfig = <%- JSON.stringify(locals.getMascotConfig ? locals.getMascotConfig(locals.boardUri || '') : { mascots: [], defaultMascotId: '', sitewideDefault: '', boardDefault: '' }).replace(/</g, '\\u003c') %>;</script>
 <% if (themeCfg.defaultTheme || themeCfg.newPostSound || (Array.isArray(themeCfg.themes) && themeCfg.themes.length)) { %>

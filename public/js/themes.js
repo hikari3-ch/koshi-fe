@@ -262,24 +262,11 @@ const themes = {
 
   init() {
     if (typeof document === 'undefined') return;
-    const tools = document.querySelector('.footer-nav-tools');
-    if (!tools || document.getElementById('themeSelector')) return;
-
-    const sel = document.createElement('select');
-    sel.id = 'themeSelector';
-    tools.insertBefore(sel, tools.firstChild);
-
-    this.rebuildSelector();
-
     const saved = this.saved();
     if (!saved && safeStorageGet('selectedTheme')) {
       safeStorageRemove('selectedTheme');
       this.apply(this.boardDefaultId());
     }
-
-    sel.addEventListener('change', () => {
-      this.select(sel.value);
-    });
   }
 };
 

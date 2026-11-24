@@ -60,6 +60,7 @@ if (!featured.length) {
 <script src="/js/dom.js?v=<%= locals.assetVersion('js/dom.js') %>"></script>
 <script src="/js/alert.js?v=<%= locals.assetVersion('js/alert.js') %>"></script>
 <script>window.boardDefaultTheme = '';</script>
+<script>window.siteDisabledTabs = <%- JSON.stringify(locals.siteDisabledTabs || { mascots: false, customThemes: false }).replace(/</g, '\\u003c') %>;</script>
 <script>window.koshiMascotConfig = <%- JSON.stringify(locals.getMascotConfig ? locals.getMascotConfig('') : { mascots: [], defaultMascotId: '', sitewideDefault: '', boardDefault: '' }).replace(/</g, '\\u003c') %>;</script>
 <% const themeCfgHome = locals.themeConfig || {}; if (themeCfgHome.defaultTheme || (Array.isArray(themeCfgHome.themes) && themeCfgHome.themes.length)) { %>
 <script>window.siteThemeConfig = <%- JSON.stringify({ defaultTheme: themeCfgHome.defaultTheme || 'yotsuba-b', defaultThemeLabel: themeCfgHome.defaultThemeLabel || 'Yotsuba B', themes: themeCfgHome.themes || [] }).replace(/</g, '\\u003c') %>;</script>

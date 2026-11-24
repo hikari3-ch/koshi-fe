@@ -26,8 +26,8 @@ const footerCreditUrl = footerCfg.creditUrl || 'https://github.com/koshi-chan/ko
   <% } %>
     <div class="footer-nav-tools">
       [<a href="#" class="watch-list-btn">Thread Watcher</a>]
-      <% if (boardFooter) { %>
       [<a href="#" class="style-btn">Style</a>]
+      <% if (boardFooter) { %>
       [<a href="/mod">Moderation</a>]<% if (locals.modUser) { const isModMode = Boolean(locals.modView || locals.modViewEnabled !== false); %> [<a href="#" class="mod-view-toggle" data-target-mode="<%= isModMode ? 'regular' : 'mod' %>"<% if (locals.modView && locals.boardUri) { %> data-regular-url="<%= locals.isThread && locals.threadId ? '/' + locals.boardUri + '/thread/' + locals.threadId : '/' + locals.boardUri + (locals.page && locals.page > 1 ? '/' + locals.page : '/') %>"<% } %> title="Switch between mod view (IPs &amp; mod options) and regular user view"><%= isModMode ? 'Regular View' : 'Mod View' %></a>]<% } %>
       <% } %>
     </div>

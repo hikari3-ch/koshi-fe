@@ -60,6 +60,16 @@ Require a captcha before posting (all boards)</label>
 </td></tr>
 </table>
 </form>
+<% const spCfg = locals.stylePanel || {}; %>
+<form id="style-panel-global-form">
+<table class="mod-settings">
+<tr><th>Style &amp; Preferences</th><td class="mod-checks">
+<label><input type="checkbox" name="disableMascots" value="true"<%= spCfg.disableMascots ? ' checked' : '' %> /> Disable Mascots tab (sitewide)</label>
+<label><input type="checkbox" name="disableCustomThemes" value="true"<%= spCfg.disableCustomThemes ? ' checked' : '' %> /> Disable Custom Themes tab (sitewide)</label>
+<div><button type="submit">Save</button></div>
+</td></tr>
+</table>
+</form>
 </fieldset>
 
 <% const mailCfg = locals.mail || {}; %>

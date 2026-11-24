@@ -42,10 +42,6 @@
 <label><input type="checkbox" name="textBoard" value="1" <%= s.includes('textBoard') ? 'checked' : '' %>> Textboard</label>
 <label><input type="checkbox" name="unindex" value="1" <%= s.includes('unindex') ? 'checked' : '' %>> Hide board</label>
 <label title="The board stays in the header and works as always on its own pages; only its threads are left out of /all/ and the front page's active threads and recent posts."><input type="checkbox" name="hideFromAggregate" value="1" <%= s.includes('hideFromAggregate') ? 'checked' : '' %>> Hide from /all/ and the front page</label>
-<% if (isAdmin) { %>
-<label><input type="checkbox" name="disableMascots" value="1" <%= s.includes('disableMascots') ? 'checked' : '' %>> Disable Mascots tab in Style &amp; Preferences</label>
-<label><input type="checkbox" name="disableCustomThemes" value="1" <%= s.includes('disableCustomThemes') ? 'checked' : '' %>> Disable Custom Themes tab in Style &amp; Preferences</label>
-<% } %>
 </td></tr>
 </table>
 </fieldset>

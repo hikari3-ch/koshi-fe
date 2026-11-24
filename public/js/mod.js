@@ -652,6 +652,21 @@ document.getElementById('captcha-global-form')?.addEventListener('submit', async
   }
 });
 
+document.getElementById('style-panel-global-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    await modPost('/mod/api/global/style-panel', {
+      disableMascots: fd.get('disableMascots') === 'true',
+      disableCustomThemes: fd.get('disableCustomThemes') === 'true'
+    });
+    await alert('Saved.');
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
 document.getElementById('site-announcement-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);

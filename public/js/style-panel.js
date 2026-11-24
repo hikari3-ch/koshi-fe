@@ -702,7 +702,7 @@
     },
 
     getDisabledTabs() {
-      const cfg = (typeof window !== 'undefined' && window.boardDisabledTabs) || {};
+      const cfg = (typeof window !== 'undefined' && window.siteDisabledTabs) || {};
       return {
         mascots: Boolean(cfg.mascots),
         customThemes: Boolean(cfg.customThemes)
