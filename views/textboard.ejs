@@ -90,10 +90,10 @@
       <%- include('/mod/partials/panels') %>
       <% } %>
 
-<script src="/js/delete-form.js"></script>
+<script src="/js/delete-form.js?v=<%= locals.assetVersion('js/delete-form.js') %>"></script>
 <script src="/js/quote.js?v=<%= locals.assetVersion('js/quote.js') %>"></script>
 <script src="/js/post-inline.js?v=<%= locals.assetVersion('js/post-inline.js') %>"></script>
-<script src="/js/you.js"></script>
+<script src="/js/you.js?v=<%= locals.assetVersion('js/you.js') %>"></script>
 <script src="/js/board.js?v=<%= locals.assetVersion('js/board.js') %>"></script>
 <% if (modView) { %>
 <script>

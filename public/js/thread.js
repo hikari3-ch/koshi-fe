@@ -408,6 +408,7 @@ const threadAutoRefresh = {
 
     if (insertedElements.length > 0) {
       if (outOfOrder) renumberReplies();
+      if (window.markYouPosts) window.markYouPosts();
       document.dispatchEvent(new CustomEvent('contentAdded'));
       if (window.backlinks?.init) window.backlinks.init();
       if (window.initializeThumbnails) window.initializeThumbnails();
@@ -416,6 +417,7 @@ const threadAutoRefresh = {
       }
       if (window.initializePolls) window.initializePolls();
       if (window.stylePanel?.applyFilters) window.stylePanel.applyFilters();
+      if (window.stylePanel?.annotatePosts) window.stylePanel.annotatePosts();
 
       if (!wasAtBottom && unreadDelta > 0) {
         unreadCount += unreadDelta;

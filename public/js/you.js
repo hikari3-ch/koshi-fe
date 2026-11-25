@@ -1,10 +1,9 @@
-document.addEventListener('DOMContentLoaded', function () {
+function markYouPosts() {
   try {
     const postPasswords = JSON.parse(localStorage.getItem('postingPasswords') || '{}');
 
-    const boardUri = window.location.pathname.split('/')[1];
-
     const pathParts = window.location.pathname.split('/');
+    const boardUri = pathParts[1];
     const isThreadPage = pathParts.length >= 4 && pathParts[2] === 'thread';
     const threadId = isThreadPage ? pathParts[3] : null;
 
@@ -14,14 +13,13 @@ document.addEventListener('DOMContentLoaded', function () {
       const postId = nameElement.getAttribute('data-post-id');
       const postBoard = nameElement.getAttribute('data-board');
 
-      if (postBoard !== boardUri) return;
+      if (boardUri && boardUri !== 'all' && postBoard !== boardUri) return;
 
       let postKey;
-
       const isReply = nameElement.closest('.reply') !== null;
 
       if (isReply) {
-        let replyThreadId = threadId;
+        let replyThreadId = threadId || nameElement.getAttribute('data-thread-id');
 
         if (!replyThreadId) {
           const threadElement = nameElement.closest('.thread');
@@ -31,10 +29,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (replyThreadId) {
-          postKey = `${boardUri}/${replyThreadId}/${postId}`;
+          postKey = `${postBoard}/${replyThreadId}/${postId}`;
         }
       } else {
-        postKey = `${boardUri}/${postId}`;
+        postKey = `${postBoard}/${postId}`;
       }
 
       if (postKey && postPasswords[postKey]) {
@@ -42,10 +40,17 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
 
+    if (window.backlinks && typeof window.backlinks.init === 'function') {
+      window.backlinks.init();
+    }
     if (window.stylePanel && typeof window.stylePanel.annotatePosts === 'function') {
       window.stylePanel.annotatePosts();
     }
   } catch (e) {
     console.error('Error checking post ownership:', e);
   }
-});
+}
+
+window.markYouPosts = markYouPosts;
+document.addEventListener('DOMContentLoaded', markYouPosts);
+document.addEventListener('contentAdded', markYouPosts);

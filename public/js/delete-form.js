@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const deleteForm = document.getElementById('delete-form');
 
   if (deleteForm) {
-    deleteForm.addEventListener('submit', function (e) {
+    deleteForm.addEventListener('submit', async function (e) {
       e.preventDefault();
 
       const selectedCheckboxes = document.querySelectorAll('.post-checkbox:checked');
@@ -74,6 +74,9 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch {
           liveCsrf = match[1];
         }
+      }
+      if (!liveCsrf && typeof window.refreshCsrfToken === 'function') {
+        liveCsrf = (await window.refreshCsrfToken()) || '';
       }
       if (!liveCsrf) {
         liveCsrf = deleteForm.querySelector('input[name="_csrf"]')?.value || '';

@@ -356,9 +356,9 @@
       const opts = optsInput || this.getStyleOptions();
       const posts = document.querySelectorAll('.post, .op');
       posts.forEach((post) => {
-        const isYou = Boolean(post.querySelector('.you, .youName'));
+        const isYou = Boolean(post.querySelector('.youName'));
         const quotesYou = Boolean(
-          post.querySelector('.quoteYou') || Array.from(post.querySelectorAll('a') || []).some((a) => /\(You\)/.test(a.textContent || ''))
+          post.querySelector('.quoteYou, .quoteLink.you, a.you') || Array.from(post.querySelectorAll('a') || []).some((a) => /\(You\)/.test(a.textContent || ''))
         );
         const hasCapcode = Boolean(post.querySelector('[data-capcode], .capcode-label'));
 
