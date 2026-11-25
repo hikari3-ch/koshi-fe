@@ -14,8 +14,8 @@
     { key: 'hideBacklinks', group: 'elements', label: 'Hide backlinks', bodyClass: 'oc-hide-backlinks', defaultValue: false },
 
     { key: 'highlightOp', group: 'highlights', label: 'Highlight OP posts', bodyClass: 'oc-highlight-op', defaultValue: false },
-    { key: 'highlightYou', group: 'highlights', label: 'Highlight your (You) posts', bodyClass: 'oc-highlight-you', defaultValue: true },
-    { key: 'highlightQuotesToYou', group: 'highlights', label: 'Highlight replies quoting (You)', bodyClass: 'oc-highlight-quotes-you', defaultValue: true },
+    { key: 'highlightYou', group: 'highlights', label: 'Highlight your (You) posts', bodyClass: 'oc-highlight-you', defaultValue: false },
+    { key: 'highlightQuotesToYou', group: 'highlights', label: 'Highlight replies quoting (You)', bodyClass: 'oc-highlight-quotes-you', defaultValue: false },
     { key: 'highlightCapcodes', group: 'highlights', label: 'Highlight staff capcodes', bodyClass: 'oc-highlight-capcodes', defaultValue: false },
     { key: 'highlightHover', group: 'highlights', label: 'Highlight hovered replies', bodyClass: 'oc-highlight-hover', defaultValue: false },
 
