@@ -896,11 +896,12 @@
       stage.style.color = textCol;
       if (bodyFont) stage.style.fontFamily = bodyFont;
 
+      const defaultGroupLabel = (typeof window !== 'undefined' && window.siteThemeConfig && window.siteThemeConfig.siteName) || 'Site';
       const stageTitle = document.createElement('div');
       stageTitle.className = 'theme-preview-title';
       stageTitle.style.color = titleCol;
       if (headingFont) stageTitle.style.fontFamily = headingFont;
-      stageTitle.textContent = `/${group || 'Site'}/ - ${label}`;
+      stageTitle.textContent = `/${group || defaultGroupLabel}/ - ${label}`;
 
       const replyBox = document.createElement('div');
       replyBox.className = 'theme-preview-reply';
@@ -981,9 +982,10 @@
       const customList = this.getCustomThemes();
       const activeId = this.currentSelectedThemeId();
 
+      const defaultGroupLabel = (typeof window !== 'undefined' && window.siteThemeConfig && window.siteThemeConfig.siteName) || 'Site';
       const groups = ['All'];
       builtInList.forEach((t) => {
-        const g = t.group || 'Site';
+        const g = t.group || defaultGroupLabel;
         if (!groups.includes(g)) groups.push(g);
       });
       if (customList.length) groups.push('Custom');
@@ -1014,7 +1016,7 @@
         const boardDefId = window.themes ? window.themes.boardDefaultId() : '';
         const defaultTargetId = boardDefId || (window.themes ? window.themes.defaultId : 'yotsuba-b');
         const defaultThemeObj = (window.themes && window.themes.byId(defaultTargetId)) || { label: 'Default', palette: {} };
-        if (!q && (grp === 'All' || grp === (defaultThemeObj.group || 'Site'))) {
+        if (!q && (grp === 'All' || grp === (defaultThemeObj.group || defaultGroupLabel))) {
           grid.appendChild(
             this.buildThemePreviewCard({
               id: 'default',
@@ -1046,7 +1048,7 @@
         }
 
         builtInList.forEach((t) => {
-          const g = t.group || 'Site';
+          const g = t.group || defaultGroupLabel;
           if (grp !== 'All' && g !== grp) return;
           if (q && !t.label.toLowerCase().includes(q) && !t.id.toLowerCase().includes(q)) return;
           grid.appendChild(

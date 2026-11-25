@@ -27,8 +27,8 @@ for (let i = 0; i < 5; i++) {
 <script>window.siteDisabledTabs = <%- JSON.stringify(locals.siteDisabledTabs || { mascots: false, customThemes: false }).replace(/</g, '\\u003c') %>;</script>
 <script>window.currentBoardUri = <%- JSON.stringify(locals.boardUri || '').replace(/</g, '\\u003c') %>;</script>
 <script>window.koshiMascotConfig = <%- JSON.stringify(locals.getMascotConfig ? locals.getMascotConfig(locals.boardUri || '') : { mascots: [], defaultMascotId: '', sitewideDefault: '', boardDefault: '' }).replace(/</g, '\\u003c') %>;</script>
-<% if (themeCfg.defaultTheme || themeCfg.newPostSound || (Array.isArray(themeCfg.themes) && themeCfg.themes.length)) { %>
-<script>window.siteThemeConfig = <%- JSON.stringify({ defaultTheme: themeCfg.defaultTheme || 'yotsuba-b', defaultThemeLabel: themeCfg.defaultThemeLabel || 'Yotsuba B', newPostSound: themeCfg.newPostSound || '', themes: themeCfg.themes || [] }).replace(/</g, '\\u003c') %>;</script>
+<% if (themeCfg.defaultTheme || themeCfg.newPostSound || (Array.isArray(themeCfg.themes) && themeCfg.themes.length) || locals.siteName) { %>
+<script>window.siteThemeConfig = <%- JSON.stringify({ siteName: locals.siteName || '', defaultTheme: themeCfg.defaultTheme || 'yotsuba-b', defaultThemeLabel: themeCfg.defaultThemeLabel || 'Yotsuba B', newPostSound: themeCfg.newPostSound || '', themes: themeCfg.themes || [] }).replace(/</g, '\\u003c') %>;</script>
 <% } %>
 <% if (themeCfg.framedBrowsing && (themeCfg.framedBrowsing.logo || (Array.isArray(themeCfg.framedBrowsing.boardSections) && themeCfg.framedBrowsing.boardSections.length))) { %>
 <script>window.framedBrowsingConfig = <%- JSON.stringify(themeCfg.framedBrowsing).replace(/</g, '\\u003c') %>;</script>
