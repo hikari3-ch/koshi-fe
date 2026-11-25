@@ -1982,6 +1982,10 @@
             this.hide();
           }
         });
+        document.addEventListener('click', (e) => {
+          const link = e.target && typeof e.target.closest === 'function' ? e.target.closest('a.sage-name-link') : null;
+          if (link) e.preventDefault();
+        });
       }
     }
   };

@@ -1626,9 +1626,15 @@ details:not([open]) .hide-file-button::before {
   margin: 0;
 }
 
-.sage-label {
+a.sage-name-link,
+a.sage-name-link:visited {
+  color: var(--link-color, #34345c);
+  text-decoration: underline;
+}
+
+a.sage-name-link:hover {
   color: var(--hover-link-color, #d00);
-  font-weight: bold;
+  text-decoration: underline;
 }
 
 #postformTable > tbody > tr > td {

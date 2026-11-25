@@ -88,6 +88,7 @@ const tooltips = {
       subject: own('.subject')?.innerHTML,
       postId: post.getAttribute('data-post-id'),
       creation: this.parsePostDate(dateText),
+      sage: Boolean(own('a.sage-name-link')),
       signedRole:
         own('[data-capcode]')?.getAttribute('data-capcode') ??
         (own('.admin-name')
@@ -137,6 +138,7 @@ const tooltips = {
       creation: post.creation,
       postId: post.postId || post.threadId,
       subject: post.subject,
+      sage: Boolean(post.sage),
       signedRole: post.signedRole ?? null,
       message: this.trimPreviewMessage(post.markdown || post.message || ''),
       files: post.files?.map((file) => ({

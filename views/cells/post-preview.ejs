@@ -5,9 +5,9 @@
     <% } %>
     <% const cap = locals.capcodeFor(post.signedRole); %>
     <% if (cap) { %>
-    <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %>" data-capcode="<%= cap.text %>"><%- post.name %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
+    <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %>" data-capcode="<%= cap.text %>"><% if (post.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- post.name %></a><% } else { %><%- post.name %><% } %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
     <% } else { %>
-    <span class="name"><%- post.name || 'Anonymous' %></span>
+    <span class="name"><% if (post.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- post.name || 'Anonymous' %></a><% } else { %><%- post.name || 'Anonymous' %><% } %></span>
     <% } %>
     <%- include('../partials/post-flag', { flag: post.flag, flagName: post.flagName }).trim() %>
     <% if (post.creation) { %>

@@ -17,9 +17,9 @@ data-board="<%= boardUri %>"
     Name:
     <% const cap = locals.capcodeFor(reply.signedRole); %>
     <% if (cap) { %>
-      <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %> name" data-capcode="<%= cap.text %>"><%- reply.name %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
+      <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %> name" data-capcode="<%= cap.text %>"><% if (reply.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- reply.name %></a><% } else { %><%- reply.name %><% } %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
       <% } else { %>
-        <span class="name" data-post-id="<%= reply.postId %>" data-board="<%= boardUri %>" data-thread-id="<%= thread.threadId %>"><%- reply.name %></span>
+        <span class="name" data-post-id="<%= reply.postId %>" data-board="<%= boardUri %>" data-thread-id="<%= thread.threadId %>"><% if (reply.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- reply.name %></a><% } else { %><%- reply.name %><% } %></span>
       <%}%>
       <%- include('../partials/post-flag', { flag: reply.flag, flagName: reply.flagName }).trim() %>
       <%- include('../partials/time', { date: reply.creation }) %>

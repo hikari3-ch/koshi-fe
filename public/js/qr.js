@@ -132,33 +132,9 @@ syncText(qr_nm, st_nm);
 
 syncText(document.getElementById('post-password-qr'), document.getElementById('post-password'));
 
-for (const name of ['fortune', 'sage', 'visible-sage', 'nonoko']) {
+for (const name of ['fortune', 'sage', 'nonoko']) {
   syncClick(document.getElementById(`${name}-qr`), document.getElementById(name));
 }
-
-(function setupSageMutualExclusion() {
-  const pair = [
-    ['sage', 'sage-qr'],
-    ['visible-sage', 'visible-sage-qr']
-  ];
-  pair.forEach(([aId, bId], idx) => {
-    const otherIds = pair[1 - idx];
-    [aId, bId].forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.addEventListener('change', () => {
-        if (!el.checked) return;
-        otherIds.forEach((otherId) => {
-          const other = document.getElementById(otherId);
-          if (other && other.checked) {
-            other.checked = false;
-            other.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-        });
-      });
-    });
-  });
-})();
 
 document.addEventListener('DOMContentLoaded', () => {
   const mainPreviewContainer = document.getElementById('preview-container');
