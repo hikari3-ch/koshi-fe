@@ -540,7 +540,9 @@ body.oc-hide-banner .banner-img {
   display: none !important;
 }
 
-body.oc-hide-rotating-banner .rotating-banner {
+body.oc-hide-rotating-banner .rotating-banner,
+body.oc-hide-rotating-banner .rotating-banner-hr,
+body.oc-hide-rotating-banner hr:has(+ .rotating-banner) {
   display: none !important;
 }
 
