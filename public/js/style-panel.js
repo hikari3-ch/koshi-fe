@@ -1967,6 +1967,39 @@
             if (wrap) wrap.classList.add('is-hidden');
           }
         });
+        this.initBlotterToggle();
+      }
+    },
+
+    initBlotterToggle() {
+      if (typeof document === 'undefined') return;
+      const wrap = document.getElementById('blotter-wrap');
+      const toggle = document.getElementById('toggleBlotter');
+      if (!wrap || !toggle) return;
+
+      const latestKey = wrap.dataset.latestKey || '';
+      const applyHidden = (hidden) => {
+        wrap.classList.toggle('blotter-hidden', hidden);
+        toggle.textContent = hidden ? 'Show' : 'Hide';
+      };
+
+      const savedKey = safeStorageGet('koshiBlotterHiddenKey');
+      if (latestKey && savedKey === latestKey) {
+        applyHidden(true);
+      }
+
+      if (!toggle.dataset.blotterBound) {
+        toggle.dataset.blotterBound = '1';
+        toggle.addEventListener('click', (e) => {
+          e.preventDefault();
+          const nextHidden = !wrap.classList.contains('blotter-hidden');
+          applyHidden(nextHidden);
+          if (nextHidden && latestKey) {
+            safeStorageSet('koshiBlotterHiddenKey', latestKey);
+          } else {
+            safeStorageRemove('koshiBlotterHiddenKey');
+          }
+        });
       }
     }
   };

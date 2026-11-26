@@ -1,0 +1,130 @@
+<% title = 'Blotter'; %>
+
+<style>
+  .blotter-admin {
+    margin: 0 auto;
+    max-width: 960px;
+  }
+
+  .blotter-note {
+    color: var(--file-info-color);
+    font-size: 12px;
+    margin: 4px 0 10px;
+  }
+
+  .blotter-list td,
+  .blotter-list th {
+    vertical-align: middle;
+  }
+
+  .blotter-row-current {
+    background: var(--marked-color);
+  }
+
+  .blotter-meta {
+    display: grid;
+    gap: 8px 12px;
+    grid-template-columns: minmax(180px, 240px) 1fr;
+    margin-bottom: 10px;
+  }
+
+  .blotter-meta label {
+    display: block;
+    font-size: 11px;
+    opacity: 0.85;
+  }
+
+  .blotter-meta input,
+  .blotter-meta textarea {
+    box-sizing: border-box;
+    display: block;
+    font: inherit;
+    margin-top: 2px;
+    width: 100%;
+  }
+
+  #blotter-message {
+    min-height: 70px;
+    resize: vertical;
+  }
+
+  .blotter-button {
+    background: var(--post-color);
+    border: 1px solid var(--border-alt);
+    border-radius: 3px;
+    color: var(--text-color);
+    cursor: pointer;
+    font: inherit;
+    padding: 2px 10px;
+    text-decoration: none;
+  }
+
+  .blotter-button:hover {
+    color: var(--hover-link-color);
+  }
+
+  .blotter-primary {
+    font-weight: bold;
+  }
+
+  .blotter-danger:hover {
+    color: #ff6b6b;
+  }
+
+  .blotter-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 0;
+  }
+
+  .blotter-status {
+    font-size: 12px;
+    opacity: 0.85;
+  }
+
+  .blotter-status.blotter-bad {
+    color: #ff6b6b;
+  }
+</style>
+
+<div class="blotter-admin">
+  <h2>Blotter</h2>
+  <p class="blotter-note">The 3 most recent entries appear below the post form; all entries appear on <a href="/blotter" target="_blank" rel="noopener">/blotter</a>.</p>
+  <% if (blotterEntries.length) { %>
+  <table class="mod-table blotter-list">
+    <tr><th>#</th><th>Date</th><th>Message</th><th>Author</th><th></th></tr>
+    <% blotterEntries.forEach(entry => { %>
+    <tr<%= editEntry && editEntry.blotterId === entry.blotterId ? ' class="blotter-row-current"' : '' %>>
+      <td><%= entry.blotterId %></td>
+      <td><%= locals.formatBlotterDate ? locals.formatBlotterDate(entry.date) : new Date(entry.date).toLocaleDateString() %></td>
+      <td><%= entry.message %></td>
+      <td><%= entry.author %></td>
+      <td><a href="/mod/blotter?edit=<%= entry.blotterId %>">Edit</a></td>
+    </tr>
+    <% }) %>
+  </table>
+  <% } else { %><p class="blotter-note">No blotter entries yet.</p><% } %>
+
+  <h2 id="blotter-editor-heading"><%= isNew ? 'Add blotter entry' : 'Editing #' + editEntry.blotterId %></h2>
+  <% if (!isNew && !editEntry) { %>
+  <p class="blotter-note">That blotter entry no longer exists.</p>
+  <% } else { %>
+  <form id="blotter-editor-form" data-blotter-id="<%= editEntry ? editEntry.blotterId : '' %>">
+    <div class="blotter-meta">
+      <label>Date<input name="date" type="datetime-local" value="<%= (editEntry ? new Date(editEntry.date) : new Date()).toISOString().slice(0, 16) %>"></label>
+      <label>Message (plain text, max 500 chars)<textarea id="blotter-message" name="message" maxlength="500" required><%= editEntry ? editEntry.message : '' %></textarea></label>
+    </div>
+
+    <p class="blotter-actions">
+      <button type="submit" class="blotter-button blotter-primary"><%= isNew ? 'Publish' : 'Save changes' %></button>
+      <a class="blotter-button" href="/mod/blotter">Add new entry</a>
+      <% if (!isNew && editEntry) { %><button type="button" class="blotter-button blotter-danger" id="blotter-delete-btn" data-id="<%= editEntry.blotterId %>">Delete</button><% } %>
+      <span class="blotter-status" id="blotter-status"></span>
+    </p>
+  </form>
+  <% } %>
+</div>
+
+<script src="/js/mod-blotter.js?v=<%= locals.assetVersion('js/mod-blotter.js') %>"></script>

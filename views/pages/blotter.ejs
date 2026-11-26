@@ -1,0 +1,22 @@
+<% title = 'Blotter - ' + siteName; %>
+<div class="box-layout">
+  <div class="box-outer top-box">
+    <div class="boxbar"><h2>Blotter</h2></div>
+    <div class="boxcontent">
+      <% if (Array.isArray(blotterEntries) && blotterEntries.length > 0) { %>
+      <table class="blotter-page-table">
+        <tbody>
+          <% blotterEntries.forEach((entry) => { %>
+          <tr id="b<%= entry.blotterId %>">
+            <td class="blotter-date"><%= locals.formatBlotterDate ? locals.formatBlotterDate(entry.date) : '' %></td>
+            <td class="blotter-content"><%= entry.message %></td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+      <% } else { %>
+      <p>No blotter entries yet.</p>
+      <% } %>
+    </div>
+  </div>
+</div>

@@ -4454,6 +4454,56 @@ html {
   word-break: break-all;
 }
 
+.blotter-hr {
+  margin: 6px auto;
+  max-width: 468px;
+}
+
+table.blotter {
+  border-collapse: collapse;
+  font-size: 11px;
+  margin: 0 auto 4px;
+  width: min(468px, 95%);
+}
+
+table.blotter td,
+.blotter-page-table td {
+  padding: 1px 4px;
+  vertical-align: top;
+}
+
+.blotter-date {
+  font-weight: bold;
+  white-space: nowrap;
+  width: 1%;
+}
+
+.blotter-content {
+  width: 100%;
+  word-break: break-word;
+}
+
+.blotter-footer {
+  font-size: 10px;
+  padding-top: 3px;
+  text-align: right;
+}
+
+.blotter-wrap.blotter-hidden #blotter-msgs {
+  display: none;
+}
+
+.blotter-page-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.blotter-page-table tr + tr td {
+  border-top: 1px solid var(--border-color);
+  padding-top: 4px;
+}
+
+
 
 
 

@@ -1,0 +1,25 @@
+<% if (Array.isArray(locals.blotterEntries) && locals.blotterEntries.length > 0) { %>
+<% const visibleBlotter = locals.blotterEntries.slice(0, 3); %>
+<% const latestBlotterKey = visibleBlotter.map((e) => e.blotterId + ':' + new Date(e.date).getTime()).join(','); %>
+<div class="blotter-wrap" id="blotter-wrap" data-latest-key="<%= latestBlotterKey %>">
+  <hr class="blotter-hr">
+  <table id="blotter" class="blotter">
+    <tbody id="blotter-msgs">
+      <% visibleBlotter.forEach((entry) => { %>
+      <tr>
+        <td class="blotter-date"><%= locals.formatBlotterDate ? locals.formatBlotterDate(entry.date) : '' %></td>
+        <td class="blotter-content"><%= entry.message %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2" class="blotter-footer">
+          [<a href="#" id="toggleBlotter" class="blotter-toggle">Hide</a>]
+          [<a href="/blotter">Show All</a>]
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+<% } %>
