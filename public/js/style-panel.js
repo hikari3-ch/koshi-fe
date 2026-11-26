@@ -222,9 +222,6 @@
       if (Number.isFinite(pt) && pt >= 8 && pt <= 14 && pt !== 10) {
         rules.push(`body { font-size: ${pt}pt !important; }`);
       }
-      if (opts.hidePostForm) {
-        rules.push(`body.oc-hide-post-form #post-form-container:not(.oc-form-expanded) { display: none !important; }`);
-      }
       return rules.join('\n');
     },
 
@@ -315,8 +312,12 @@
       return opts;
     },
 
-    syncPostFormToggle() {
+    syncPostFormToggle(collapsed) {
       if (typeof document === 'undefined') return;
+      if (!collapsed) {
+        document.querySelectorAll('.post-form-collapsible.is-open').forEach((el) => el.classList.remove('is-open'));
+        document.querySelectorAll('.post-form-toggle-wrap.is-hidden').forEach((el) => el.classList.remove('is-hidden'));
+      }
     },
 
     annotatePosts(optsInput) {
@@ -1963,7 +1964,7 @@
             const container = targetId ? document.getElementById(targetId) : null;
             if (container) container.classList.add('is-open');
             const wrap = formToggle.closest('.post-form-toggle-wrap');
-            if (wrap) wrap.style.display = 'none';
+            if (wrap) wrap.classList.add('is-hidden');
           }
         });
       }

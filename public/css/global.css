@@ -168,15 +168,20 @@ input[type="text"] {
   padding: 0;
 }
 
-.post-form-collapsible:not(.is-open) {
+body.oc-hide-post-form .post-form-collapsible:not(.is-open) {
   display: none;
 }
 
 .post-form-toggle-wrap {
+  display: none;
   font-size: 22px;
   font-weight: bold;
   margin: 6px 0;
   text-align: center;
+}
+
+body.oc-hide-post-form .post-form-toggle-wrap:not(.is-hidden) {
+  display: block;
 }
 
 .thread-toggle-icon {
