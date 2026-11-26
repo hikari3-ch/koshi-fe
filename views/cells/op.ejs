@@ -8,8 +8,19 @@ var role = thread.signedRole;
 var threadHref = modView ? '/mod/thread/' + boardUri + '/' + id : href;
 var controls = modView || locals.modControls;
 %>
+<% if (!locals.isThread) { %>
+<div class="thread-collapsed-bar" data-board="<%= boardUri %>" data-thread-id="<%= id %>">
+  <a href="#" class="thread-expand-icon-btn thread-toggle-icon" data-board="<%= boardUri %>" data-thread-id="<%= id %>" title="Show thread" aria-label="Show thread"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true"><path class="expand-icon-border" d="M1 0h11v1h1v11h-1v1H1v-1H0V1h1z"/><rect class="expand-icon-bg" x="1" y="1" width="11" height="11"/><path class="expand-icon-glyph" d="M5.5 3h2v2.5H10v2H7.5V10h-2V7.5H3v-2h2.5z"/></svg></a>
+  <% if (thread.subject) { %><span class="subject"><%- thread.subject %></span><% } %>
+  <span class="name"><%- thread.name %></span>
+  <span class="summary">(<%= thread.totalReplies || 0 %> repl<%= (thread.totalReplies || 0) === 1 ? 'y' : 'ies' %>)</span>
+</div>
+<% } %>
 <div class="post-container op-container" id="pc<%= id %>">
 <div class="post op<%= controls && thread.isTor ? ' mod-tor-post' : '' %>" id="p<%= id %>" data-post-id="<%= id %>" data-board="<%= boardUri %>" data-thread-id="<%= id %>" data-pinned="<%= thread.pinned ? 1 : 0 %>" data-locked="<%= thread.locked ? 1 : 0 %>" data-autosage="<%= thread.autoSage ? 1 : 0 %>" data-cyclic="<%= thread.cyclic ? 1 : 0 %>"<% if (controls && thread.isTor) { %> data-tor="1" data-tor-kind="<%= thread.torKind || 'exit' %>"<% } %>>
+<% if (!locals.isThread) { %>
+<a href="#" class="thread-collapse-btn thread-toggle-icon" data-board="<%= boardUri %>" data-thread-id="<%= id %>" title="Hide thread" aria-label="Hide thread"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true"><path class="expand-icon-border" d="M1 0h11v1h1v11h-1v1H1v-1H0V1h1z"/><rect class="expand-icon-bg" x="1" y="1" width="11" height="11"/><rect class="expand-icon-glyph" x="3" y="5.5" width="7" height="2"/></svg></a>
+<% } %>
 <% if (thread.files && thread.files.length) { %>
 <%- include('../partials/post-files', { files: thread.files, imageClass: 'thread-image', maxWidth: 235, maxHeight: 235, boardUri, threadId: id, postId: id, modView }) %>
 <% } %>
@@ -57,8 +68,8 @@ var controls = modView || locals.modControls;
 </div>
 <% if (!locals.isThread && thread.totalReplies > 5) { %>
 <span class="summary thread-footer" data-thread-id="<%= id %>">
-  <span class="omitted-posts"><a href="#" class="expand-thread-btn thread-toggle-icon" title="Expand thread" aria-label="Expand thread"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true"><path class="expand-icon-border" d="M1 0h11v1h1v11h-1v1H1v-1H0V1h1z"/><rect class="expand-icon-bg" x="1" y="1" width="11" height="11"/><path class="expand-icon-glyph" d="M5.5 3h2v2.5H10v2H7.5V10h-2V7.5H3v-2h2.5z"/></svg></a><a href="#" class="expand-thread" title="Expand thread"><%= omitted %> repl<%= omitted !== 1 ? 'ies' : 'y' %><% if (thread.omittedImages > 0) { %> and <%= thread.omittedImages %> image<%= thread.omittedImages !== 1 ? 's' : '' %><% } %> omitted. Click to expand.</a></span>
-  <span class="expanded-posts" style="display: none"><a href="#" class="collapse-thread-btn thread-toggle-icon" title="Collapse thread" aria-label="Collapse thread"><svg viewBox="0 0 13 13" width="13" height="13" aria-hidden="true"><path class="expand-icon-border" d="M1 0h11v1h1v11h-1v1H1v-1H0V1h1z"/><rect class="expand-icon-bg" x="1" y="1" width="11" height="11"/><rect class="expand-icon-glyph" x="3" y="5.5" width="7" height="2"/></svg></a><a href="#" class="collapse-thread reply-link">Collapse thread</a></span>
+  <span class="omitted-posts"><a href="#" class="expand-thread" title="Expand thread"><%= omitted %> repl<%= omitted !== 1 ? 'ies' : 'y' %><% if (thread.omittedImages > 0) { %> and <%= thread.omittedImages %> image<%= thread.omittedImages !== 1 ? 's' : '' %><% } %> omitted. Click to expand.</a></span>
+  <span class="expanded-posts" style="display: none"><a href="#" class="collapse-thread reply-link">Collapse thread</a></span>
 </span>
 <div class="additional-replies" style="display: none;"></div>
 <% } %>

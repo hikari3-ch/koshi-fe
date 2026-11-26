@@ -208,6 +208,27 @@ input[type="text"] {
   fill: color-mix(in srgb, var(--hover-link-color, #d00) 45%, var(--post-color, #eef2ff));
 }
 
+.op > .thread-collapse-btn {
+  float: left;
+  margin: 2px 4px 0 2px;
+}
+
+.thread-collapsed-bar {
+  align-items: center;
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 6px;
+}
+
+.thread.thread-collapsed > :not(.thread-collapsed-bar) {
+  display: none !important;
+}
+
+.thread.thread-collapsed > .thread-collapsed-bar {
+  display: flex;
+}
+
 .thread-refresh-controls {
   padding: 0 5px;
 }
