@@ -472,9 +472,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  const mainReplyForm = document.getElementById('reply-form');
+  const mainReplyForms = Array.from(document.querySelectorAll('.reply-form:not(#quick-reply-form)'));
+  if (!mainReplyForms.length) return;
 
-  if (mainReplyForm) {
+  mainReplyForms.forEach((mainReplyForm) => {
     let replyInFlight = false;
     mainReplyForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -485,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
         button.disabled = true;
       });
 
-      const fileInput = document.getElementById('image');
+      const fileInput = mainReplyForm.querySelector('input[type="file"][name="image"]') || document.getElementById('image');
       if (window.updateFileInput && typeof window.updateFileInput === 'function') {
         window.updateFileInput();
       }
@@ -519,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const result = await response.json();
 
           if (result.success) {
-            mainReplyForm.reset();
+            document.querySelectorAll('.reply-form').forEach((f) => f.reset());
 
             globalFormState = {
               name: '',
@@ -528,17 +529,14 @@ document.addEventListener('DOMContentLoaded', () => {
               files: []
             };
 
-            const fileInput = document.getElementById('image');
-            const previewContainer = document.getElementById('preview-container');
-            const previewContainer_QR = document.getElementById('qr-preview-container');
+            document.querySelectorAll('.preview-container, #preview-container, #qr-preview-container').forEach((c) => {
+              c.innerHTML = '';
+            });
 
-            if (previewContainer) previewContainer.innerHTML = '';
-            if (previewContainer_QR) previewContainer_QR.innerHTML = '';
-
-            if (fileInput) {
+            document.querySelectorAll('input[type="file"][name="image"]').forEach((inp) => {
               const dt = new DataTransfer();
-              fileInput.files = dt.files;
-            }
+              inp.files = dt.files;
+            });
 
             if (window.currentFiles !== undefined) {
               window.currentFiles = [];
@@ -659,7 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     });
-  }
+  });
 });
 
 window.addEventListener('scroll', () => {

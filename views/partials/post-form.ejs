@@ -1,16 +1,27 @@
+<% const sfx = locals.formSuffix || ''; %>
+<% if (!sfx) { %>
 <script>
     function updateTextareaValueFromURL() {
-        const textarea = document.getElementById('message');
         const hash = window.location.hash;
         if (hash && hash.startsWith('#q')) {
             const id = hash.substring(2);
-            textarea.value = `>>${id}\n`;
+            const topContainer = document.getElementById('reply-form-container-top');
+            if (topContainer) {
+                topContainer.classList.add('is-open');
+                const wrap = topContainer.previousElementSibling;
+                if (wrap && wrap.classList.contains('post-form-toggle-wrap')) wrap.style.display = 'none';
+            }
+            document.querySelectorAll('#post-form textarea[name="message"], .reply-form textarea[name="message"]').forEach(function(ta) {
+                ta.value = `>>${id}\n`;
+                ta.dispatchEvent(new Event('input', { bubbles: true }));
+            });
         }
     }
     window.onload = updateTextareaValueFromURL;
     window.onhashchange = updateTextareaValueFromURL;
 
 </script>
+<% } %>
 
 <style>
     .mode-select-group {
@@ -33,21 +44,21 @@
 <% if (locals.isTor && locals.torPostingAllowed === false) { %>
 <div class="tor-notice-banner">Posting via Tor is currently disabled on /<%= boardUri %>/.</div>
 <% } %>
-<table id="postformTable">
+<table id="postformTable<%= sfx %>" class="postform-table">
     <tbody>
         <tr>
-            <td class="post-block"><label for="name">Name</label></td>
+            <td class="post-block"><label for="name<%= sfx %>">Name</label></td>
             <td class="postform-input-cell">
-                <input type="text" id="name" name="name" class="input-text" placeholder="<%= anonymousName %>" />
+                <input type="text" id="name<%= sfx %>" name="name" class="input-text" placeholder="<%= anonymousName %>" />
             </td>
         </tr>
         <% const formFlagMode = locals.flagModeFor ? locals.flagModeFor(locals.board) : 'off'; %>
         <% const formFlags = formFlagMode === 'custom' || formFlagMode === 'both' ? (locals.customFlagsFor ? locals.customFlagsFor(boardUri) : []) : []; %>
         <% if (formFlagMode === 'custom' || formFlagMode === 'both') { %>
         <tr>
-            <td class="post-block"><label for="user_flag">Flag</label></td>
+            <td class="post-block"><label for="user_flag<%= sfx %>">Flag</label></td>
             <td class="postform-input-cell">
-                <select id="user_flag" name="user_flag" class="input-text">
+                <select id="user_flag<%= sfx %>" name="user_flag" class="input-text">
                     <option value=""><%= formFlagMode === 'both' ? 'None (use my country)' : 'None' %></option>
                     <% formFlags.forEach((flag) => { %><option value="<%= flag.name %>"><%= flag.label %></option><% }) %>
                 </select>
@@ -58,13 +69,13 @@
             <td class="post-block"><label>Options</label></td>
             <td class="postform-input-cell">
                 
-                <details class="post-options" id="post-options">
+                <details class="post-options" id="post-options<%= sfx %>">
                     <summary><select class="input-text post-options-select" tabindex="-1" aria-hidden="true"><option class="post-options-label">None</option></select></summary>
                     <div class="post-options-menu">
-                        <label><input type="checkbox" id="fortune" name="fortune" value="true" /> Fortune</label>
+                        <label><input type="checkbox" id="fortune<%= sfx %>" name="fortune" value="true" /> Fortune</label>
                         <% if (isThread) { %>
-                        <label><input type="checkbox" id="sage" name="sage" value="true" /> Sage</label>
-                        <label><input type="checkbox" id="nonoko" name="nonoko" value="true" /> Nonoko</label>
+                        <label><input type="checkbox" id="sage<%= sfx %>" name="sage" value="true" /> Sage</label>
+                        <label><input type="checkbox" id="nonoko<%= sfx %>" name="nonoko" value="true" /> Nonoko</label>
                         <% } %>
                     </div>
                 </details>
@@ -75,32 +86,32 @@
         </tr>
         <% if (!isThread) { %>
         <tr>
-            <td class="post-block"><label for="subject">Subject</label></td>
+            <td class="post-block"><label for="subject<%= sfx %>">Subject</label></td>
             <td class="postform-input-cell subject-row-cell">
-                <input type="text" id="subject" name="subject" class="input-text" />
+                <input type="text" id="subject<%= sfx %>" name="subject" class="input-text" />
                 <button class="new-thread-btn" type="submit">New thread</button>
             </td>
         </tr>
         <% } %>
         <tr>
             <td class="post-block">
-                <label for="message">Comment</label>
+                <label for="message<%= sfx %>">Comment</label>
             </td>
             <td class="postform-input-cell">
-                <textarea id="message" name="message" class="input-text" rows="5"></textarea>
-                <p class="file-info no-js" style="margin: 0;font-size: 10px;">Max comment length: <span id="charCount">0</span>/4096</p>
+                <textarea id="message<%= sfx %>" name="message" class="input-text" rows="5"></textarea>
+                <p class="file-info no-js" style="margin: 0;font-size: 10px;">Max comment length: <span id="charCount<%= sfx %>">0</span>/4096</p>
                 <% var youtubeOk = locals.youtubeAllowed !== false; %>
                 <% var pollsOk = locals.pollsAllowed !== false; %>
                 <% var tegakiOk = locals.tegakiAllowed !== false; %>
                 <div class="js-only comment-block-extra">
                     <% if (pollsOk) { %>
-                    <div id="poll-details" class="poll-details" style="display: <%= textBoard ? 'block' : 'none' %>; padding: 10px;">
+                    <div id="poll-details<%= sfx %>" class="poll-details" style="display: <%= textBoard ? 'block' : 'none' %>; padding: 10px;">
                         <input type="text" autocomplete="off" name="poll_question" placeholder="Poll question" style="width: 98%; margin-bottom: 5px;" />
-                        <div id="poll-options" data-max-options="<%= locals.maxPollOptions || 10 %>">
+                        <div id="poll-options<%= sfx %>" data-max-options="<%= locals.maxPollOptions || 10 %>">
                             <input type="text" autocomplete="off" name="poll_options[]" placeholder="Option 1" style="width: 90%; margin-bottom: 5px;" />
                             <input type="text" autocomplete="off" name="poll_options[]" placeholder="Option 2" style="width: 90%; margin-bottom: 5px;" />
                         </div>
-                        <button type="button" id="add-option" style="margin-bottom: 5px;">+ Add Option</button>
+                        <button type="button" id="add-option<%= sfx %>" style="margin-bottom: 5px;">+ Add Option</button>
                         <div style="margin-top: 5px;">
                             <label>Poll duration:
                                 <select name="poll_duration">
@@ -114,7 +125,7 @@
                     </div>
                     <% } %>
                     <% if (tegakiOk && !textBoard) { %>
-                    <button type="button" id="tegaki-btn" title="Tegaki" class="form-button" style="display: none;">Tegaki</button>
+                    <button type="button" id="tegaki-btn<%= sfx %>" title="Tegaki" class="form-button" style="display: none;">Tegaki</button>
                     <% } %>
                 </div>
             </td>
@@ -140,21 +151,21 @@
         <% } %>
         <% if (!textBoard) { %>
         <tr>
-            <td class="post-block"><label id="file-row-label" for="standard-image">File</label></td>
+            <td class="post-block"><label id="file-row-label<%= sfx %>" for="standard-image<%= sfx %>">File</label></td>
             <td class="postform-input-cell">
-                <div id="file-mode-content">
-                    <div id="drop-zone">
+                <div id="file-mode-content<%= sfx %>">
+                    <div id="drop-zone<%= sfx %>" class="drop-zone">
                         Drag files here to upload or <br />click here to select them, or paste an image
-                        <input type="file" id="image" name="image" accept="image/*,video/*,.jxl,.avif" style="display: none;" />
+                        <input type="file" id="image<%= sfx %>" name="image" accept="image/*,video/*,.jxl,.avif" style="display: none;" />
                     </div>
-                    <div id="standard-file-input">
-                        <input type="file" id="standard-image" name="image" accept="image/*,video/*,.jxl,.avif" />
+                    <div id="standard-file-input<%= sfx %>">
+                        <input type="file" id="standard-image<%= sfx %>" name="image" accept="image/*,video/*,.jxl,.avif" />
                     </div>
-                    <div id="preview-container" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                    <div id="preview-container<%= sfx %>" class="preview-container" style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;"></div>
                 </div>
                 <% if (youtubeOk) { %>
-                <div id="embed-mode-content" style="display: none;">
-                    <input type="text" id="youtube-url" name="youtube-url" placeholder="Enter a supported URL here" style="width: 98%;" />
+                <div id="embed-mode-content<%= sfx %>" style="display: none;">
+                    <input type="text" id="youtube-url<%= sfx %>" name="youtube-url" placeholder="Enter a supported URL here" style="width: 98%;" />
                 </div>
                 <% } %>
             </td>
@@ -167,9 +178,9 @@
         </tr>
         <% } %>
         <tr>
-            <td class="post-block"><label for="post-password">Password</label></td>
+            <td class="post-block"><label for="post-password<%= sfx %>">Password</label></td>
             <td class="postform-input-cell">
-                <input type="text" id="post-password" name="post-password" class="input-text" autocomplete="off" spellcheck="false" value="<%= locals.formPassword %>" /><span id="delPasswordInfo"> (for deletion)</span>
+                <input type="text" id="post-password<%= sfx %>" name="post-password" class="input-text" autocomplete="off" spellcheck="false" value="<%= locals.formPassword %>" /><span id="delPasswordInfo<%= sfx %>"> (for deletion)</span>
             </td>
         </tr>
         <tr>
@@ -193,39 +204,46 @@
 
 <script>
     (function() {
-        const dropdown = document.getElementById('post-options');
-        if (!dropdown) return;
-        const label = dropdown.querySelector('.post-options-label');
-        const boxes = Array.from(dropdown.querySelectorAll('input[type="checkbox"]'));
-        function updateLabel() {
-            const ticked = boxes.filter(function(cb) { return cb.checked; }).map(function(cb) { return cb.parentNode.textContent.trim(); });
-            label.textContent = ticked.length ? ticked.join(', ') : 'None';
+        const sfx = <%- JSON.stringify(sfx) %>;
+        const dropdown = document.getElementById('post-options' + sfx);
+        if (dropdown) {
+            const label = dropdown.querySelector('.post-options-label');
+            const boxes = Array.from(dropdown.querySelectorAll('input[type="checkbox"]'));
+            function updateLabel() {
+                const ticked = boxes.filter(function(cb) { return cb.checked; }).map(function(cb) { return cb.parentNode.textContent.trim(); });
+                label.textContent = ticked.length ? ticked.join(', ') : 'None';
+            }
+            document.addEventListener('change', function(e) {
+                if (e.target instanceof HTMLInputElement && e.target.type === 'checkbox') updateLabel();
+            });
+            dropdown.closest('form')?.addEventListener('reset', function() { setTimeout(updateLabel); });
+            document.addEventListener('click', function(e) {
+                if (dropdown.open && !dropdown.contains(e.target)) dropdown.open = false;
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && dropdown.open) dropdown.open = false;
+            });
+            updateLabel();
         }
-        document.addEventListener('change', function(e) {
-            if (e.target instanceof HTMLInputElement && e.target.type === 'checkbox') updateLabel();
-        });
-        dropdown.closest('form')?.addEventListener('reset', function() { setTimeout(updateLabel); });
-        document.addEventListener('click', function(e) {
-            if (dropdown.open && !dropdown.contains(e.target)) dropdown.open = false;
-        });
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && dropdown.open) dropdown.open = false;
-        });
-        updateLabel();
-    })();
 
-    document.getElementById('message').addEventListener('input', function() {
-        document.getElementById('charCount').textContent = this.value.length;
-    });
+        const msgEl = document.getElementById('message' + sfx);
+        const countEl = document.getElementById('charCount' + sfx);
+        if (msgEl && countEl) {
+            msgEl.addEventListener('input', function() {
+                countEl.textContent = this.value.length;
+            });
+        }
+    })();
 
 </script>
 
+<% if (!sfx) { %>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const message = document.getElementById('message');
         document.querySelectorAll('#emo .emote').forEach(function(img) {
             img.style.cursor = 'pointer';
             img.addEventListener('click', function() {
+                const message = document.getElementById('message');
                 if (!message) return;
                 const tag = ':' + img.title + ':';
                 const start = message.selectionStart != null ? message.selectionStart : message.value.length;
@@ -233,27 +251,31 @@
                 message.value = message.value.slice(0, start) + tag + message.value.slice(end);
                 message.focus();
                 message.selectionStart = message.selectionEnd = start + tag.length;
+                message.dispatchEvent(new Event('input', { bubbles: true }));
             });
         });
     });
 
 </script>
+<% } %>
 
-<% if (tegakiOk && !textBoard) { %>
+<% if (tegakiOk && !textBoard && !sfx) { %>
 <script src="/js/tegaki-post.js"></script>
 <% } %>
 
 <% if (!textBoard && (youtubeOk || pollsOk || tegakiOk)) { %>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const modeButtons = document.querySelectorAll('.mode-select-btn');
-        const pollDetails = document.getElementById('poll-details');
-        const tegakiBtn = document.getElementById('tegaki-btn');
-        const fileModeContent = document.getElementById('file-mode-content');
-        const embedModeContent = document.getElementById('embed-mode-content');
-        const fileRowLabel = document.getElementById('file-row-label');
-        const fileInput = document.getElementById('image');
-        const youtubeUrl = document.getElementById('youtube-url');
+        const sfx = <%- JSON.stringify(sfx) %>;
+        const root = document.getElementById('postformTable' + sfx) || document;
+        const modeButtons = root.querySelectorAll('.mode-select-btn');
+        const pollDetails = document.getElementById('poll-details' + sfx);
+        const tegakiBtn = document.getElementById('tegaki-btn' + sfx);
+        const fileModeContent = document.getElementById('file-mode-content' + sfx);
+        const embedModeContent = document.getElementById('embed-mode-content' + sfx);
+        const fileRowLabel = document.getElementById('file-row-label' + sfx);
+        const fileInput = document.getElementById('image' + sfx);
+        const youtubeUrl = document.getElementById('youtube-url' + sfx);
 
         function setMode(mode) {
             modeButtons.forEach(function(btn) {
@@ -283,10 +305,12 @@
             });
         });
 
-        const standardFileInput = document.getElementById('standard-file-input');
+        const standardFileInput = document.getElementById('standard-file-input' + sfx);
         if (standardFileInput) standardFileInput.style.display = 'none';
     });
 
 </script>
 <% } %>
+<% if (!sfx) { %>
 <script src="/js/post-password.js?v=<%= locals.assetVersion('js/post-password.js') %>" defer></script>
+<% } %>

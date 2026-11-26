@@ -617,8 +617,14 @@ body.oc-compact-posts blockquote.thread-content {
   margin-bottom: 6px;
 }
 
+body.oc-full-width-replies .op-container,
+body.oc-full-width-replies .reply-container {
+  clear: both;
+  display: flow-root;
+}
+
 body.oc-full-width-replies .reply {
-  display: block;
+  display: flow-root;
 }
 
 body.oc-rice-checkboxes input[type='checkbox'] {

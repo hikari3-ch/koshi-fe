@@ -322,11 +322,21 @@ const tooltips = {
       });
   },
 
+  isMobileOrTouch() {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      if (window.matchMedia('(max-width: 768px), (hover: none) and (pointer: coarse)').matches) {
+        return true;
+      }
+    }
+    return typeof window !== 'undefined' && Number(window.innerWidth) > 0 && window.innerWidth <= 768;
+  },
+
   processQuote(quote) {
     if (quote.dataset.quoteBound) return;
     quote.dataset.quoteBound = '1';
 
     quote.onmouseenter = (event) => {
+      if (this.isMobileOrTouch()) return;
       const quoteUrl = quote.href;
       if (!quoteUrl || quoteUrl.endsWith('#')) return;
 

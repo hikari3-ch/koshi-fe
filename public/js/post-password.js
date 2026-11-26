@@ -18,7 +18,7 @@
   };
 
   const boxes = () =>
-    IDS.map((id) => document.getElementById(id)).filter(Boolean);
+    Array.from(document.querySelectorAll('#post-form input[name="post-password"], .reply-form input[name="post-password"]'));
 
   const apply = (value) => {
     boxes().forEach((el) => {

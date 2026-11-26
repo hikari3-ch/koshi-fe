@@ -43,10 +43,15 @@
         </div>
         <% if (!modView) { %>
         <div class="page-content">
+          <% if (thread.locked) { %>
           <div class="reply-form-container">
-            <% if (thread.locked) { %>
             <h3 style="margin-top: 0; text-align: center;">This thread is locked and you cannot reply.</h3>
-            <% } else { %>
+          </div>
+          <% } else { %>
+          <div class="post-form-toggle-wrap">
+            [<a href="#" class="post-form-toggle-link" data-form-target="reply-form-container-top">Post a Reply</a>]
+          </div>
+          <div class="reply-form-container post-form-collapsible" id="reply-form-container-top">
             <form
               action="/<%= boardUri %>/thread/<%= thread.threadId %>/reply"
               class="reply-form"
@@ -60,8 +65,8 @@
             <noscript>
               <a href="/styling">Styling</a>
             </noscript>
-            <% } %>
           </div>
+          <% } %>
           <span>
             <span id="countdown" class="thread-refresh-controls">
               <input type="button" id="thread-refresh-btn" value="Refresh">
@@ -74,6 +79,23 @@
               <button type="submit">Delete</button>
             </form>
             </span>
+          <% if (!thread.locked && Array.isArray(locals.board?.settings) && locals.board.settings.includes('bottomReplyForm')) { %>
+          <div style="clear: both"></div>
+          <div class="post-form-toggle-wrap">
+            [<a href="#" class="post-form-toggle-link" data-form-target="reply-form-container-bottom">Post a Reply</a>]
+          </div>
+          <div class="reply-form-container post-form-collapsible" id="reply-form-container-bottom">
+            <form
+              action="/<%= boardUri %>/thread/<%= thread.threadId %>/reply"
+              class="reply-form"
+              id="reply-form-bottom"
+              method="POST"
+              enctype="multipart/form-data"
+              data-max-files="<%= maxUploadFiles %>">
+              <%- include('partials/post-form', { textBoard: true, isThread: true, formSuffix: '-bottom' }) %>
+            </form>
+          </div>
+          <% } %>
         </div>
         <% } %>
         <% if (modView) { %>

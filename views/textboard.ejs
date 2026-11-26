@@ -69,7 +69,10 @@
       </div>
       <% if (!modView) { %>
       <div class="page-content">
-        <div class="reply-form-container" id="postform">
+        <div class="post-form-toggle-wrap">
+          [<a href="#" class="post-form-toggle-link" data-form-target="postform">Start a New Thread</a>]
+        </div>
+        <div class="reply-form-container post-form-collapsible" id="postform">
           <h3 style="margin-top: 0">Submit New Thread</h3>
           <form id="post-form" data-requires-file="false" action="/<%= boardUri %>/thread" style="margin-top: 10px; width: 400px" method="POST" enctype="multipart/form-data">
             <%- include('partials/post-form-text') %>

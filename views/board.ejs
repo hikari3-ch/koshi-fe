@@ -2,14 +2,17 @@
 <% title = '/' + boardUri + '/ - ' + boardName; %>
 <% head = '<link rel="alternate" type="application/rss+xml" title="' + siteName + ' | ' + boardName + '" href="/' + boardUri + '/rss.xml" />'; %>
 <% styles = ['/css/tegaki.css', 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/monokai-sublime.min.css']; %>
-<noscript><style>.js-only { display: block !important; }</style></noscript>
+<noscript><style>.js-only { display: block !important; } .post-form-collapsible { display: block !important; } .post-form-toggle-wrap { display: none; }</style></noscript>
 <%- include('partials/banner') %>
 <hr class="above-post-form">
 <% if (modView) { %>
 <%- include('/mod/partials/board-toolbar', { user, roleLabel, boardUri }) %>
 <% } %>
 <% if (!modView) { %>
-<div class="reply-form-container" id="post-form-container">
+<div class="post-form-toggle-wrap">
+  [<a href="#" class="post-form-toggle-link" data-form-target="post-form-container">Start a New Thread</a>]
+</div>
+<div class="reply-form-container post-form-collapsible" id="post-form-container">
   <form id="post-form" action="/<%= boardUri %>/thread" method="POST" enctype="multipart/form-data" data-max-files="<%= maxUploadFiles %>">
     <%- include('partials/post-form') %>
   </form>

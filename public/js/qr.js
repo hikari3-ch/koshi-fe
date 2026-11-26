@@ -132,9 +132,43 @@ syncText(qr_nm, st_nm);
 
 syncText(document.getElementById('post-password-qr'), document.getElementById('post-password'));
 
-for (const name of ['fortune', 'sage', 'nonoko']) {
-  syncClick(document.getElementById(`${name}-qr`), document.getElementById(name));
+function syncAllPostForms() {
+  const forms = Array.from(document.querySelectorAll('#post-form, .reply-form'));
+  if (forms.length < 2) return;
+  const syncFieldNames = new Set(['name', 'subject', 'message', 'post-password', 'user_flag', 'fortune', 'sage', 'nonoko', 'youtube-url']);
+  let syncing = false;
+
+  const propagate = (source) => {
+    if (syncing || !source || !source.name || !syncFieldNames.has(source.name)) return;
+    syncing = true;
+    try {
+      const isCheckbox = source.type === 'checkbox';
+      forms.forEach((f) => {
+        if (f.contains(source)) return;
+        f.querySelectorAll(`[name="${source.name}"]`).forEach((target) => {
+          if (isCheckbox) {
+            if (target.checked !== source.checked) {
+              target.checked = source.checked;
+              target.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          } else if (target.value !== source.value) {
+            target.value = source.value;
+            target.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        });
+      });
+    } finally {
+      syncing = false;
+    }
+  };
+
+  forms.forEach((f) => {
+    f.addEventListener('input', (e) => propagate(e.target));
+    f.addEventListener('change', (e) => propagate(e.target));
+  });
 }
+
+syncAllPostForms();
 
 document.addEventListener('DOMContentLoaded', () => {
   const mainPreviewContainer = document.getElementById('preview-container');

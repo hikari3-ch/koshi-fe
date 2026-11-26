@@ -7,6 +7,13 @@ const form =
   document.getElementById('submit-form') ||
   document.getElementById('reply-form') ||
   document.getElementById('quick-reply-form');
+const allDropZones = Array.from(new Set([...(document.querySelectorAll?.('[id^="drop-zone"]') || []), dropZone].filter(Boolean)));
+const allFileInputs = Array.from(
+  new Set([...(document.querySelectorAll?.('input[type="file"][name="image"][id^="image"]') || []), fileInput].filter(Boolean))
+);
+const allForms = Array.from(
+  new Set([...(document.querySelectorAll?.('#post-form, #submit-form, .reply-form, #quick-reply-form') || []), form].filter(Boolean))
+);
 
 const maxFilesLimit = Math.max(
   1,
@@ -36,29 +43,31 @@ Object.defineProperty(window, 'currentFiles', {
 });
 
 if (uploadWidget) {
-  fileInput.removeAttribute('required');
-  fileInput.setAttribute('multiple', 'true');
-  fileInput.setAttribute('max', String(maxFilesLimit));
+  allFileInputs.forEach((inp) => {
+    inp.removeAttribute('required');
+    inp.setAttribute('multiple', 'true');
+    inp.setAttribute('max', String(maxFilesLimit));
+  });
 }
 
-dropZone?.addEventListener('click', () => {
-  fileInput.click();
-});
-
-dropZone?.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  dropZone.style.backgroundColor = 'var(--small-button)';
-});
-
-dropZone?.addEventListener('dragleave', (e) => {
-  dropZone.style.backgroundColor = 'var(--background-gradient)';
-});
-
-dropZone?.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropZone.style.backgroundColor = 'var(--background-gradient)';
-  const files = Array.from(e.dataTransfer.files);
-  handleFilesUpload(files);
+allDropZones.forEach((dz) => {
+  const localInput = dz.querySelector('input[type="file"][name="image"]') || fileInput;
+  dz.addEventListener('click', () => {
+    localInput?.click();
+  });
+  dz.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dz.style.backgroundColor = 'var(--small-button)';
+  });
+  dz.addEventListener('dragleave', () => {
+    dz.style.backgroundColor = 'var(--background-gradient)';
+  });
+  dz.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dz.style.backgroundColor = 'var(--background-gradient)';
+    const files = Array.from(e.dataTransfer.files);
+    handleFilesUpload(files);
+  });
 });
 
 if (dropZone_QR) {
@@ -84,19 +93,21 @@ if (dropZone_QR) {
 }
 
 if (uploadWidget) {
-  fileInput.addEventListener('change', (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+  allFileInputs.forEach((inp) => {
+    inp.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
 
-    window.currentFiles = [];
-    const previewItems = previewContainer.querySelectorAll('.preview-item');
-    previewItems.forEach((item) => item.remove());
-    if (previewContainer_QR) {
-      const qrPreviews = previewContainer_QR.querySelectorAll('.preview-text');
-      qrPreviews.forEach((item) => item.remove());
-    }
-    handleFilesUpload(files);
-    updateFileInput();
+      window.currentFiles = [];
+      const previewItems = previewContainer.querySelectorAll('.preview-item');
+      previewItems.forEach((item) => item.remove());
+      if (previewContainer_QR) {
+        const qrPreviews = previewContainer_QR.querySelectorAll('.preview-text');
+        qrPreviews.forEach((item) => item.remove());
+      }
+      handleFilesUpload(files);
+      updateFileInput();
+    });
   });
 }
 
@@ -253,7 +264,9 @@ function updateFileInput() {
   if (!uploadWidget) return;
   const dataTransfer = new DataTransfer();
   currentFiles.forEach((file) => dataTransfer.items.add(file));
-  fileInput.files = dataTransfer.files;
+  allFileInputs.forEach((inp) => {
+    inp.files = dataTransfer.files;
+  });
 }
 
 window.updateFileInput = updateFileInput;
@@ -282,8 +295,8 @@ window.getSpoilerFields = function (root) {
   return fields;
 };
 
-if (form) {
-  form.addEventListener('submit', (e) => {
+allForms.forEach((targetForm) => {
+  targetForm.addEventListener('submit', (e) => {
   if (e.submitter && e.submitter.getAttribute('data-no-upload-check') === 'true') {
     return; 
   }
@@ -291,28 +304,30 @@ if (form) {
   updateFileInput();
 
   const requiresFile =
-    form.id !== 'reply-form' &&
-    form.id !== 'quick-reply-form' &&
-    form.getAttribute('data-requires-file') !== 'false';
+    !targetForm.classList?.contains('reply-form') &&
+    targetForm.id !== 'reply-form' &&
+    targetForm.id !== 'quick-reply-form' &&
+    targetForm.getAttribute('data-requires-file') !== 'false';
 
-  const youtubeInput = form.querySelector('#youtube-url') || document.getElementById('youtube-url');
+  const youtubeInput = targetForm.querySelector?.('input[name="youtube-url"]') || document.getElementById('youtube-url');
   const hasEmbedUrl = Boolean(youtubeInput && String(youtubeInput.value || '').trim().length > 0);
+  const targetFileInput = targetForm.querySelector?.('input[type="file"][name="image"][id^="image"]') || fileInput;
 
-  if (uploadWidget && !fileInput.files.length && !hasEmbedUrl && requiresFile) {
+  if (uploadWidget && !targetFileInput.files.length && !hasEmbedUrl && requiresFile) {
     e.preventDefault();
     e.stopImmediatePropagation();
     alert('Please select at least one file before submitting.');
     return;
   }
 
-  form.querySelectorAll('input[data-spoiler-field]').forEach((input) => input.remove());
-  window.getSpoilerFields(form).forEach(({ name, value }) => {
+  targetForm.querySelectorAll('input[data-spoiler-field]').forEach((input) => input.remove());
+  window.getSpoilerFields(targetForm).forEach(({ name, value }) => {
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = name;
     input.value = value;
     input.setAttribute('data-spoiler-field', 'true');
-    form.appendChild(input);
+    targetForm.appendChild(input);
   });
   });
-}
+});

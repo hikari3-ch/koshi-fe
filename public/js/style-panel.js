@@ -315,40 +315,8 @@
       return opts;
     },
 
-    syncPostFormToggle(collapsed) {
+    syncPostFormToggle() {
       if (typeof document === 'undefined') return;
-      const formContainer = document.getElementById('post-form-container');
-      if (!formContainer) return;
-
-      let wrap = document.getElementById('oc-post-form-toggle-wrap');
-      if (!collapsed) {
-        formContainer.classList.remove('oc-form-collapsed', 'oc-form-expanded');
-        if (wrap) wrap.style.display = 'none';
-        return;
-      }
-
-      if (!formContainer.classList.contains('oc-form-expanded')) {
-        formContainer.classList.add('oc-form-collapsed');
-      }
-
-      if (!wrap && formContainer.parentNode) {
-        wrap = document.createElement('div');
-        wrap.id = 'oc-post-form-toggle-wrap';
-        wrap.className = 'oc-post-form-toggle-wrap';
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.id = 'oc-post-form-toggle-btn';
-        btn.textContent = 'Start a New Thread / Reply';
-        btn.addEventListener('click', () => {
-          const isOpen = formContainer.classList.toggle('oc-form-expanded');
-          formContainer.classList.toggle('oc-form-collapsed', !isOpen);
-          btn.textContent = isOpen ? 'Hide Post Form' : 'Start a New Thread / Reply';
-        });
-        wrap.appendChild(btn);
-        formContainer.parentNode.insertBefore(wrap, formContainer);
-      } else if (wrap) {
-        wrap.style.display = '';
-      }
     },
 
     annotatePosts(optsInput) {
@@ -1983,8 +1951,20 @@
           }
         });
         document.addEventListener('click', (e) => {
-          const link = e.target && typeof e.target.closest === 'function' ? e.target.closest('a.sage-name-link') : null;
-          if (link) e.preventDefault();
+          const sageLink = e.target && typeof e.target.closest === 'function' ? e.target.closest('a.sage-name-link') : null;
+          if (sageLink) {
+            e.preventDefault();
+            return;
+          }
+          const formToggle = e.target && typeof e.target.closest === 'function' ? e.target.closest('.post-form-toggle-link') : null;
+          if (formToggle) {
+            e.preventDefault();
+            const targetId = formToggle.getAttribute('data-form-target');
+            const container = targetId ? document.getElementById(targetId) : null;
+            if (container) container.classList.add('is-open');
+            const wrap = formToggle.closest('.post-form-toggle-wrap');
+            if (wrap) wrap.style.display = 'none';
+          }
         });
       }
     }

@@ -65,6 +65,7 @@
 <label><input type="checkbox" name="disableTegaki" value="1" <%= s.includes('disableTegaki') ? 'checked' : '' %>> Disable Tegaki</label>
 <label title="Shows a + button under every post that increments a counter, similar to 2chan's そうだね."><input type="checkbox" name="enableAgree" value="1" <%= s.includes('enableAgree') ? 'checked' : '' %>> Enable agree button</label>
 <label title="Rejects a reply that exactly repeats another post in the same thread, or a new thread whose message exactly repeats an existing thread on this board."><input type="checkbox" name="allowDuplicatePosts" value="1" <%= s.includes('allowDuplicatePosts') ? 'checked' : '' %>> Allow duplicate posts <span class="mod-unit">(disables the duplicate post check)</span></label>
+<label><input type="checkbox" name="bottomReplyForm" value="1" <%= s.includes('bottomReplyForm') ? 'checked' : '' %>> Duplicate reply form at bottom of threads</label>
 </td></tr>
 </table>
 </fieldset>
