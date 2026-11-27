@@ -25,44 +25,58 @@ var controls = modView || locals.modControls;
 <%- include('../partials/post-files', { files: thread.files, imageClass: 'thread-image', maxWidth: 235, maxHeight: 235, boardUri, threadId: id, postId: id, modView }) %>
 <% } %>
 <div class="post-info thread-header" id="pi<%= id %>">
-  <% if (!locals.isSearchResult) { %><% if (modView) { %><input type="checkbox" class="mod-select" value="<%= boardUri %>-<%= id %>"><% } else { %><input type="checkbox" class="post-checkbox" name="posts" form="delete-form" value="<%= id %>-true"><% } %><% } %>
-  <% if (thread.subject) { %><span class="subject"><%- thread.subject %></span> <% } %>
-  <span class="name-block">
-    <% const cap = locals.capcodeFor(role); %>
-    <% if (cap) { %>
-    <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %> name" data-capcode="<%= cap.text %>"><%- thread.name %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
-    <% } else { %>
-    <span class="name" data-post-id="<%= id %>" data-board="<%= boardUri %>"><%- thread.name %></span>
+  <div class="post-header-bar">
+    <% if (!locals.isSearchResult) { %><% if (modView) { %><input type="checkbox" class="mod-select" value="<%= boardUri %>-<%= id %>"><% } else { %><input type="checkbox" class="post-checkbox" name="posts" form="delete-form" value="<%= id %>-true"><% } %><% } %>
+    <span class="post-header-left">
+      <% if (thread.subject) { %><span class="subject"><%- thread.subject %></span> <% } %>
+      <span class="name-block">
+        <% const cap = locals.capcodeFor(role); %>
+        <% if (cap) { %>
+        <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %> name" data-capcode="<%= cap.text %>"><%- thread.name %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
+        <% } else { %>
+        <span class="name" data-post-id="<%= id %>" data-board="<%= boardUri %>"><%- thread.name %></span>
+        <% } %>
+      </span>
+      <%- include('../partials/post-flag', { flag: thread.flag, flagName: thread.flagName }).trim() %>
+      <% if (thread.pinned) { %><span title="Sticky"><img src="/img/sticky.gif"></span><% } %>
+      <% if (thread.locked) { %><span title="Locked"><img src="/img/locked.gif"></span><% } %>
+      <% if (thread.autoSage) { %><span title="Bumplocked">⚓</span><% } %>
+    </span>
+    <span class="post-header-right">
+      <%- include('../partials/time', { date: thread.creation }) %> 
+      <span class="post-num">
+        <a class="linkQuote" title="Link to this post" href="<%= threadHref %>#<%= id %>">No.</a><a class="linkQuote" title="Reply to this post" href="<%= href %>#q<%= id %>"><%= id %></a><%- include('agree-button', { postId: id, isThread: true, agreeCount: thread.agreeCount }) %>
+        <% if (!locals.isThread) { %><span class="op-reply-links"> <span>[<a href="<%= href %>" class="reply-link">Reply</a>]</span><% if (!locals.isArchive && (thread.totalReplies || 0) > 50) { %> <span>[<a href="<%= href %>?last=50" class="reply-link last-posts-link" title="Only the 50 newest replies">Last 50 Posts</a>]</span><% } %></span><% } %>
+      </span>
+    </span>
+    <% if (!locals.isThread && locals.threadIndex != null) { %>
+    <span style="float: right" class="nav-arrows">
+      <% if (threadIndex > 0) { %><a href="#<%= threads[threadIndex - 1].threadId %>">▲</a><% } %>
+      <% if (threadIndex < threads.length - 1) { %><a href="#<%= threads[threadIndex + 1].threadId %>">▼</a><% } %>
+    </span>
     <% } %>
-  </span>
-  <%- include('../partials/post-flag', { flag: thread.flag, flagName: thread.flagName }).trim() %>
-  <%- include('../partials/time', { date: thread.creation }) %> 
-  <span class="post-num">
-    <a class="linkQuote" title="Link to this post" href="<%= threadHref %>#<%= id %>">No.</a><a class="linkQuote" title="Reply to this post" href="<%= href %>#q<%= id %>"><%= id %></a><%- include('agree-button', { postId: id, isThread: true, agreeCount: thread.agreeCount }) %>
-    <% if (!locals.isThread) { %> <span>[<a href="<%= href %>" class="reply-link">Reply</a>]</span>
-    <% if (!locals.isArchive && (thread.totalReplies || 0) > 50) { %> <span>[<a href="<%= href %>?last=50" class="reply-link last-posts-link" title="Only the 50 newest replies">Last 50 Posts</a>]</span><% } %><% } %>
-  </span>
+  </div>
   <% if (controls) { %>
-  <%- include('/mod/partials/post-links', { boardUri, thread, postId: id, isThread: true, post: thread, showIp, globalStaff }) %>
+  <div class="mod-post-meta">
+    <span class="mod-post-links"><%- include('/mod/partials/post-links', { boardUri, thread, postId: id, isThread: true, post: thread, showIp, globalStaff }) %></span>
+    <%- include('/mod/partials/staff-info', { post: thread, showIp }) %>
+  </div>
   <% } %>
-  <% if (thread.pinned) { %><span title="Sticky"><img src="/img/sticky.gif"></span><% } %>
-  <% if (thread.locked) { %><span title="Locked"><img src="/img/locked.gif"></span><% } %>
-  <% if (thread.autoSage) { %><span title="Bumplocked">⚓</span><% } %>
   <div class="backlinks"></div>
-  <% if (controls) { %>
-  <%- include('/mod/partials/staff-info', { post: thread, showIp }) %>
-  <% } %>
-  <% if (!locals.isThread && locals.threadIndex != null) { %>
-  <span style="float: right" class="nav-arrows">
-    <% if (threadIndex > 0) { %><a href="#<%= threads[threadIndex - 1].threadId %>">▲</a><% } %>
-    <% if (threadIndex < threads.length - 1) { %><a href="#<%= threads[threadIndex + 1].threadId %>">▼</a><% } %>
-  </span>
-  <% } %>
 </div>
 
 <blockquote class="thread-content" id="m<%= id %>"><%- msg %><% if (thread.warningMessage) { %><%- include('../partials/warning-message', { message: thread.warningMessage }).trim() %><% } else if (thread.banMessage) { %><div class="ban-message"><%- thread.banMessage %></div><% } %></blockquote>
 <% if (thread.poll) { %>
 <%- include('poll', { poll: thread.poll }) %>
+<% } %>
+<% if (!locals.isThread) { %>
+<div class="op-mobile-bar">
+  <span class="op-mobile-stats"><%= thread.totalReplies || 0 %> Repl<%= (thread.totalReplies || 0) === 1 ? 'y' : 'ies' %><% if (thread.totalFiles) { %> / <%= thread.totalFiles %> File<%= thread.totalFiles === 1 ? '' : 's' %><% } %></span>
+  <span class="op-mobile-actions">
+    <% if (!locals.isArchive && (thread.totalReplies || 0) > 50) { %><a href="<%= href %>?last=50" class="op-mobile-btn">Last 50</a><% } %>
+    <a href="<%= href %>" class="op-mobile-btn op-mobile-reply-btn">Reply</a>
+  </span>
+</div>
 <% } %>
 </div>
 </div>

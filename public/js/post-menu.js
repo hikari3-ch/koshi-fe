@@ -239,8 +239,11 @@ function ensurePostMenuToggle(postEl) {
   toggle.title = 'Post Menu';
   toggle.textContent = '▶';
   dropdown.appendChild(toggle);
+  const headerRight = postInfo.querySelector(':scope > .post-header-bar > .post-header-right');
   const postNum = postInfo.querySelector('.post-num');
-  if (postNum) {
+  if (headerRight) {
+    headerRight.insertAdjacentElement('afterend', dropdown);
+  } else if (postNum) {
     postNum.insertAdjacentElement('afterend', dropdown);
   } else {
     postInfo.appendChild(dropdown);

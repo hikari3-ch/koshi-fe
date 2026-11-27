@@ -9,36 +9,37 @@
 <% var matchingReplay = null; if (file.originalName && file.originalName.endsWith('-tegaki.png') && locals.files) { matchingReplay = files.find(function(f) { return f.mime === 'tegaki/replay' && f.originalName && f.originalName.slice(0, -4) === file.originalName.slice(0, -3); }); } %>
 <% var EMBED_ICONS = { 'youtube/video': { icon: '/img/youtube.png', label: 'YouTube' }, 'nicovideo/video': { icon: '/img/niconico.png', label: 'Nicovideo' }, 'bilibili/video': { icon: '/img/bilibili.png', label: 'BiliBili' }, 'twitter/video': { icon: '/img/twitter.png', label: 'Twitter/X' }, 'bluesky/video': { icon: '/img/bluesky.png', label: 'Bluesky' }, 'vocaroo/audio': { icon: '/img/vocaroo.png', label: 'Vocaroo' } }; %>
 <% var isEmbed = Boolean(EMBED_ICONS[file.mime]); %>
-<details open>
-  <summary>
-    <span class="hide-file-button"></span>
-    <% if (!isEmbed) { %>
-    <a target="_blank" href="<%= file.path %>" class="file-link" title="<%= file.originalName %>"><%= locals.displayFileName ? locals.displayFileName(file.originalName) : file.originalName %></a>
-    - <%= (file.size / 1024).toFixed(2) %> KB
-    <% if (file.width && file.height) { %>(<%= file.width %>x<%= file.height %>)<% } %>
-    <a href="<%= file.path %>" download="<%= file.originalName %>" title="Download"><img src="/img/download.png" width="16" alt="Download" loading="lazy" decoding="async"></a>
-    <% if (file.mime === 'tegaki/replay') { %>
-    <a href="<%= file.path %>" class="replay-tegaki" download="<%= file.originalName %>">Replay</a>
-    <% } else if (matchingReplay) { %>
-    <a href="<%= matchingReplay.path %>" class="replay-tegaki" download="<%= matchingReplay.originalName %>">Replay</a>
-    <% } %>
-    <% if (file.mime !== 'tegaki/replay') { %>
-    <a target="_blank" style="text-decoration: underline;" title="SauceNAO" href="https://saucenao.com/search.php?url=<%= encodeURIComponent(fileUrl) %>"><img src="/img/saucenao.png" width="16" alt="SauceNAO" loading="lazy" decoding="async"></a>
-    <a target="_blank" style="text-decoration: underline;" title="IQDB" href="https://iqdb.org/?url=<%= encodeURIComponent(fileUrl) %>"><img src="/img/iqdb.jpg" width="16" alt="IQDB" loading="lazy" decoding="async"></a>
-    <a target="_blank" style="text-decoration: underline;" title="Yandex" href="https://yandex.com/images/search?rpt=imageview&url=<%= encodeURIComponent(fileUrl) %>"><img src="/img/yandex.png" width="16" alt="Yandex" loading="lazy" decoding="async"></a>
-    <% } %>
-      <% if (modControls) { %><%- include('/mod/partials/file-actions', { boardUri, threadId, postId, fileIndex, file }) %><% } %>
-    <% } else { %>
-    <a target="_blank" href="<%= file.path %>" class="file-link"><%= file.path %></a>
-    <% var embedIcon = EMBED_ICONS[file.mime]; %>
-    <% if (embedIcon) { %>
-    <a target="_blank" style="text-decoration: underline;" title="<%= embedIcon.label %>" href="<%= file.path %>"><img src="<%= embedIcon.icon %>" width="16" alt="<%= embedIcon.label %>" loading="lazy" decoding="async"></a>
-    <% } %>
-    <% if (file.mime === 'cytube/stream') { %>
-    <span class="cytube-now-playing" title="This is a CyTube room, not a video: the player follows whatever the room is showing"><%= file.originalName %></span>
-    <% } %>
-    <% if (modControls) { %><%- include('/mod/partials/file-actions', { boardUri, threadId, postId, fileIndex, file }) %><% } %>
-    <% } %>
+<details open class="<%= file.mime !== 'tegaki/replay' ? 'file-has-thumb' : 'file-no-thumb' %>">
+  <summary class="file-summary<%= modControls ? ' has-mod-file-actions' : '' %>">
+    <span class="file-meta">
+      <span class="hide-file-button"></span>
+      <% if (!isEmbed) { %>
+      <a target="_blank" href="<%= file.path %>" class="file-link" title="<%= file.originalName %>"><%= locals.displayFileName ? locals.displayFileName(file.originalName) : file.originalName %></a>
+      - <%= (file.size / 1024).toFixed(2) %> KB
+      <% if (file.width && file.height) { %>(<%= file.width %>x<%= file.height %>)<% } %>
+      <a href="<%= file.path %>" download="<%= file.originalName %>" title="Download"><img src="/img/download.png" width="16" alt="Download" loading="lazy" decoding="async"></a>
+      <% if (file.mime === 'tegaki/replay') { %>
+      <a href="<%= file.path %>" class="replay-tegaki" download="<%= file.originalName %>">Replay</a>
+      <% } else if (matchingReplay) { %>
+      <a href="<%= matchingReplay.path %>" class="replay-tegaki" download="<%= matchingReplay.originalName %>">Replay</a>
+      <% } %>
+      <% if (file.mime !== 'tegaki/replay') { %>
+      <a target="_blank" style="text-decoration: underline;" title="SauceNAO" href="https://saucenao.com/search.php?url=<%= encodeURIComponent(fileUrl) %>"><img src="/img/saucenao.png" width="16" alt="SauceNAO" loading="lazy" decoding="async"></a>
+      <a target="_blank" style="text-decoration: underline;" title="IQDB" href="https://iqdb.org/?url=<%= encodeURIComponent(fileUrl) %>"><img src="/img/iqdb.jpg" width="16" alt="IQDB" loading="lazy" decoding="async"></a>
+      <a target="_blank" style="text-decoration: underline;" title="Yandex" href="https://yandex.com/images/search?rpt=imageview&url=<%= encodeURIComponent(fileUrl) %>"><img src="/img/yandex.png" width="16" alt="Yandex" loading="lazy" decoding="async"></a>
+      <% } %>
+      <% } else { %>
+      <a target="_blank" href="<%= file.path %>" class="file-link"><%= file.path %></a>
+      <% var embedIcon = EMBED_ICONS[file.mime]; %>
+      <% if (embedIcon) { %>
+      <a target="_blank" style="text-decoration: underline;" title="<%= embedIcon.label %>" href="<%= file.path %>"><img src="<%= embedIcon.icon %>" width="16" alt="<%= embedIcon.label %>" loading="lazy" decoding="async"></a>
+      <% } %>
+      <% if (file.mime === 'cytube/stream') { %>
+      <span class="cytube-now-playing" title="This is a CyTube room, not a video: the player follows whatever the room is showing"><%= file.originalName %></span>
+      <% } %>
+      <% } %>
+    </span>
+    <% if (modControls) { %><span class="mod-file-actions"><%- include('/mod/partials/file-actions', { boardUri, threadId, postId, fileIndex, file }) %></span><% } %>
   </summary>
   <% if (file.mime !== 'tegaki/replay') { %>
   <div class="image-container">

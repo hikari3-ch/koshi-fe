@@ -94,7 +94,8 @@ const watchedThreads = {
     if (!board || !thread) return;
 
     const checkBox = info.querySelector('.post-checkbox, .mod-select');
-    info.insertBefore(this.makeWatchButton(board, thread), checkBox || info.firstElementChild);
+    const container = (checkBox && checkBox.parentNode) || info.querySelector('.post-header-bar') || info;
+    container.insertBefore(this.makeWatchButton(board, thread), checkBox || container.firstElementChild);
   },
 
   makeWatchButton(board, thread) {

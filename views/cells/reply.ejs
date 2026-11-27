@@ -9,27 +9,33 @@ var controls = modView || locals.modControls;
 <div class="side-arrows" id="sa<%= reply.postId %>"><% if (!modView) { %>&gt;&gt;<% } %></div>
 <div class="post reply<%= controls && reply.isTor ? ' mod-tor-post' : '' %>" id="p<%= reply.postId %>" data-post-id="<%= reply.postId %>" data-thread-id="<%= thread.threadId %>" data-board="<%= boardUri %>"<% if (controls && reply.isTor) { %> data-tor="1" data-tor-kind="<%= reply.torKind || 'exit' %>"<% } %>>
 <div class="post-info" id="pi<%= reply.postId %>">
-  <% if (!locals.isSearchResult) { %><input type="checkbox" class="<%= modView ? 'mod-select' : 'post-checkbox' %>" <% if (modView) { %>value="<%= boardUri %>-<%= thread.threadId %>-<%= reply.postId %>"<% } else { %>name="posts" form="delete-form" value="<%= reply.postId %>-false"<% } %>><% } %>
-  <span class="name-block">
-    <% const cap = locals.capcodeFor(reply.signedRole); %>
-    <% if (cap) { %>
-    <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %> name" data-capcode="<%= cap.text %>"><% if (reply.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- reply.name %></a><% } else { %><%- reply.name %><% } %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
-    <% } else { %>
-    <span class="name" data-post-id="<%= reply.postId %>" data-board="<%= boardUri %>" data-thread-id="<%= thread.threadId %>"><% if (reply.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- reply.name %></a><% } else { %><%- reply.name %><% } %></span>
-    <% } %>
-  </span>
-  <%- include('../partials/post-flag', { flag: reply.flag, flagName: reply.flagName }).trim() %>
-  <%- include('../partials/time', { date: reply.creation }) %> 
-  <span class="post-num">
-    <a class="linkQuote" title="Link to this post" href="<%= permalinkHref %>">No.</a><a class="linkQuote" title="Reply to this post" href="<%= href %>#q<%= reply.postId %>"><%= reply.postId %></a><%- include('agree-button', { postId: reply.postId, isThread: false, agreeCount: reply.agreeCount }) %>
-  </span>
+  <div class="post-header-bar">
+    <% if (!locals.isSearchResult) { %><input type="checkbox" class="<%= modView ? 'mod-select' : 'post-checkbox' %>" <% if (modView) { %>value="<%= boardUri %>-<%= thread.threadId %>-<%= reply.postId %>"<% } else { %>name="posts" form="delete-form" value="<%= reply.postId %>-false"<% } %>><% } %>
+    <span class="post-header-left">
+      <span class="name-block">
+        <% const cap = locals.capcodeFor(reply.signedRole); %>
+        <% if (cap) { %>
+        <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %> name" data-capcode="<%= cap.text %>"><% if (reply.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- reply.name %></a><% } else { %><%- reply.name %><% } %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
+        <% } else { %>
+        <span class="name" data-post-id="<%= reply.postId %>" data-board="<%= boardUri %>" data-thread-id="<%= thread.threadId %>"><% if (reply.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- reply.name %></a><% } else { %><%- reply.name %><% } %></span>
+        <% } %>
+      </span>
+      <%- include('../partials/post-flag', { flag: reply.flag, flagName: reply.flagName }).trim() %>
+    </span>
+    <span class="post-header-right">
+      <%- include('../partials/time', { date: reply.creation }) %> 
+      <span class="post-num">
+        <a class="linkQuote" title="Link to this post" href="<%= permalinkHref %>">No.</a><a class="linkQuote" title="Reply to this post" href="<%= href %>#q<%= reply.postId %>"><%= reply.postId %></a><%- include('agree-button', { postId: reply.postId, isThread: false, agreeCount: reply.agreeCount }) %>
+      </span>
+    </span>
+  </div>
   <% if (controls) { %>
-  <%- include('/mod/partials/post-links', { boardUri, thread, postId: reply.postId, isThread: false, post: reply, showIp, globalStaff }) %>
+  <div class="mod-post-meta">
+    <span class="mod-post-links"><%- include('/mod/partials/post-links', { boardUri, thread, postId: reply.postId, isThread: false, post: reply, showIp, globalStaff }) %></span>
+    <%- include('/mod/partials/staff-info', { post: reply, showIp }) %>
+  </div>
   <% } %>
   <div class="backlinks"></div>
-  <% if (controls) { %>
-  <%- include('/mod/partials/staff-info', { post: reply, showIp }) %>
-  <% } %>
 </div>
 <% if (reply.files && reply.files.length > 0) { %>
 <%- include('../partials/post-files', { files: reply.files, imageClass: 'reply-image', maxWidth: 150, maxHeight: 170, boardUri, threadId: thread.threadId, postId: reply.postId, modView }) %>

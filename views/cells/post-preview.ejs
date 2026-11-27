@@ -1,36 +1,42 @@
 <div class="preview-content">
   <div class="post-info">
-    <% if (post.subject) { %>
-    <span class="subject"><%- post.subject %></span>
-    <% } %>
-    <% const cap = locals.capcodeFor(post.signedRole); %>
-    <% if (cap) { %>
-    <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %>" data-capcode="<%= cap.text %>"><% if (post.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- post.name %></a><% } else { %><%- post.name %><% } %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
-    <% } else { %>
-    <span class="name"><% if (post.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- post.name || 'Anonymous' %></a><% } else { %><%- post.name || 'Anonymous' %><% } %></span>
-    <% } %>
-    <%- include('../partials/post-flag', { flag: post.flag, flagName: post.flagName }).trim() %>
-    <% if (post.creation) { %>
-    <%- include('../partials/time', { date: post.creation }) %>
-    <% } %>
-    <span class="post-num">No.<%= post.postId || post.threadId %></span>
+    <span class="post-header-left">
+      <% if (post.subject) { %>
+      <span class="subject"><%- post.subject %></span>
+      <% } %>
+      <% const cap = locals.capcodeFor(post.signedRole); %>
+      <% if (cap) { %>
+      <span<% if (cap.title) { %> title="<%= cap.title %>"<% } %> class="<%= cap.className %>" data-capcode="<%= cap.text %>"><% if (post.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- post.name %></a><% } else { %><%- post.name %><% } %><span class="capcode-label"> ## <%= cap.text %><% if (cap.icon) { %> <img src="<%= cap.icon %>"><% } %></span></span>
+      <% } else { %>
+      <span class="name"><% if (post.sage) { %><a class="sage-name-link" href=" /sage" title="sage"><%- post.name || 'Anonymous' %></a><% } else { %><%- post.name || 'Anonymous' %><% } %></span>
+      <% } %>
+      <%- include('../partials/post-flag', { flag: post.flag, flagName: post.flagName }).trim() %>
+    </span>
+    <span class="post-header-right">
+      <% if (post.creation) { %>
+      <%- include('../partials/time', { date: post.creation }) %>
+      <% } %>
+      <span class="post-num">No.<%= post.postId || post.threadId %></span>
+    </span>
   </div>
   <% if (post.files && post.files.length > 0) { %>
   <% var EMBED_MIMES = ['youtube/video', 'nicovideo/video', 'bilibili/video', 'twitch/video', 'twitter/video', 'bluesky/video', 'vocaroo/audio', 'cytube/stream']; %>
   <% var isEmbed = (mime) => EMBED_MIMES.indexOf(mime) !== -1; %>
   <% if (post.files.length === 1) { %>
   <span class="file-info">
-    <details open>
+    <details open class="file-has-thumb">
       <summary>
-        <span class="hide-file-button"></span>
-        <% if (!isEmbed(post.files[0].mime)) { %>
-        <a target="_blank" href="<%= post.files[0].path %>" class="file-link" title="<%= post.files[0].originalName %>"><%= locals.displayFileName ? locals.displayFileName(post.files[0].originalName) : post.files[0].originalName %></a>
-        - <%= post.files[0].size ? (post.files[0].size / 1024).toFixed(2) : '0.00' %> KB
-        <% if (post.files[0].width && post.files[0].height) { %>(<%= post.files[0].width %>x<%= post.files[0].height %>)<% } %>
-        <a href="<%= post.files[0].path %>" download="<%= post.files[0].originalName %>" title="Download"><img src="/img/download.png" width="16" alt="Download"></a>
-        <% } else { %>
-        <a target="_blank" href="<%= post.files[0].path %>" class="file-link"><%= post.files[0].path %></a>
-        <% } %>
+        <span class="file-meta">
+          <span class="hide-file-button"></span>
+          <% if (!isEmbed(post.files[0].mime)) { %>
+          <a target="_blank" href="<%= post.files[0].path %>" class="file-link" title="<%= post.files[0].originalName %>"><%= locals.displayFileName ? locals.displayFileName(post.files[0].originalName) : post.files[0].originalName %></a>
+          - <%= post.files[0].size ? (post.files[0].size / 1024).toFixed(2) : '0.00' %> KB
+          <% if (post.files[0].width && post.files[0].height) { %>(<%= post.files[0].width %>x<%= post.files[0].height %>)<% } %>
+          <a href="<%= post.files[0].path %>" download="<%= post.files[0].originalName %>" title="Download"><img src="/img/download.png" width="16" alt="Download"></a>
+          <% } else { %>
+          <a target="_blank" href="<%= post.files[0].path %>" class="file-link"><%= post.files[0].path %></a>
+          <% } %>
+        </span>
       </summary>
       <div class="image-container">
         <a href="<%= post.files[0].path %>" class="media-toggle" data-mime="<%= post.files[0].mime || '' %>">
@@ -44,17 +50,19 @@
   <% post.files.forEach(function(file) { %>
   <div class="op-upload-cell">
     <span class="file-info">
-      <details open>
+      <details open class="file-has-thumb">
         <summary>
-          <span class="hide-file-button"></span>
-          <% if (!isEmbed(file.mime)) { %>
-          <a target="_blank" href="<%= file.path %>" class="file-link" title="<%= file.originalName %>"><%= locals.displayFileName ? locals.displayFileName(file.originalName) : file.originalName %></a>
-          - <%= file.size ? (file.size / 1024).toFixed(2) : '0.00' %> KB
-          <% if (file.width && file.height) { %>(<%= file.width %>x<%= file.height %>)<% } %>
-          <a href="<%= file.path %>" download="<%= file.originalName %>" title="Download"><img src="/img/download.png" width="16" alt="Download"></a>
-          <% } else { %>
-          <a target="_blank" href="<%= file.path %>" class="file-link"><%= file.path %></a>
-          <% } %>
+          <span class="file-meta">
+            <span class="hide-file-button"></span>
+            <% if (!isEmbed(file.mime)) { %>
+            <a target="_blank" href="<%= file.path %>" class="file-link" title="<%= file.originalName %>"><%= locals.displayFileName ? locals.displayFileName(file.originalName) : file.originalName %></a>
+            - <%= file.size ? (file.size / 1024).toFixed(2) : '0.00' %> KB
+            <% if (file.width && file.height) { %>(<%= file.width %>x<%= file.height %>)<% } %>
+            <a href="<%= file.path %>" download="<%= file.originalName %>" title="Download"><img src="/img/download.png" width="16" alt="Download"></a>
+            <% } else { %>
+            <a target="_blank" href="<%= file.path %>" class="file-link"><%= file.path %></a>
+            <% } %>
+          </span>
         </summary>
         <div class="image-container">
           <a href="<%= file.path %>" class="media-toggle" data-mime="<%= file.mime || '' %>">
