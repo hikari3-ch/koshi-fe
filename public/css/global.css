@@ -5400,7 +5400,6 @@ table.blotter td,
 .post-embed-card {
   background: var(--post-color);
   border: 1px solid var(--border-alt, var(--border-color));
-  border-radius: 3px;
   color: var(--text-color);
   display: flex;
   flex-direction: column;
@@ -5488,7 +5487,6 @@ a.post-embed-name:hover {
   max-height: 450px;
   width: auto;
   height: auto;
-  border-radius: 2px;
 }
 
 .post-embed-media-multi .post-embed-image {
