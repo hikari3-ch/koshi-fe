@@ -4,6 +4,7 @@
 <% var maxH = locals.maxHeight || 235; %>
 <% var imgClass = locals.imageClass || 'thread-image'; %>
 <% var dw = file.width; var dh = file.height; var placeholderThumbs = ['/spoiler.png', '/spoiler.webp', '/spoiler-nsfw.png', '/spoiler-nsfw.webp', '/genericThumb.webp', '/audioGenericThumb.webp', '/imageNotFound.webp']; if (dw && dh && placeholderThumbs.indexOf(file.thumb) === -1) { if (dw > maxW || dh > maxH) { var r = Math.min(maxW / dw, maxH / dh); dw = Math.round(dw * r); dh = Math.round(dh * r); } } else { dw = null; dh = null; } %>
+<% var thumbBase = String(file.thumb || '').split('/').pop().toLowerCase(); var fileSpoilerKind = ''; if (!file.deleted) { if (thumbBase === 'spoiler-nsfw' || thumbBase === 'spoiler-nsfw.webp' || thumbBase === 'spoiler-nsfw.png' || file.spoiled === 'nsfw' || file.spoiled === 2) fileSpoilerKind = 'nsfw'; else if (thumbBase === 'spoiler' || thumbBase === 'spoiler.webp' || thumbBase === 'spoiler.png' || file.spoiled) fileSpoilerKind = 'spoiler'; } %>
 <% var fileUrl = site + file.path; %>
 <% var matchingReplay = null; if (file.originalName && file.originalName.endsWith('-tegaki.png') && locals.files) { matchingReplay = files.find(function(f) { return f.mime === 'tegaki/replay' && f.originalName && f.originalName.slice(0, -4) === file.originalName.slice(0, -3); }); } %>
 <% var EMBED_ICONS = { 'youtube/video': { icon: '/img/youtube.png', label: 'YouTube' }, 'nicovideo/video': { icon: '/img/niconico.png', label: 'Nicovideo' }, 'bilibili/video': { icon: '/img/bilibili.png', label: 'BiliBili' }, 'twitter/video': { icon: '/img/twitter.png', label: 'Twitter/X' }, 'bluesky/video': { icon: '/img/bluesky.png', label: 'Bluesky' }, 'vocaroo/audio': { icon: '/img/vocaroo.png', label: 'Vocaroo' } }; %>
@@ -26,7 +27,7 @@
     <a target="_blank" style="text-decoration: underline;" title="IQDB" href="https://iqdb.org/?url=<%= encodeURIComponent(fileUrl) %>"><img src="/img/iqdb.jpg" width="16" alt="IQDB" loading="lazy" decoding="async"></a>
     <a target="_blank" style="text-decoration: underline;" title="Yandex" href="https://yandex.com/images/search?rpt=imageview&url=<%= encodeURIComponent(fileUrl) %>"><img src="/img/yandex.png" width="16" alt="Yandex" loading="lazy" decoding="async"></a>
     <% } %>
-      <% if (modControls) { %><%- include('/mod/partials/file-actions', { boardUri, threadId, postId, fileIndex }) %><% } %>
+      <% if (modControls) { %><%- include('/mod/partials/file-actions', { boardUri, threadId, postId, fileIndex, file }) %><% } %>
     <% } else { %>
     <a target="_blank" href="<%= file.path %>" class="file-link"><%= file.path %></a>
     <% var embedIcon = EMBED_ICONS[file.mime]; %>
@@ -36,13 +37,13 @@
     <% if (file.mime === 'cytube/stream') { %>
     <span class="cytube-now-playing" title="This is a CyTube room, not a video: the player follows whatever the room is showing"><%= file.originalName %></span>
     <% } %>
-    <% if (modControls) { %><%- include('/mod/partials/file-actions', { boardUri, threadId, postId, fileIndex }) %><% } %>
+    <% if (modControls) { %><%- include('/mod/partials/file-actions', { boardUri, threadId, postId, fileIndex, file }) %><% } %>
     <% } %>
   </summary>
   <% if (file.mime !== 'tegaki/replay') { %>
   <div class="image-container">
     <a href="<%= file.path %>" class="media-toggle" data-mime="<%= file.mime %>"<% if (file.width && file.height) { %> data-file-width="<%= file.width %>" data-file-height="<%= file.height %>"<% } %>>
-      <img loading="lazy" decoding="async" src="<%= file.thumb %>" alt="<%= file.originalName %>" class="<%= imgClass %>" data-full="<%= file.path %>" data-thumb="<%= file.thumb %>"<% if (dw && dh) { %> width="<%= dw %>" height="<%= dh %>"<% } else if (isEmbed) { %> width="<%= maxW %>"<% } %>>
+      <img loading="lazy" decoding="async" src="<%= file.thumb %>" alt="<%= file.originalName %>" class="<%= imgClass %>" data-full="<%= file.path %>" data-thumb="<%= file.thumb %>" data-spoiler="<%= fileSpoilerKind %>"<% if (dw && dh) { %> width="<%= dw %>" height="<%= dh %>"<% } else if (isEmbed) { %> width="<%= maxW %>"<% } %>>
     </a>
   </div>
   <% } %>

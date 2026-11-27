@@ -1,2 +1,15 @@
 <a href="/mod/file/unlink?boardUri=<%= encodeURIComponent(boardUri) %>&threadId=<%= threadId %>&postId=<%= postId %>&fileIndex=<%= fileIndex %>">[Unlink]</a>
 <a href="/mod/file/unlink?boardUri=<%= encodeURIComponent(boardUri) %>&threadId=<%= threadId %>&postId=<%= postId %>&fileIndex=<%= fileIndex %>&delete=1">[Unlink+Delete]</a>
+<%
+var f = locals.file || {};
+if (!f.deleted && f.mime !== 'tegaki/replay') {
+  var thumbBase = String(f.thumb || '').split('/').pop().toLowerCase();
+  var currentKind = '';
+  if (thumbBase === 'spoiler-nsfw' || thumbBase === 'spoiler-nsfw.webp' || thumbBase === 'spoiler-nsfw.png' || f.spoiled === 'nsfw' || f.spoiled === 2) currentKind = 'nsfw';
+  else if (thumbBase === 'spoiler' || thumbBase === 'spoiler.webp' || thumbBase === 'spoiler.png' || f.spoiled) currentKind = 'spoiler';
+  var qs = 'boardUri=' + encodeURIComponent(boardUri) + '&threadId=' + threadId + '&postId=' + postId + '&fileIndex=' + fileIndex;
+%>
+<% if (currentKind !== 'spoiler') { %><a href="/mod/file/spoiler?<%= qs %>&kind=spoiler">[Spoiler]</a><% } %>
+<% if (currentKind !== 'nsfw') { %><a href="/mod/file/spoiler?<%= qs %>&kind=nsfw">[NSFW]</a><% } %>
+<% if (currentKind) { %><a href="/mod/file/spoiler?<%= qs %>&kind=none">[Unspoil]</a><% } %>
+<% } %>

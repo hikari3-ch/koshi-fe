@@ -96,6 +96,16 @@ function positionMenu(menu, button) {
   }
 }
 
+function postHasSpoiledFiles(postEl) {
+  if (!postEl || typeof postEl.querySelectorAll !== 'function') return false;
+  return [...postEl.querySelectorAll('.file-info img')].some((img) => {
+    const ds = img.dataset?.spoiler;
+    if (ds === 'spoiler' || ds === 'nsfw') return true;
+    const thumb = String(img.dataset?.thumb || (typeof img.getAttribute === 'function' ? img.getAttribute('src') : img.src) || '');
+    return /\/spoiler(?:-nsfw)?\.(?:webp|png)(?:[?#]|$)/i.test(thumb);
+  });
+}
+
 function getPostContext(dropdown) {
   const replyElement = dropdown.closest('.reply');
   const threadElement = dropdown.closest('.op');
@@ -114,7 +124,8 @@ function getPostContext(dropdown) {
       isThread: false,
       isTor: replyElement.dataset.tor === '1',
       postEl: replyElement,
-      hasFiles: !!replyElement.querySelector('.file-info, .op-upload-cell')
+      hasFiles: !!replyElement.querySelector('.file-info, .op-upload-cell'),
+      hasSpoiledFiles: postHasSpoiledFiles(replyElement)
     };
   }
   if (threadElement) {
@@ -130,6 +141,7 @@ function getPostContext(dropdown) {
       isTor: threadElement.dataset.tor === '1',
       postEl: threadElement,
       hasFiles: !!threadElement.querySelector('.file-info, .op-upload-cell'),
+      hasSpoiledFiles: postHasSpoiledFiles(threadElement),
       pinned: threadElement.dataset.pinned === '1',
       locked: threadElement.dataset.locked === '1',
       autoSage: threadElement.dataset.autosage === '1',
@@ -158,7 +170,11 @@ function buildPostMenu(ctx) {
   menu.appendChild(createMenuButton('Hide', 'hide', false));
 
   if (window.modUser) {
-    menu.appendChild(createMenuButton('Spoil Files', 'spoil', true));
+    if (ctx.hasFiles) {
+      menu.appendChild(createMenuButton('Spoil Files', 'spoil', true));
+      menu.appendChild(createMenuButton('Mark Files NSFW', 'spoil-nsfw', true));
+      if (ctx.hasSpoiledFiles) menu.appendChild(createMenuButton('Unspoil Files', 'unspoil', true));
+    }
     menu.appendChild(createMenuButton('Delete Post and Media', 'delete-media', true));
     menu.appendChild(createMenuButton('Trash Post', 'trash', true));
     if (ctx.hasFiles) menu.appendChild(createMenuButton('Unlink Files', 'unlink', true));
@@ -570,6 +586,16 @@ async function handleModAction(action, dropdown) {
       case 'spoil':
         if (!confirm('Spoil files on this post?')) return;
         await runContentAction(ctx, 'spoil');
+        location.reload();
+        break;
+      case 'spoil-nsfw':
+        if (!confirm('Mark files on this post as NSFW?')) return;
+        await runContentAction(ctx, 'spoil-nsfw');
+        location.reload();
+        break;
+      case 'unspoil':
+        if (!confirm('Remove spoiler/NSFW mark from files on this post?')) return;
+        await runContentAction(ctx, 'unspoil');
         location.reload();
         break;
       case 'delete-media':

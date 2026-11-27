@@ -176,16 +176,22 @@ document.getElementById('mod-trash-selected')?.addEventListener('click', async (
   }
 });
 
-document.getElementById('mod-spoil-files')?.addEventListener('click', async () => {
-  const selections = selectedKeys();
-  if (!selections.length) return alert('Select posts');
-  try {
-    await modPost('/mod/api/content', { action: 'spoil', selections });
-    location.reload();
-  } catch (err) {
-    alert(err.message);
-  }
-});
+for (const [id, action] of [
+  ['mod-spoil-files', 'spoil'],
+  ['mod-nsfw-files', 'spoil-nsfw'],
+  ['mod-unspoil-files', 'unspoil']
+]) {
+  document.getElementById(id)?.addEventListener('click', async () => {
+    const selections = selectedKeys();
+    if (!selections.length) return alert('Select posts');
+    try {
+      await modPost('/mod/api/content', { action, selections });
+      location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+}
 
 document.getElementById('mod-ip-delete-board')?.addEventListener('click', async () => {
   const selections = selectedKeys();
