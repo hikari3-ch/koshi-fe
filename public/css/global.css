@@ -3384,6 +3384,27 @@ html {
     width: auto;
   }
 
+  .captcha {
+    max-width: 100%;
+  }
+
+  .captcha-controls {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  #postformTable input.input-text.captcha-answer,
+  .postform-table input.captcha-answer,
+  .captcha .captcha-answer {
+    flex: 1 1 120px;
+    min-width: 0;
+    width: auto;
+  }
+
+  .captcha-controls button {
+    flex: 0 0 auto;
+  }
+
   .post-options {
     max-width: 100%;
   }
