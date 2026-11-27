@@ -164,4 +164,16 @@ table .line1 {
   .textthread {
     padding: 4px;
   }
+
+  .textreplies .reply-number {
+    font-size: 0.85em;
+  }
+
+  .post-quote {
+    font-size: 0.9em;
+  }
+
+  .textreplies .post-info {
+    line-height: 1.4;
+  }
 }

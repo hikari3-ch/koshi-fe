@@ -3253,16 +3253,20 @@ html {
 }
 
 @media (max-width: 768px) {
+  html {
+    overflow-x: hidden;
+  }
+
   body {
-    font-size: 1.05em;
-    line-height: 1.25em;
+    font-size: 1.125em;
+    line-height: 1.3em;
     margin: 0;
     padding: 0 2px;
   }
 
   .board-list {
-    font-size: 1em;
-    line-height: 1.4em;
+    font-size: 1.1em;
+    line-height: 1.45em;
     margin: 0 -2px;
     padding: 2px 0;
     position: static;
@@ -3271,21 +3275,58 @@ html {
 
   .navtopright {
     float: none;
-    font-size: 0.95em;
-    line-height: 1.9;
+    font-size: 1em;
+    line-height: 1.6;
     margin-top: 6px;
     text-align: center;
   }
 
+  .header-search-input {
+    font-size: 16px;
+    width: 160px;
+  }
+
+  .header-search-btn {
+    font-size: 16px;
+    padding: 3px 10px;
+  }
+
+  .board-title {
+    font-size: 32px;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+
+  .board-description {
+    font-size: 0.95em;
+    margin-top: 4px;
+  }
+
   .page-nav {
-    font-size: 1em;
+    font-size: 1.05em;
+    line-height: 1.6;
   }
 
   input[type="text"],
   input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  input[type="email"],
+  input[type="url"],
   textarea,
   select {
     font-size: 16px;
+  }
+
+  button,
+  input[type="button"],
+  input[type="submit"] {
+    font-size: 16px;
+    padding: 4px 10px;
+  }
+
+  .post-form-toggle-wrap {
+    font-size: 1.3em;
   }
 
   .header-search-form {
@@ -3303,16 +3344,81 @@ html {
     width: 100%;
   }
 
-  #postformTable {
+  #postformTable,
+  .postform-table {
+    box-sizing: border-box;
     max-width: 100%;
+    width: 100%;
   }
 
-  #postformTable .post-block {
+  #postformTable .post-block,
+  .postform-table .post-block {
+    font-size: 0.9em;
+    padding: 4px 6px;
     width: 1%;
   }
 
-  #postformTable textarea#message {
+  #postformTable input.input-text,
+  #postformTable select.input-text,
+  #postformTable select,
+  #postformTable textarea#message,
+  .postform-table input[type="text"],
+  .postform-table select,
+  .postform-table textarea {
+    box-sizing: border-box;
+    font-size: 16px;
+    max-width: 100%;
     min-width: 0;
+    width: 100%;
+  }
+
+  .postform-table .subject-row-cell {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .postform-table .subject-row-cell input.input-text {
+    flex: 1 1 140px;
+    width: auto;
+  }
+
+  .post-options {
+    max-width: 100%;
+  }
+
+  .post-options-menu label {
+    font-size: 16px;
+    padding: 6px 8px;
+  }
+
+  .post-label {
+    font-size: 0.95em;
+  }
+
+  .rules {
+    font-size: 0.8em;
+    line-height: 1.35;
+  }
+
+  #delPasswordInfo,
+  [id^="delPasswordInfo"] {
+    display: inline-block;
+    font-size: 0.85em;
+  }
+
+  .postform-table .file-info.no-js {
+    font-size: 0.8em !important;
+  }
+
+  #search-op {
+    box-sizing: border-box;
+    font-size: 16px;
+    height: auto;
+    line-height: 1.3;
+    padding: 3px 6px;
+    width: 150px;
   }
 
   #emo,
@@ -3347,15 +3453,21 @@ html {
   }
 
   .post {
-    line-height: 22px;
+    line-height: 24px;
     margin: 2px 0;
+    width: 100%;
+  }
+
+  .thread-content p,
+  .reply-content p {
+    line-height: inherit;
   }
 
   .reply,
   .post-container > div.post.reply {
     box-sizing: border-box;
     display: flow-root;
-    margin: 2px 0;
+    margin: 3px 0;
     max-width: 100%;
     padding: 2px 0;
     width: 100%;
@@ -3364,7 +3476,8 @@ html {
   .post-info,
   .thread-header {
     box-sizing: border-box;
-    padding: 3px 6px;
+    line-height: 24px;
+    padding: 4px 6px;
   }
 
   .thread-content,
@@ -3373,16 +3486,31 @@ html {
   }
 
   .op .thread-content {
-    margin: 8px 9px 8px 15px;
+    margin: 12px 9px 8px 15px;
+  }
+
+  .heading {
+    font-size: 1.15em;
+  }
+
+  .hash {
+    font-size: 0.85em;
   }
 
   .backlink {
     font-size: unset !important;
+    padding: 0 2px;
+  }
+
+  .dropdown-item {
+    font-size: 16px;
+    padding: 8px 14px;
   }
 
   .summary,
   .thread-footer {
-    margin: 4px 6px;
+    font-size: 0.95em;
+    margin: 6px 6px;
   }
 
   .page-content {
@@ -3449,15 +3577,23 @@ html {
 
   .file-info,
   .file-text {
-    font-size: 12px;
-    line-height: 1.3;
+    box-sizing: border-box;
+    font-size: 0.8em;
+    line-height: 1.35;
     margin: 0;
     max-width: 100%;
-    padding: 0 4px;
+    padding: 2px 4px;
+    width: 100%;
+  }
+
+  .file-info details summary {
+    justify-content: center;
   }
 
   .file-link {
     max-width: 92vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .poll-wrapper {
@@ -3468,13 +3604,12 @@ html {
     min-width: 0;
   }
 
-  table.blotter {
-    font-size: 13px;
-    width: 100%;
+  .poll-options {
+    font-size: 0.95em;
   }
 
-  .blotter-footer {
-    font-size: 12px;
+  .poll-footer {
+    font-size: 0.85em;
   }
 
   .pagination {
@@ -3485,10 +3620,15 @@ html {
   .pagelist {
     flex-wrap: wrap;
     float: none;
-    font-size: 1.05em;
+    font-size: 1.1em;
     justify-content: center;
     margin: 4px 0;
     row-gap: 4px;
+  }
+
+  .pagelist button {
+    font-size: 0.9em;
+    padding: 4px 8px;
   }
 
   .pagelist .catalog-link {
@@ -3496,10 +3636,26 @@ html {
     padding-left: 8px;
   }
 
+  .thread-refresh-controls {
+    display: block;
+    margin: 6px 0;
+    text-align: center;
+  }
+
+  #thread-refresh-btn {
+    font-size: 1.05em;
+    padding: 6px 18px;
+  }
+
   #delete-form {
     float: none !important;
+    font-size: 0.95em;
     margin: 10px 0 0 !important;
-    text-align: right;
+    text-align: center;
+  }
+
+  #delete-password {
+    width: 90px !important;
   }
 
   .footer-board-list,
@@ -3507,8 +3663,23 @@ html {
     text-align: center;
   }
 
+  .footer-nav-tools {
+    font-size: 1em;
+    line-height: 1.7;
+  }
+
   .footer-board-list {
     word-spacing: 2px;
+  }
+
+  #footer-links {
+    font-size: 0.85em;
+    line-height: 1.5;
+  }
+
+  .footer-text {
+    font-size: 0.8em;
+    line-height: 1.4;
   }
 
   .catalog-search {
@@ -3531,16 +3702,32 @@ html {
 
   .catalog-thread {
     box-sizing: border-box;
-    width: 150px;
+    font-size: 0.85em;
+    height: auto;
+    max-height: 300px;
+    width: calc(50% - 6px);
   }
 
   .catalog-thread.size-large {
     box-sizing: border-box;
-    width: 170px;
+    font-size: 0.85em;
+    height: auto;
+    max-height: 360px;
+    width: calc(50% - 6px);
   }
 
   .catalog-content {
+    font-size: 1em;
     width: 100%;
+  }
+
+  .catalog-thread .thread-text {
+    font-size: 0.95em;
+    line-height: 1.35;
+  }
+
+  .thread-stats {
+    font-size: 0.85em;
   }
 
   .catalog-image,
@@ -3572,6 +3759,7 @@ html {
   }
 
   .watch-list-modal {
+    font-size: 0.9em;
     left: 5px;
     max-height: 60vh;
     right: 5px;
@@ -3582,6 +3770,12 @@ html {
 
   .watch-list-header {
     cursor: default;
+  }
+
+  .watch-list-header,
+  .watch-list-item {
+    font-size: 1em;
+    line-height: 1.35;
   }
 
   .watch-list-modal.watch-list-inline {
@@ -3635,6 +3829,10 @@ html {
     width: 400px;
   }
 
+  #alert_div {
+    font-size: 1em;
+  }
+
   .side-catalog {
     max-width: 85vw;
   }
@@ -3642,6 +3840,21 @@ html {
   .quote-preview {
     max-width: calc(100vw - 16px) !important;
     width: auto;
+  }
+
+  .featured-teaser {
+    font-size: 0.85em;
+  }
+
+  .featured-board {
+    font-size: 0.8em;
+  }
+
+  .box-layout > table,
+  .box-layout > table > tbody,
+  .box-layout > table > tbody > tr {
+    display: block;
+    width: 100%;
   }
 
   .box-layout .left-col,
@@ -3676,6 +3889,14 @@ html {
     float: none;
     display: block;
     margin-top: 4px;
+  }
+
+  .mod-page .mod-hint,
+  .mod-page .mod-unit,
+  .mod-page .mod-ban-links,
+  .mod-page .mod-ban-target,
+  .mod-media > div {
+    font-size: 0.85em;
   }
 }
 
@@ -4001,7 +4222,7 @@ html {
   }
 
   .boxbar h2 {
-    font-size: 116%;
+    font-size: 1.2em;
   }
 
   .boxcontent {
@@ -4027,6 +4248,26 @@ html {
   .appeal-form button,
   .box-outer form > button[type="submit"] {
     padding: 6px 14px;
+  }
+
+  .post-dialog {
+    font-size: 0.95em;
+  }
+
+  .post-dialog input[type="text"],
+  .post-dialog select,
+  .post-dialog textarea {
+    font-size: 16px;
+    height: auto;
+  }
+
+  .post-dialog-footer button {
+    font-size: 16px;
+    padding: 6px 12px;
+  }
+
+  .appeal-text {
+    font-size: 16px;
   }
 }
 
@@ -4595,6 +4836,28 @@ table.blotter td,
 .blotter-page-table tr + tr td {
   border-top: 1px solid var(--border-color);
   padding-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .home-board-item {
+    padding: 8px 10px;
+  }
+
+  .home-board-meta,
+  .home-box-links,
+  .tor-footer-info {
+    font-size: 0.85em;
+  }
+
+  table.blotter {
+    font-size: 0.9em;
+    line-height: 1.35;
+    width: 100%;
+  }
+
+  .blotter-footer {
+    font-size: 0.85em;
+  }
 }
 
 

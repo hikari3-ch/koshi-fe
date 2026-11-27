@@ -220,7 +220,9 @@
       const rules = [];
       const pt = Number(opts.fontSizePt);
       if (Number.isFinite(pt) && pt >= 8 && pt <= 14 && pt !== 10) {
+        const mobileEm = (1.125 * (pt / 10)).toFixed(3);
         rules.push(`body { font-size: ${pt}pt !important; }`);
+        rules.push(`@media (max-width: 768px) { body { font-size: ${mobileEm}em !important; } }`);
       }
       return rules.join('\n');
     },
