@@ -3728,14 +3728,6 @@ html {
     font-size: 0.85em;
   }
 
-  .quoteLink {
-    background: var(--post-color);
-    background: color-mix(in srgb, var(--post-color) 65%, var(--border-alt) 35%);
-    border-radius: 2px;
-    display: inline-block;
-    padding: 0 4px;
-  }
-
   .backlinks:empty {
     display: none;
   }
