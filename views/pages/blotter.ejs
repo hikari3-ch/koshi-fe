@@ -9,7 +9,7 @@
           <% blotterEntries.forEach((entry) => { %>
           <tr id="b<%= entry.blotterId %>">
             <td class="blotter-date"><%= locals.formatBlotterDate ? locals.formatBlotterDate(entry.date) : '' %></td>
-            <td class="blotter-content"><%= entry.message %></td>
+            <td class="blotter-content"><% if (locals.sanitizeBlotterMessage) { %><%- locals.sanitizeBlotterMessage(entry.message) %><% } else { %><%= entry.message %><% } %></td>
           </tr>
           <% }); %>
         </tbody>

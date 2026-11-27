@@ -87,6 +87,13 @@
   .blotter-status.blotter-bad {
     color: #ff6b6b;
   }
+
+  .blotter-preview {
+    background: var(--post-color);
+    border: 1px solid var(--border-color);
+    margin-top: 10px;
+    padding: 8px 10px;
+  }
 </style>
 
 <div class="blotter-admin">
@@ -96,10 +103,10 @@
   <table class="mod-table blotter-list">
     <tr><th>#</th><th>Date</th><th>Message</th><th>Author</th><th></th></tr>
     <% blotterEntries.forEach(entry => { %>
-    <tr<%= editEntry && editEntry.blotterId === entry.blotterId ? ' class="blotter-row-current"' : '' %>>
+    <tr<% if (editEntry && editEntry.blotterId === entry.blotterId) { %> class="blotter-row-current"<% } %>>
       <td><%= entry.blotterId %></td>
       <td><%= locals.formatBlotterDate ? locals.formatBlotterDate(entry.date) : new Date(entry.date).toLocaleDateString() %></td>
-      <td><%= entry.message %></td>
+      <td><% if (locals.sanitizeBlotterMessage) { %><%- locals.sanitizeBlotterMessage(entry.message) %><% } else { %><%= entry.message %><% } %></td>
       <td><%= entry.author %></td>
       <td><a href="/mod/blotter?edit=<%= entry.blotterId %>">Edit</a></td>
     </tr>
@@ -114,16 +121,18 @@
   <form id="blotter-editor-form" data-blotter-id="<%= editEntry ? editEntry.blotterId : '' %>">
     <div class="blotter-meta">
       <label>Date<input name="date" type="datetime-local" value="<%= (editEntry ? new Date(editEntry.date) : new Date()).toISOString().slice(0, 16) %>"></label>
-      <label>Message (plain text, max 500 chars)<textarea id="blotter-message" name="message" maxlength="500" required><%= editEntry ? editEntry.message : '' %></textarea></label>
+      <label>Message (rich text HTML: links, bold/italic, inline style; no images/video; max 2000 chars)<textarea id="blotter-message" name="message" maxlength="2000" required><%= editEntry ? editEntry.message : '' %></textarea></label>
     </div>
 
     <p class="blotter-actions">
       <button type="submit" class="blotter-button blotter-primary"><%= isNew ? 'Publish' : 'Save changes' %></button>
+      <button type="button" class="blotter-button" id="blotter-preview-btn">Preview</button>
       <a class="blotter-button" href="/mod/blotter">Add new entry</a>
       <% if (!isNew && editEntry) { %><button type="button" class="blotter-button blotter-danger" id="blotter-delete-btn" data-id="<%= editEntry.blotterId %>">Delete</button><% } %>
       <span class="blotter-status" id="blotter-status"></span>
     </p>
   </form>
+  <div id="blotter-preview" class="blotter-preview" hidden></div>
   <% } %>
 </div>
 

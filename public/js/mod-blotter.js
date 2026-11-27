@@ -61,6 +61,26 @@
     });
   }
 
+  const previewBtn = document.getElementById('blotter-preview-btn');
+  const previewBox = document.getElementById('blotter-preview');
+  if (previewBtn && previewBox) {
+    previewBtn.addEventListener('click', async () => {
+      const message = String(messageInput?.value || '').trim();
+      if (!message) {
+        previewBox.hidden = true;
+        return setStatus('A message is required.', true);
+      }
+      setStatus('');
+      try {
+        const data = await api('/mod/api/blotter/preview', { message });
+        previewBox.innerHTML = data.html || '<em>(Empty after stripping disallowed HTML)</em>';
+        previewBox.hidden = false;
+      } catch (err) {
+        setStatus(err.message, true);
+      }
+    });
+  }
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     save();
