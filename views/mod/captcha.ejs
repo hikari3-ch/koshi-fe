@@ -39,7 +39,7 @@ Choose a captcha provider (<strong>Google reCAPTCHA v2</strong>, <strong>hCaptch
   <tr data-provider-row="recaptcha"<%= provider === 'recaptcha' ? '' : ' hidden' %>>
     <th><label for="recaptcha-secret-key">reCAPTCHA Secret Key</label></th>
     <td>
-      <input type="password" id="recaptcha-secret-key" name="recaptchaSecretKey" value="" placeholder="<%= settings.hasRecaptchaSecretKey ? '(saved — enter to replace)' : '' %>" class="mod-wide" autocomplete="new-password" />
+      <input type="password" id="recaptcha-secret-key" name="recaptchaSecretKey" value="" placeholder="<%= settings.hasRecaptchaSecretKey ? '(saved; enter to replace)' : '' %>" class="mod-wide" autocomplete="new-password" />
       <% if (settings.hasRecaptchaSecretKey) { %>
       <label class="mod-block"><input type="checkbox" name="clearRecaptchaSecretKey" value="true" /> Clear saved secret key</label>
       <% } %>
@@ -52,7 +52,7 @@ Choose a captcha provider (<strong>Google reCAPTCHA v2</strong>, <strong>hCaptch
   <tr data-provider-row="hcaptcha"<%= provider === 'hcaptcha' ? '' : ' hidden' %>>
     <th><label for="hcaptcha-secret-key">hCaptcha Secret Key</label></th>
     <td>
-      <input type="password" id="hcaptcha-secret-key" name="hcaptchaSecretKey" value="" placeholder="<%= settings.hasHcaptchaSecretKey ? '(saved — enter to replace)' : '' %>" class="mod-wide" autocomplete="new-password" />
+      <input type="password" id="hcaptcha-secret-key" name="hcaptchaSecretKey" value="" placeholder="<%= settings.hasHcaptchaSecretKey ? '(saved; enter to replace)' : '' %>" class="mod-wide" autocomplete="new-password" />
       <% if (settings.hasHcaptchaSecretKey) { %>
       <label class="mod-block"><input type="checkbox" name="clearHcaptchaSecretKey" value="true" /> Clear saved secret key</label>
       <% } %>
@@ -88,7 +88,7 @@ Waptcha is not installed in <code>waptcha/</code>. Clone the standalone <code>wa
   <tr><th>Address</th><td><code><%= status.url %></code></td></tr>
   <tr><th>State</th><td id="captcha-service-state">
     <% if (status.running) { %>running<% } else { %>not running<% } %>
-    <% if (!status.running && status.error) { %> &mdash; <%= status.error %><% } %>
+    <% if (!status.running && status.error) { %> (<%= status.error %>)<% } %>
     <% if (status.running && !status.managed) { %> (started outside Koshi)<% } %>
   </td></tr>
   <% if (status.pid) { %><tr><th>Process</th><td><code><%= status.pid %></code></td></tr><% } %>
@@ -117,8 +117,7 @@ Waptcha is not installed in <code>waptcha/</code>. Clone the standalone <code>wa
 <fieldset>
 <legend>Pictures</legend>
 <form id="captcha-create-form">
-<p class="captcha-hint mod-hint">Every picture is run through ImageMagick first (the noise and the squeeze are
-what make it a puzzle). All of these are passed to <code>convert</code>.</p>
+<p class="captcha-hint mod-hint">Options below are passed to ImageMagick <code>convert</code>.</p>
 <table class="mod-settings captcha-grid">
   <tr><th><label for="captcha-use-local">Where a picture comes from</label></th><td>
     <select id="captcha-use-local" name="use_local">
@@ -159,11 +158,7 @@ what make it a puzzle). All of these are passed to <code>convert</code>.</p>
 <fieldset>
 <legend>Characters</legend>
 <p class="captcha-hint mod-hint">
-One line per character: the folder its pictures live in, then every name that counts as
-correct &ndash; <code>character_one = character one, alias</code>. Names may be in any language.
-The pool named <code>default</code> is used everywhere. A pool named after a board
-&ndash; <code>b</code>, <code>tech</code> &ndash; is used on that board instead. Choosing another
-pool above loads its saved names.
+One entry per line: <code>folder = answer, alias</code>. <code>default</code> applies everywhere; pool names matching a board URI (e.g. <code>b</code>) override that board.
 </p>
 <form id="captcha-characters-form" data-pool-characters="<%= JSON.stringify(locals.charactersByPool || {}) %>">
   <div class="mod-inline-form">
@@ -180,8 +175,7 @@ pool above loads its saved names.
 <fieldset>
 <legend>Pictures per character</legend>
 <p class="captcha-hint mod-hint">
-Drop pictures into a character's folder &ndash; or add them here. A character with no picture of
-its own is never picked. <%= categories.length %> categories known.
+Add images to character folders below (<%= categories.length %> categories).
 </p>
 <form id="captcha-images-form" enctype="multipart/form-data">
   <div class="mod-inline-form">

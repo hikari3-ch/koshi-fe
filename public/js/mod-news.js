@@ -12,8 +12,8 @@
   const submitButton = form.querySelector('button[type="submit"]');
 
   const HINTS = {
-    markup: 'Markup is rendered the way a post is — the same rules (**bold**, [spoiler], >>123, links). Switch to raw HTML to see and edit what actually gets stored.',
-    raw: 'This is the HTML that is stored and printed on /news, exactly as typed. Switch to markup to write it as a post instead — saving re-renders whatever is in the box.'
+    markup: 'Rendered with post markup (**bold**, [spoiler], >>123, links). Switch to Raw HTML to edit stored HTML.',
+    raw: 'Stored HTML printed on /news. Switch to Markup to edit as post text (saving re-renders).'
   };
 
   let mode = form.dataset.mode === 'raw' ? 'raw' : 'markup';

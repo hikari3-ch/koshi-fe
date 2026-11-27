@@ -4,7 +4,7 @@
 <% staff.forEach(s => { %>
 <tr>
 <td><%= s.login %></td>
-<td><%= s.email || '—' %></td>
+<td><%= s.email || '-' %></td>
 <td>
   <%= s.totpEnabled ? 'Enabled' : 'Off' %>
   <% if (s.totpEnabled && user.globalRole < Number(s.globalRole)) { %>

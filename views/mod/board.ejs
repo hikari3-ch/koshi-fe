@@ -19,7 +19,7 @@
 <select id="bs-theme" name="defaultTheme">
 <option value="">Site default</option>
 <% (locals.themes || []).forEach(function (theme) { %>
-<option value="<%= theme.id %>"<%= locals.boardTheme === theme.id ? ' selected' : '' %>><% if (theme.group) { %><%= theme.group %> &mdash; <% } %><%= theme.label %></option>
+<option value="<%= theme.id %>"<%= locals.boardTheme === theme.id ? ' selected' : '' %>><% if (theme.group) { %><%= theme.group %> - <% } %><%= theme.label %></option>
 <% }); %>
 </select>
 <span class="mod-unit">used when a visitor has not picked a theme</span>

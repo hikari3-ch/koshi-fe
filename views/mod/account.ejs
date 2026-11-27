@@ -31,7 +31,7 @@
 <legend>Two-Factor Authentication (TOTP)</legend>
 <p class="mod-hint">
   Status: <strong><%= locals.totpEnabled ? 'Enabled' : 'Disabled' %></strong>
-  <% if (locals.totpEnabled) { %> &mdash; Recovery codes remaining: <strong><%= locals.recoveryCodesRemaining || 0 %></strong><% } %>
+  <% if (locals.totpEnabled) { %> | Recovery codes remaining: <strong><%= locals.recoveryCodesRemaining || 0 %></strong><% } %>
 </p>
 
 <% if (!locals.totpEnabled) { %>

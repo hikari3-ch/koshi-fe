@@ -627,8 +627,6 @@ async function handleModAction(action, dropdown) {
           threadId: ctx.threadId,
           targetBoard: targetBoard.trim()
         });
-        // A moved thread is renumbered onto the target board, so the old URL
-        // is dead; follow the new id.
         if (moved && moved.threadId) {
           location.href = '/' + moved.boardUri + '/thread/' + moved.threadId;
         } else {
