@@ -14,6 +14,12 @@ const YT_RE = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|yout
 const NICO_RE = /(?:nicovideo\.jp\/watch\/|nico\.ms\/)((?:sm|nm|so|lv)\d+)/i;
 const TWEET_RE = /(?:twitter|x|fxtwitter|fixupx|twittpr|fixvx)\.com\/(?:i\/(?:web\/)?|[\w.]+\/)?status(?:es)?\/(\d+)/i;
 const BSKY_RE = /(?:bsky\.app|fxbsky\.app|bsky\.social)\/profile\/([\w.:%-]+)\/post\/([a-z0-9]+)/i;
+const IG_RE =
+  /https?:\/\/(?:www\.|m\.)?(?:instagram\.com|instagr\.am|uuinstagram\.com|ddinstagram\.com|kkinstagram\.com|eeinstagram\.com|vxinstagram\.com|fxstagram\.com)\/(?:share\/|(?!share\/|p\/|reel\/|reels\/|tv\/)([A-Za-z0-9._]{1,40})\/)?(p|reel|reels|tv)\/([A-Za-z0-9_-]{5,64})/i;
+const TIKTOK_DIRECT_RE =
+  /https?:\/\/(?:www\.|m\.)?tiktok\.com\/(?:@([A-Za-z0-9._-]+)\/(video|photo)\/(\d{8,25})|v\/(\d{8,25})|embed(?:\/v2)?\/(\d{8,25})|player\/v1\/(\d{8,25}))/i;
+const TIKTOK_SHORT_RE =
+  /https?:\/\/(?:(vm|vt)\.tiktok\.com\/([A-Za-z0-9_-]{4,32})|(?:www\.)?tiktok\.com\/t\/([A-Za-z0-9_-]{4,32}))/i;
 const BILI_BV_RE = /bilibili\.com\/video\/(BV[0-9A-Za-z]{10})/i;
 const BILI_AV_RE = /bilibili\.com\/video\/[aA][vV](\d+)/;
 const BILI_PAGE_RE = /[?&]p=(\d+)/i;
@@ -77,6 +83,12 @@ function embedUrlFor(href) {
     const page = (url.match(BILI_PAGE_RE) || [])[1] || '1';
     const id = bilibili[1].startsWith('BV') ? 'bvid=' + bilibili[1] : 'aid=' + bilibili[1];
     return 'https://player.bilibili.com/player.html?' + id + '&page=' + page + '&high_quality=1';
+  }
+
+  const tiktok = url.match(TIKTOK_DIRECT_RE);
+  if (tiktok) {
+    const ttId = tiktok[3] || tiktok[4] || tiktok[5] || tiktok[6];
+    if (ttId) return 'https://www.tiktok.com/player/v1/' + ttId + '?controls=1&description=0&music_info=0&rel=0';
   }
 
   return twitchPlayerUrlFor(url);
@@ -257,17 +269,76 @@ function extractFxMediaItems(media) {
   return items;
 }
 
-function extractPostMedia(data) {
-  const post = data && (data.tweet || data.status);
-  if (!post) return [];
-  const primary = extractFxMediaItems(post.media);
-  if (primary.length) return primary;
-  if (post.quote && post.quote.media) return extractFxMediaItems(post.quote.media);
-  return [];
+function extractFxQuote(rawQuote, provider) {
+  if (!rawQuote || typeof rawQuote !== 'object') return null;
+  const author = rawQuote.author || {};
+  const handle = String(author.screen_name || author.handle || '');
+  const text = String(rawQuote.text || '').trim();
+  const items = extractFxMediaItems(rawQuote.media);
+  if (!text && !items.length) return null;
+  return {
+    author: {
+      name: String(author.name || (handle ? `@${handle}` : '')),
+      handle,
+      avatar: isSafeMediaUrl(author.avatar_url || author.avatar) ? author.avatar_url || author.avatar : null,
+      url: isSafeMediaUrl(author.url)
+        ? author.url
+        : handle
+          ? provider === 'bluesky'
+            ? `https://bsky.app/profile/${encodeURIComponent(handle)}`
+            : `https://x.com/${encodeURIComponent(handle)}`
+          : null
+    },
+    text,
+    items,
+    postUrl: isSafeMediaUrl(rawQuote.url) ? rawQuote.url : null
+  };
 }
 
-function extractBlueskyAppViewMedia(data) {
-  const embed = data?.thread?.post?.embed;
+function extractPostData(data, provider) {
+  const post = data && (data.tweet || data.status);
+  if (!post) return null;
+  const items = extractFxMediaItems(post.media);
+  const quote = extractFxQuote(post.quote, provider);
+  const authorObj = post.author || {};
+  const handle = String(authorObj.screen_name || authorObj.handle || '');
+  const avatar = isSafeMediaUrl(authorObj.avatar_url || authorObj.avatar) ? authorObj.avatar_url || authorObj.avatar : null;
+  const authorUrl = isSafeMediaUrl(authorObj.url)
+    ? authorObj.url
+    : handle
+      ? provider === 'bluesky'
+        ? `https://bsky.app/profile/${encodeURIComponent(handle)}`
+        : `https://x.com/${encodeURIComponent(handle)}`
+      : null;
+  const text = String(post.text || '').trim();
+  const createdAt =
+    post.created_at ||
+    (Number.isFinite(Number(post.created_timestamp)) ? new Date(Number(post.created_timestamp) * 1000).toISOString() : null);
+  const stats = {
+    replies: Number.isFinite(Number(post.replies)) ? Number(post.replies) : null,
+    reposts: Number.isFinite(Number(post.retweets ?? post.reposts)) ? Number(post.retweets ?? post.reposts) : null,
+    likes: Number.isFinite(Number(post.likes)) ? Number(post.likes) : null
+  };
+  const postUrl = isSafeMediaUrl(post.url) ? post.url : null;
+  return {
+    provider,
+    postUrl,
+    author: {
+      name: String(authorObj.name || (handle ? `@${handle}` : '')),
+      handle,
+      avatar,
+      url: authorUrl
+    },
+    text,
+    createdAt,
+    items,
+    quote,
+    stats,
+    iframeUrl: null
+  };
+}
+
+function extractBlueskyAppViewMedia(embed) {
   if (!embed) return [];
   let target = embed.$type === 'app.bsky.embed.recordWithMedia#view' ? embed.media : embed;
   if (!Array.isArray(target?.images) || !target.images.length) {
@@ -283,32 +354,102 @@ function extractBlueskyAppViewMedia(data) {
     .filter((item) => isSafeMediaUrl(item.url));
 }
 
-function resolvePostMedia(key, apiUrl, { fallbackUrl } = {}) {
+function extractBlueskyAppViewPost(data) {
+  const post = data?.thread?.post;
+  if (!post) return null;
+  const embed = post.embed;
+  const items = extractBlueskyAppViewMedia(embed);
+  const text = String(post.record?.text || '').trim();
+  const author = post.author || {};
+  const handle = String(author.handle || '');
+  let quote = null;
+  const quotedRecord = embed?.record?.record || embed?.record;
+  if (quotedRecord && (quotedRecord.value?.text || quotedRecord.author)) {
+    const qHandle = String(quotedRecord.author?.handle || '');
+    const qText = String(quotedRecord.value?.text || '').trim();
+    const qItems = extractBlueskyAppViewMedia(quotedRecord.embeds?.[0]);
+    if (qText || qItems.length) {
+      quote = {
+        author: {
+          name: String(quotedRecord.author?.displayName || (qHandle ? `@${qHandle}` : '')),
+          handle: qHandle,
+          avatar: isSafeMediaUrl(quotedRecord.author?.avatar) ? quotedRecord.author.avatar : null,
+          url: qHandle ? `https://bsky.app/profile/${encodeURIComponent(qHandle)}` : null
+        },
+        text: qText,
+        items: qItems,
+        postUrl: null
+      };
+    }
+  }
+  if (!text && !items.length && !quote) return null;
+  return {
+    provider: 'bluesky',
+    postUrl: handle && post.uri ? `https://bsky.app/profile/${encodeURIComponent(handle)}/post/${post.uri.split('/').pop()}` : null,
+    author: {
+      name: String(author.displayName || (handle ? `@${handle}` : '')),
+      handle,
+      avatar: isSafeMediaUrl(author.avatar) ? author.avatar : null,
+      url: handle ? `https://bsky.app/profile/${encodeURIComponent(handle)}` : null
+    },
+    text,
+    createdAt: post.record?.createdAt || null,
+    items,
+    quote,
+    stats: {
+      replies: Number.isFinite(Number(post.replyCount)) ? Number(post.replyCount) : null,
+      reposts: Number.isFinite(Number(post.repostCount)) ? Number(post.repostCount) : null,
+      likes: Number.isFinite(Number(post.likeCount)) ? Number(post.likeCount) : null
+    },
+    iframeUrl: null
+  };
+}
+
+function hasEmbedContent(post) {
+  if (!post) return false;
+  if (post.text) return true;
+  if (Array.isArray(post.items) && post.items.length) return true;
+  if (isSafeMediaUrl(post.iframeUrl)) return true;
+  if (post.quote && (post.quote.text || (Array.isArray(post.quote.items) && post.quote.items.length))) return true;
+  return false;
+}
+
+function normalizeResolvedPost(post) {
+  if (!hasEmbedContent(post)) return null;
+  const items = Array.isArray(post.items) ? post.items : [];
+  const firstVideo = items.find((item) => item.kind === 'video') || null;
+  return {
+    ...post,
+    items,
+    url: firstVideo ? firstVideo.url : null,
+    thumb: firstVideo ? firstVideo.thumb : post.thumb || null
+  };
+}
+
+function resolvePostMedia(key, apiUrl, { provider = 'twitter', fallbackUrl, parsePrimary, parseFallback } = {}) {
   const cached = postVideos.get(key);
   if (cached) return cached;
 
+  const primaryParser = parsePrimary || ((data) => extractPostData(data, provider));
+  const fallbackParser = parseFallback || extractBlueskyAppViewPost;
+
   const pending = fetch(apiUrl)
     .then((res) => (res.ok ? res.json() : null))
-    .then((data) => extractPostMedia(data))
-    .catch(() => [])
-    .then((items) => {
-      if (items.length || !fallbackUrl) return items;
+    .then((data) => normalizeResolvedPost(primaryParser(data)))
+    .catch(() => null)
+    .then((post) => {
+      if (post || !fallbackUrl) return post;
       return fetch(fallbackUrl)
         .then((res) => (res.ok ? res.json() : null))
-        .then((data) => extractBlueskyAppViewMedia(data))
-        .catch(() => []);
+        .then((data) => normalizeResolvedPost(fallbackParser(data)))
+        .catch(() => null);
     })
-    .then((items) => {
-      if (!items.length) {
+    .then((post) => {
+      if (!post) {
         postVideos.delete(key);
         return null;
       }
-      const firstVideo = items.find((item) => item.kind === 'video') || null;
-      return {
-        items,
-        url: firstVideo ? firstVideo.url : null,
-        thumb: firstVideo ? firstVideo.thumb : null
-      };
+      return post;
     });
 
   postVideos.set(key, pending);
@@ -318,7 +459,7 @@ function resolvePostMedia(key, apiUrl, { fallbackUrl } = {}) {
 function tweetVideoUrl(href) {
   const match = String(href || '').match(TWEET_RE);
   if (!match) return Promise.resolve(null);
-  return resolvePostMedia('twitter:' + match[1], 'https://api.fxtwitter.com/i/status/' + match[1]);
+  return resolvePostMedia('twitter:' + match[1], 'https://api.fxtwitter.com/i/status/' + match[1], { provider: 'twitter' });
 }
 
 function blueskyVideoUrl(href) {
@@ -328,7 +469,41 @@ function blueskyVideoUrl(href) {
   const uri = `at://${handle}/app.bsky.feed.post/${rkey}`;
   const fallbackUrl =
     'https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=' + encodeURIComponent(uri) + '&depth=0&parentHeight=0';
-  return resolvePostMedia('bluesky:' + handle + '/' + rkey, 'https://api.fxbsky.app/2/status/' + handle + '/' + rkey, { fallbackUrl });
+  return resolvePostMedia('bluesky:' + handle + '/' + rkey, 'https://api.fxbsky.app/2/status/' + handle + '/' + rkey, {
+    provider: 'bluesky',
+    fallbackUrl
+  });
+}
+
+function instagramPostData(href) {
+  const match = String(href || '').match(IG_RE);
+  if (!match) return Promise.resolve(null);
+  const username = match[1] || '';
+  const kind = match[2].toLowerCase() === 'reels' ? 'reel' : match[2].toLowerCase();
+  const code = match[3];
+  const qs = username ? '?user=' + encodeURIComponent(username) : '';
+  return resolvePostMedia(
+    'instagram:' + kind + ':' + code,
+    '/api/embed/instagram/' + encodeURIComponent(kind) + '/' + encodeURIComponent(code) + qs,
+    {
+      provider: 'instagram',
+      parsePrimary: (data) => (data && data.post ? { ...data.post, provider: 'instagram' } : null)
+    }
+  );
+}
+
+function tiktokPostData(href) {
+  const raw = String(href || '').trim();
+  const direct = raw.match(TIKTOK_DIRECT_RE);
+  const shortMatch = !direct && raw.match(TIKTOK_SHORT_RE);
+  if (!direct && !shortMatch) return Promise.resolve(null);
+  const id = direct ? direct[3] || direct[4] || direct[5] || direct[6] : null;
+  const shortCode = shortMatch ? shortMatch[2] || shortMatch[3] : null;
+  const key = id ? 'tiktok:' + id : 'tiktok:short:' + shortCode;
+  return resolvePostMedia(key, '/api/embed/tiktok?url=' + encodeURIComponent(raw), {
+    provider: 'tiktok',
+    parsePrimary: (data) => (data && data.post ? { ...data.post, provider: 'tiktok' } : null)
+  });
 }
 
 const cytubeRooms = new Map();
@@ -1049,65 +1224,231 @@ const thumbs = {
     details.addEventListener('toggle', () => details.open && mount(), { once: true });
   },
 
+  buildPostMediaList(items) {
+    const wrap = document.createElement('div');
+    wrap.className = 'post-embed-media' + (items.length > 1 ? ' post-embed-media-multi' : '');
+    for (const item of items) {
+      if (item.kind === 'video') {
+        const video = document.createElement('video');
+        video.className = 'post-embed-video';
+        video.controls = true;
+        video.preload = 'metadata';
+        if (item.loop) video.loop = true;
+        if (item.thumb) video.poster = item.thumb;
+        const source = document.createElement('source');
+        source.src = item.url;
+        source.type = 'video/mp4';
+        video.appendChild(source);
+        wrap.appendChild(video);
+      } else if (item.kind === 'image') {
+        const link = document.createElement('a');
+        link.className = 'post-embed-image-link';
+        link.href = item.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        const img = document.createElement('img');
+        img.className = 'post-embed-image';
+        img.src = item.url;
+        img.loading = 'lazy';
+        img.alt = item.alt || '';
+        link.appendChild(img);
+        wrap.appendChild(link);
+      }
+    }
+    return wrap;
+  },
+
+  buildPostEmbedCard(post, fallbackUrl) {
+    const PROVIDER_NAMES = {
+      twitter: 'X',
+      bluesky: 'Bluesky',
+      instagram: 'Instagram',
+      tiktok: 'TikTok'
+    };
+    const provider = post.provider || 'twitter';
+    const card = document.createElement('div');
+    card.className = 'post-embed-card post-embed-provider-' + provider;
+
+    const header = document.createElement('div');
+    header.className = 'post-embed-header';
+    const author = post.author || {};
+    if (isSafeMediaUrl(author.avatar)) {
+      const avatar = document.createElement('img');
+      avatar.className = 'post-embed-avatar';
+      avatar.src = author.avatar;
+      avatar.alt = '';
+      avatar.loading = 'lazy';
+      avatar.setAttribute('referrerpolicy', 'no-referrer');
+      header.appendChild(avatar);
+    }
+
+    const authorWrap = document.createElement('div');
+    authorWrap.className = 'post-embed-author';
+    const displayName = author.name || (author.handle ? '@' + author.handle : PROVIDER_NAMES[provider] || 'Post');
+    const nameTag = isSafeMediaUrl(author.url) ? document.createElement('a') : document.createElement('span');
+    nameTag.className = 'post-embed-name';
+    nameTag.textContent = displayName;
+    if (nameTag.tagName === 'A') {
+      nameTag.href = author.url;
+      nameTag.target = '_blank';
+      nameTag.rel = 'noopener noreferrer';
+    }
+    authorWrap.appendChild(nameTag);
+    if (author.handle) {
+      const handleEl = document.createElement('span');
+      handleEl.className = 'post-embed-handle';
+      handleEl.textContent = '@' + author.handle;
+      authorWrap.appendChild(handleEl);
+    }
+    header.appendChild(authorWrap);
+
+    const badge = document.createElement('span');
+    badge.className = 'post-embed-badge';
+    badge.textContent = PROVIDER_NAMES[provider] || 'Embed';
+    header.appendChild(badge);
+    card.appendChild(header);
+
+    if (post.text) {
+      const textEl = document.createElement('div');
+      textEl.className = 'post-embed-text';
+      textEl.textContent = post.text;
+      card.appendChild(textEl);
+    }
+
+    if (Array.isArray(post.items) && post.items.length) {
+      card.appendChild(this.buildPostMediaList(post.items));
+    }
+
+    if (isSafeMediaUrl(post.iframeUrl)) {
+      const frameWrap = document.createElement('div');
+      frameWrap.className = 'post-embed-tiktok-wrap';
+      const iframe = document.createElement('iframe');
+      iframe.className = 'post-embed-tiktok-frame';
+      iframe.setAttribute('src', post.iframeUrl);
+      iframe.loading = 'lazy';
+      iframe.allowFullscreen = true;
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'encrypted-media; fullscreen; picture-in-picture');
+      iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+      frameWrap.appendChild(iframe);
+      card.appendChild(frameWrap);
+    }
+
+    if (post.quote && (post.quote.text || (Array.isArray(post.quote.items) && post.quote.items.length))) {
+      const qBox = document.createElement('div');
+      qBox.className = 'post-embed-quote';
+      const qAuthor = post.quote.author || {};
+      if (qAuthor.name || qAuthor.handle) {
+        const qHeader = document.createElement('div');
+        qHeader.className = 'post-embed-quote-header';
+        const qName = document.createElement('span');
+        qName.className = 'post-embed-name';
+        qName.textContent = qAuthor.name || '@' + qAuthor.handle;
+        qHeader.appendChild(qName);
+        if (qAuthor.handle) {
+          const qHandle = document.createElement('span');
+          qHandle.className = 'post-embed-handle';
+          qHandle.textContent = ' @' + qAuthor.handle;
+          qHeader.appendChild(qHandle);
+        }
+        qBox.appendChild(qHeader);
+      }
+      if (post.quote.text) {
+        const qText = document.createElement('div');
+        qText.className = 'post-embed-text';
+        qText.textContent = post.quote.text;
+        qBox.appendChild(qText);
+      }
+      if (Array.isArray(post.quote.items) && post.quote.items.length) {
+        qBox.appendChild(this.buildPostMediaList(post.quote.items));
+      }
+      card.appendChild(qBox);
+    }
+
+    const footer = document.createElement('div');
+    footer.className = 'post-embed-footer';
+    const metaParts = [];
+    if (post.createdAt) {
+      const parsed = new Date(post.createdAt);
+      if (!Number.isNaN(parsed.getTime())) metaParts.push(parsed.toLocaleString());
+    }
+    if (post.stats) {
+      const statBits = [];
+      if (typeof post.stats.replies === 'number') statBits.push(post.stats.replies + ' replies');
+      if (typeof post.stats.reposts === 'number') statBits.push(post.stats.reposts + ' reposts');
+      if (typeof post.stats.likes === 'number') statBits.push(post.stats.likes + ' likes');
+      if (statBits.length) metaParts.push(statBits.join(' \u00b7 '));
+    }
+    if (metaParts.length) {
+      const statsEl = document.createElement('span');
+      statsEl.className = 'post-embed-stats';
+      statsEl.textContent = metaParts.join(' \u00b7 ');
+      footer.appendChild(statsEl);
+    }
+    const extUrl = isSafeMediaUrl(post.postUrl) ? post.postUrl : fallbackUrl;
+    if (isSafeMediaUrl(extUrl)) {
+      const link = document.createElement('a');
+      link.className = 'post-embed-link';
+      link.href = extUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'View on ' + (PROVIDER_NAMES[provider] || 'site');
+      footer.appendChild(link);
+    }
+    card.appendChild(footer);
+    return card;
+  },
+
   mountPostVideoBlock(container) {
     const postUrl = container.dataset.url;
     if (!postUrl) return;
     container.dataset.postVideoMounted = 'true';
 
     const details = container.closest('details');
-    const isBluesky = container.dataset.provider === 'bluesky';
-    const providerLabel = isBluesky ? 'Bluesky post' : 'Twitter/X post';
+    const provider = container.dataset.provider || 'twitter';
+    const LABELS = {
+      bluesky: 'Bluesky post',
+      instagram: 'Instagram post',
+      tiktok: 'TikTok post',
+      twitter: 'Twitter/X post'
+    };
+    const RESOLVERS = {
+      bluesky: blueskyVideoUrl,
+      instagram: instagramPostData,
+      tiktok: tiktokPostData,
+      twitter: tweetVideoUrl
+    };
+    const providerLabel = LABELS[provider] || 'post';
+    const resolve = RESOLVERS[provider] || tweetVideoUrl;
     let asked = false;
     const show = () => {
-      if (asked) return;
+      if (asked) {
+        container.querySelectorAll('iframe.post-embed-tiktok-frame[data-src]').forEach((frame) => {
+          const src = frame.getAttribute('data-src');
+          if (src) {
+            frame.removeAttribute('data-src');
+            frame.setAttribute('src', src);
+          }
+        });
+        return;
+      }
       asked = true;
       const status = document.createElement('div');
       status.className = 'post-embed-status';
-      status.textContent = 'Loading media\u2026';
+      status.textContent = 'Loading post\u2026';
       container.textContent = '';
       container.appendChild(status);
 
-      const resolve = isBluesky ? blueskyVideoUrl : tweetVideoUrl;
-      resolve(postUrl).then((media) => {
-        if (media && Array.isArray(media.items) && media.items.length) {
-          const wrap = document.createElement('div');
-          wrap.className = 'post-embed-media' + (media.items.length > 1 ? ' post-embed-media-multi' : '');
-          for (const item of media.items) {
-            if (item.kind === 'video') {
-              const video = document.createElement('video');
-              video.className = 'post-embed-video';
-              video.controls = true;
-              video.preload = 'metadata';
-              if (item.loop) video.loop = true;
-              if (item.thumb) video.poster = item.thumb;
-              const source = document.createElement('source');
-              source.src = item.url;
-              source.type = 'video/mp4';
-              video.appendChild(source);
-              wrap.appendChild(video);
-            } else if (item.kind === 'image') {
-              const link = document.createElement('a');
-              link.className = 'post-embed-image-link';
-              link.href = item.url;
-              link.target = '_blank';
-              link.rel = 'noopener noreferrer';
-              const img = document.createElement('img');
-              img.className = 'post-embed-image';
-              img.src = item.url;
-              img.loading = 'lazy';
-              img.alt = item.alt || '';
-              link.appendChild(img);
-              wrap.appendChild(link);
-            }
-          }
+      resolve(postUrl).then((post) => {
+        if (post) {
           container.textContent = '';
-          container.appendChild(wrap);
+          container.appendChild(this.buildPostEmbedCard({ provider, ...post }, postUrl));
           return;
         }
 
         const empty = document.createElement('div');
         empty.className = 'post-embed-status';
-        empty.appendChild(document.createTextNode(`No embeddable media found in this ${providerLabel} \u2014 `));
+        empty.appendChild(document.createTextNode(`Could not load this ${providerLabel} \u2014 `));
         const fallbackLink = document.createElement('a');
         fallbackLink.className = 'post-video-play';
         fallbackLink.href = postUrl;
@@ -1122,8 +1463,18 @@ const thumbs = {
 
     if (!details) return show();
     details.addEventListener('toggle', () => {
-      if (details.open) show();
-      else container.querySelectorAll('video').forEach((v) => v.pause?.());
+      if (details.open) {
+        show();
+      } else {
+        container.querySelectorAll('video').forEach((v) => v.pause?.());
+        container.querySelectorAll('iframe.post-embed-tiktok-frame[src]').forEach((frame) => {
+          const src = frame.getAttribute('src');
+          if (src) {
+            frame.setAttribute('data-src', src);
+            frame.removeAttribute('src');
+          }
+        });
+      }
     });
     if (details.open) show();
   },
@@ -1168,7 +1519,7 @@ const thumbs = {
         },
         { once: true }
       );
-    } else if (mime === 'youtube/video' || mime === 'nicovideo/video' || mime === 'bilibili/video' || mime === 'twitch/video') {
+    } else if (mime === 'youtube/video' || mime === 'nicovideo/video' || mime === 'bilibili/video' || mime === 'twitch/video' || mime === 'tiktok/video') {
       link.addEventListener(
         'click',
         (e) => {
