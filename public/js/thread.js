@@ -36,6 +36,28 @@ window.markPost = markPost;
 scrollToHash();
 window.addEventListener('hashchange', scrollToHash);
 
+document.addEventListener('click', (e) => {
+  const link = e.target instanceof Element && e.target.closest('a.linkQuote[href*="#"]');
+  if (!link || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+  let url;
+  try {
+    url = new URL(link.href, window.location.href);
+  } catch {
+    return;
+  }
+  if (url.pathname !== window.location.pathname || !/^#\d+$/.test(url.hash)) return;
+  const postId = url.hash.slice(1);
+  const el =
+    document.querySelector(`.reply[data-post-id="${postId}"], .op[data-post-id="${postId}"]`) ||
+    document.getElementById('p' + postId);
+  if (!el) return;
+  e.preventDefault();
+  markPost(postId);
+  if (typeof history !== 'undefined' && history.replaceState) {
+    history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${postId}`);
+  }
+});
+
 let unreadCount = 0;
 let originalTitle = document.title;
 let lastPostedId = null;

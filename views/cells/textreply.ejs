@@ -2,7 +2,6 @@
 var archivePrefix = locals.isArchive ? 'archive/' : '';
 var href = '/' + boardUri + '/' + archivePrefix + 'thread/' + thread.threadId;
 var threadHref = modView ? '/mod/thread/' + boardUri + '/' + thread.threadId : href;
-var permalinkHref = modView ? threadHref + '#' + reply.postId : threadHref + '?post=' + reply.postId + '#' + reply.postId;
 var controls = modView || locals.modControls;
 %>
 <div class="reply<%= controls && reply.isTor ? ' mod-tor-post' : '' %>"
@@ -23,7 +22,7 @@ data-board="<%= boardUri %>"
       <%}%>
       <%- include('../partials/post-flag', { flag: reply.flag, flagName: reply.flagName }).trim() %>
       <%- include('../partials/time', { date: reply.creation }) %>
-    <span class="post-num"><a class="linkQuote" title="Link to this post" href="<%= permalinkHref %>">No.</a>
+    <span class="post-num"><a class="linkQuote" title="Link to this post" href="<%= threadHref %>#<%= reply.postId %>">No.</a>
     <a class="linkQuote" title="Reply to this post" href="<%= href %>#q<%= reply.postId %>"><%= reply.postId %></a><%- include('agree-button', { postId: reply.postId, isThread: false, agreeCount: reply.agreeCount }) %></span>
     <% if (controls) { %>
     <%- include('/mod/partials/post-links', { boardUri, thread, postId: reply.postId, isThread: false, post: reply, showIp, globalStaff }) %>

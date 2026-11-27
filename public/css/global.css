@@ -5397,6 +5397,45 @@ table.blotter td,
   border: 1px solid var(--border-color, #ccc);
 }
 
+.post-embed-media {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  align-items: flex-start;
+}
+
+.post-embed-image-link {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.post-embed-image {
+  display: block;
+  max-width: min(100%, 500px);
+  max-height: 450px;
+  width: auto;
+  height: auto;
+  border-radius: 2px;
+}
+
+.post-embed-media-multi .post-embed-image {
+  max-width: min(100%, 320px);
+  max-height: 320px;
+}
+
+.post-embed-video {
+  display: block;
+  max-width: min(100%, 640px);
+  max-height: 500px;
+}
+
+.post-embed-status {
+  font-size: 0.9em;
+  margin-top: 3px;
+  opacity: 0.85;
+}
+
 @media (max-width: 768px) {
   .home-board-item {
     padding: 8px 10px;
