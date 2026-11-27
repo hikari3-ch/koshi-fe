@@ -684,6 +684,33 @@ document.getElementById('site-announcement-form')?.addEventListener('submit', as
   }
 });
 
+document.getElementById('startup-art-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('startup-art-input');
+  try {
+    await modPost('/mod/api/global/startup-art', { startupAsciiArt: input ? input.value : '' });
+    await alert('Saved.');
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById('startup-art-load-default')?.addEventListener('click', () => {
+  const input = document.getElementById('startup-art-input');
+  if (input) input.value = input.dataset.default || '';
+});
+
+document.getElementById('startup-art-reset')?.addEventListener('click', async () => {
+  if (!confirm('Reset startup ASCII art to default?')) return;
+  try {
+    await modPost('/mod/api/global/startup-art', { reset: true });
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
 document.querySelectorAll('.apply-role').forEach((btn) => {
   btn.addEventListener('click', async () => {
     const select = document.querySelector(`.set-role[data-login="${btn.dataset.login}"]`);

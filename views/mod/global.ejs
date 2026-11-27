@@ -36,6 +36,18 @@
 </form>
 </fieldset>
 <fieldset>
+<legend>Startup ASCII Art</legend>
+<form id="startup-art-form">
+<p class="mod-hint">Shown in the terminal when starting Koshi. Leave blank to use the default (applies on next restart).</p>
+<textarea id="startup-art-input" name="startupAsciiArt" rows="7" maxlength="4000" class="mod-wide" style="font-family: monospace; white-space: pre;" spellcheck="false" data-default="<%= locals.defaultStartupAsciiArt || '' %>"><%= locals.startupAsciiArt || '' %></textarea>
+<div class="mod-actions">
+  <button type="submit">Save ASCII art</button>
+  <button type="button" id="startup-art-load-default">Load default</button>
+  <button type="button" id="startup-art-reset">Reset to default</button>
+</div>
+</form>
+</fieldset>
+<fieldset>
 <legend>Site Settings</legend>
 <form id="clear-ip-role-form">
 <table class="mod-settings">
