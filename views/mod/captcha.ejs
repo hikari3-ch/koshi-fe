@@ -1,15 +1,89 @@
 <% title = 'Captcha'; %>
+<% const provider = settings.provider || 'recaptcha'; %>
 <h1>Captcha</h1>
 <p class="captcha-intro mod-intro">
-The captcha is a picture of a character; the reader types the character's name before posting.
-It is a separate little service in <code>wap-captcha/</code> that owns the pictures, the names
-and the ImageMagick settings, and it keeps them in <code><%= configPath %></code> - which this
-page edits for you (a copy of the previous file is kept as <code>config.toml.bak</code>, and the
-file stays plain text you can edit by hand).
+Choose a captcha provider (<strong>Google reCAPTCHA v2</strong>, <strong>hCaptcha</strong>, or an optional self-hosted <strong>Waptcha</strong> service) and when visitors are asked to complete it before posting.
 </p>
 
 <fieldset>
-<legend>Service</legend>
+<legend>Captcha Settings</legend>
+<form id="captcha-settings-form">
+<table class="mod-settings">
+  <tr><th>Captcha</th><td>
+    <label><input type="checkbox" name="enabled" value="true"<%= settings.enabled ? ' checked' : '' %> />
+    Require the captcha before posting (all boards)</label>
+  </td></tr>
+  <tr><th><label for="captcha-provider">Provider</label></th><td>
+    <select id="captcha-provider" name="provider">
+      <option value="recaptcha"<%= provider === 'recaptcha' ? ' selected' : '' %>>Google reCAPTCHA v2</option>
+      <option value="hcaptcha"<%= provider === 'hcaptcha' ? ' selected' : '' %>>hCaptcha</option>
+      <option value="waptcha"<%= provider === 'waptcha' ? ' selected' : '' %>>Waptcha (optional, self-hosted)<%= locals.waptchaInstalled ? '' : ' (not installed)' %></option>
+    </select>
+  </td></tr>
+  <tr><th><label for="captcha-session">Solving it is good for</label></th><td>
+    <input type="number" id="captcha-session" name="sessionMinutes" min="1" max="1440" value="<%= settings.sessionMinutes %>" /> <span class="mod-unit">minutes</span>
+  </td></tr>
+  <tr><th><label for="captcha-bypass">Let staff skip it</label></th><td>
+    <select id="captcha-bypass" name="bypassMinRole">
+      <option value="0"<%= Number(settings.bypassMinRole) === 0 ? ' selected' : '' %>>Nobody (root solves it too)</option>
+      <option value="1"<%= Number(settings.bypassMinRole) === 1 ? ' selected' : '' %>>Root and admins</option>
+      <option value="2"<%= Number(settings.bypassMinRole) === 2 ? ' selected' : '' %>>Moderators and above</option>
+      <option value="3"<%= Number(settings.bypassMinRole) === 3 ? ' selected' : '' %>>Janitors and above</option>
+      <option value="4"<%= Number(settings.bypassMinRole) === 4 ? ' selected' : '' %>>Everyone (only visitors solve it)</option>
+    </select>
+  </td></tr>
+  <tr data-provider-row="recaptcha"<%= provider === 'recaptcha' ? '' : ' hidden' %>>
+    <th><label for="recaptcha-site-key">reCAPTCHA Site Key</label></th>
+    <td><input type="text" id="recaptcha-site-key" name="recaptchaSiteKey" value="<%= settings.recaptchaSiteKey || '' %>" class="mod-wide" autocomplete="off" /></td>
+  </tr>
+  <tr data-provider-row="recaptcha"<%= provider === 'recaptcha' ? '' : ' hidden' %>>
+    <th><label for="recaptcha-secret-key">reCAPTCHA Secret Key</label></th>
+    <td>
+      <input type="password" id="recaptcha-secret-key" name="recaptchaSecretKey" value="" placeholder="<%= settings.hasRecaptchaSecretKey ? '(saved — enter to replace)' : '' %>" class="mod-wide" autocomplete="new-password" />
+      <% if (settings.hasRecaptchaSecretKey) { %>
+      <label class="mod-block"><input type="checkbox" name="clearRecaptchaSecretKey" value="true" /> Clear saved secret key</label>
+      <% } %>
+    </td>
+  </tr>
+  <tr data-provider-row="hcaptcha"<%= provider === 'hcaptcha' ? '' : ' hidden' %>>
+    <th><label for="hcaptcha-site-key">hCaptcha Site Key</label></th>
+    <td><input type="text" id="hcaptcha-site-key" name="hcaptchaSiteKey" value="<%= settings.hcaptchaSiteKey || '' %>" class="mod-wide" autocomplete="off" /></td>
+  </tr>
+  <tr data-provider-row="hcaptcha"<%= provider === 'hcaptcha' ? '' : ' hidden' %>>
+    <th><label for="hcaptcha-secret-key">hCaptcha Secret Key</label></th>
+    <td>
+      <input type="password" id="hcaptcha-secret-key" name="hcaptchaSecretKey" value="" placeholder="<%= settings.hasHcaptchaSecretKey ? '(saved — enter to replace)' : '' %>" class="mod-wide" autocomplete="new-password" />
+      <% if (settings.hasHcaptchaSecretKey) { %>
+      <label class="mod-block"><input type="checkbox" name="clearHcaptchaSecretKey" value="true" /> Clear saved secret key</label>
+      <% } %>
+    </td>
+  </tr>
+  <tr data-provider-row="waptcha"<%= provider === 'waptcha' ? '' : ' hidden' %>>
+    <th><label for="captcha-url">Waptcha service address</label></th>
+    <td>
+      <input type="text" id="captcha-url" name="url" value="<%= status.url %>" />
+      <label class="mod-block"><input type="checkbox" name="autostart" value="true"<%= settings.autostart ? ' checked' : '' %> /> Start it if nothing answers there</label>
+      <% if (!locals.waptchaInstalled) { %>
+      <div class="mod-unit">Waptcha is not included by default. To add it manually: <code>git clone &lt;waptcha-repo-url&gt; waptcha &amp;&amp; cd waptcha &amp;&amp; bun install &amp;&amp; cp config.example.toml config.toml</code></div>
+      <% } %>
+    </td>
+  </tr>
+</table>
+<div class="mod-actions"><button type="submit">Save</button> <span class="captcha-message" id="captcha-settings-message"></span></div>
+</form>
+</fieldset>
+
+<div id="waptcha-admin-sections"<%= provider === 'waptcha' ? '' : ' hidden' %>>
+<% if (!locals.waptchaInstalled) { %>
+<fieldset>
+<legend>Waptcha Service</legend>
+<p class="captcha-hint mod-hint">
+Waptcha is not installed in <code>waptcha/</code>. Clone the standalone <code>waptcha</code> repository into <code>waptcha/</code> inside the Koshi directory, install its dependencies (<code>bun install</code>), copy <code>config.example.toml</code> to <code>config.toml</code>, and reload this page to manage it.
+</p>
+</fieldset>
+<% } else { %>
+<fieldset>
+<legend>Waptcha Service</legend>
 <table class="mod-settings captcha-status">
   <tr><th>Address</th><td><code><%= status.url %></code></td></tr>
   <tr><th>State</th><td id="captcha-service-state">
@@ -34,41 +108,12 @@ file stays plain text you can edit by hand).
 <pre id="captcha-log" hidden></pre>
 </fieldset>
 
-<fieldset>
-<legend>When the captcha is asked for</legend>
-<form id="captcha-settings-form">
-<table class="mod-settings">
-  <tr><th>Captcha</th><td>
-    <label><input type="checkbox" name="enabled" value="true"<%= settings.enabled ? ' checked' : '' %> />
-    Require the captcha before posting (all boards)</label>
-  </td></tr>
-  <tr><th><label for="captcha-session">Solving it is good for</label></th><td>
-    <input type="number" id="captcha-session" name="sessionMinutes" min="1" max="1440" value="<%= settings.sessionMinutes %>" /> <span class="mod-unit">minutes</span>
-  </td></tr>
-  <tr><th><label for="captcha-bypass">Let staff skip it</label></th><td>
-    <select id="captcha-bypass" name="bypassMinRole">
-      <option value="0"<%= Number(settings.bypassMinRole) === 0 ? ' selected' : '' %>>Nobody (root solves it too)</option>
-      <option value="1"<%= Number(settings.bypassMinRole) === 1 ? ' selected' : '' %>>Root and admins</option>
-      <option value="2"<%= Number(settings.bypassMinRole) === 2 ? ' selected' : '' %>>Moderators and above</option>
-      <option value="3"<%= Number(settings.bypassMinRole) === 3 ? ' selected' : '' %>>Janitors and above</option>
-      <option value="4"<%= Number(settings.bypassMinRole) === 4 ? ' selected' : '' %>>Everyone (only visitors solve it)</option>
-    </select>
-  </td></tr>
-  <tr><th><label for="captcha-url">Service address</label></th><td>
-    <input type="text" id="captcha-url" name="url" value="<%= status.url %>" />
-    <label class="mod-block"><input type="checkbox" name="autostart" value="true"<%= settings.autostart ? ' checked' : '' %> /> Start it if nothing answers there</label>
-  </td></tr>
-</table>
-<div class="mod-actions"><button type="submit">Save</button> <span class="captcha-message" id="captcha-settings-message"></span></div>
-</form>
-</fieldset>
-
 <% if (configError) { %>
 <fieldset>
 <legend>config.toml</legend>
 <p class="captcha-error">The captcha's configuration could not be read: <%= configError %></p>
 </fieldset>
-<% } else { %>
+<% } else if (captchaConfig) { %>
 <fieldset>
 <legend>Pictures</legend>
 <form id="captcha-create-form">
@@ -157,7 +202,6 @@ its own is never picked. <%= categories.length %> categories known.
     <td><code><%= category.name %></code></td>
     <td class="captcha-image-list">
       <% if (!category.images) { %><span class="captcha-none">none</span><% } %>
-      
       <span class="captcha-count"><%= category.images %></span>
       <button type="button" class="captcha-show-images" data-category="<%= category.name %>"<%= category.images ? '' : ' disabled' %>>show</button>
     </td>
@@ -168,5 +212,7 @@ its own is never picked. <%= categories.length %> categories known.
 </table>
 </fieldset>
 <% } %>
+<% } %>
+</div>
 
 <script src="/js/mod-captcha.js?v=<%= locals.assetVersion('js/mod-captcha.js') %>"></script>

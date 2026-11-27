@@ -3,17 +3,21 @@
   if (!widgets.length) return;
 
   const board = String(widgets[0]?.dataset.board || '').toLowerCase();
+  const provider = String(widgets[0]?.dataset.provider || 'recaptcha').toLowerCase();
+  let siteKey = String(widgets[0]?.dataset.sitekey || '').trim();
 
   const CHALLENGE_MAX_AGE_MS = 15000;
 
   let token = null;
   let loadedAt = 0;
   let loading = null;
+  let scriptPromise = null;
   let expiryTimer = null;
   let verifiedUntil = 0;
   let syncing = null;
   let pendingNotice = null;
   let pendingFocus = false;
+  const thirdPartyWidgetIds = new WeakMap();
 
   const isVerified = () => widgets.some((widget) => widget.classList.contains('captcha-verified'));
 
@@ -59,6 +63,23 @@
     target?.focus();
   };
 
+  const getProviderApi = () => (provider === 'hcaptcha' ? window.hcaptcha : provider === 'recaptcha' ? window.grecaptcha : null);
+
+  const resetProviderWidgets = () => {
+    if (provider === 'waptcha') return;
+    const api = getProviderApi();
+    if (!api || typeof api.reset !== 'function') return;
+    for (const widget of widgets) {
+      const box = widget.querySelector('.captcha-provider-widget');
+      const wid = box ? thirdPartyWidgetIds.get(box) : undefined;
+      if (wid !== undefined) {
+        try {
+          api.reset(wid);
+        } catch {}
+      }
+    }
+  };
+
   const removeWidgets = () => {
     clearExpiryTimer();
     verifiedUntil = 0;
@@ -71,6 +92,7 @@
     loadedAt = 0;
     pendingNotice = null;
     pendingFocus = false;
+    resetProviderWidgets();
     for (const widget of widgets) {
       widget.classList.add('captcha-verified', 'captcha-collapsed');
       widget.dataset.verified = '1';
@@ -92,7 +114,149 @@
     }
   };
 
-  const load = async (options = {}) => {
+  const waitForProviderApi = () => {
+    if (provider === 'recaptcha') {
+      const api = window.grecaptcha;
+      if (api && typeof api.ready === 'function') {
+        return new Promise((resolve) => api.ready(() => resolve(window.grecaptcha)));
+      }
+      if (api && typeof api.render === 'function') return Promise.resolve(api);
+    } else if (provider === 'hcaptcha') {
+      if (window.hcaptcha && typeof window.hcaptcha.render === 'function') return Promise.resolve(window.hcaptcha);
+    }
+    return new Promise((resolve, reject) => {
+      const started = Date.now();
+      const timer = setInterval(() => {
+        const api = getProviderApi();
+        if (provider === 'recaptcha' && api && typeof api.ready === 'function') {
+          clearInterval(timer);
+          api.ready(() => resolve(window.grecaptcha));
+          return;
+        }
+        if (api && typeof api.render === 'function') {
+          clearInterval(timer);
+          resolve(api);
+          return;
+        }
+        if (Date.now() - started > 10000) {
+          clearInterval(timer);
+          reject(new Error(`Timed out loading ${provider === 'hcaptcha' ? 'hCaptcha' : 'reCAPTCHA'} widget.`));
+        }
+      }, 50);
+    });
+  };
+
+  const ensureProviderScript = () => {
+    if (scriptPromise) return scriptPromise;
+    const readyNow = getProviderApi();
+    if (provider === 'recaptcha' && readyNow && (typeof readyNow.ready === 'function' || typeof readyNow.render === 'function')) {
+      scriptPromise = waitForProviderApi();
+      return scriptPromise;
+    }
+    if (provider === 'hcaptcha' && readyNow && typeof readyNow.render === 'function') {
+      scriptPromise = Promise.resolve(readyNow);
+      return scriptPromise;
+    }
+    const src =
+      provider === 'hcaptcha'
+        ? 'https://js.hcaptcha.com/1/api.js?render=explicit'
+        : 'https://www.google.com/recaptcha/api.js?render=explicit';
+    scriptPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[data-captcha-provider="${provider}"]`);
+      if (existing) {
+        waitForProviderApi().then(resolve, reject);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.defer = true;
+      script.dataset.captchaProvider = provider;
+      script.onload = () => waitForProviderApi().then(resolve, reject);
+      script.onerror = () => {
+        scriptPromise = null;
+        reject(new Error(`Could not load ${provider === 'hcaptcha' ? 'hCaptcha' : 'reCAPTCHA'} script.`));
+      };
+      document.head.appendChild(script);
+    });
+    return scriptPromise;
+  };
+
+  const solveThirdParty = async (responseToken) => {
+    if (!responseToken) return;
+    message('Verifying…');
+    try {
+      const res = await fetch('/captcha/solve', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ response: responseToken, board })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        resetProviderWidgets();
+        return message(data.error || 'Captcha verification failed.', true);
+      }
+      if (data.enabled === false) return removeWidgets();
+      const remainingMs = Number(data.remainingMs) > 0 ? Number(data.remainingMs) : (Number(data.minutes) || 0) * 60000;
+      markVerified(remainingMs, { bypassed: !!data.bypassed });
+    } catch (err) {
+      resetProviderWidgets();
+      message(`Captcha check failed: ${err.message}`, true);
+    }
+  };
+
+  const loadThirdParty = async (options = {}) => {
+    if (options.notice) pendingNotice = options.notice;
+    if (!siteKey) {
+      pendingNotice = null;
+      return message('Captcha site key is not configured.', true);
+    }
+    message('Loading captcha…');
+    try {
+      const res = await fetch('/captcha/new', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ board })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        pendingNotice = null;
+        return message(data.error || `The captcha could not be loaded (HTTP ${res.status}).`, true);
+      }
+      if (!data.enabled) return removeWidgets();
+      if (data.solved) return markVerified(data.remainingMs, { bypassed: !!data.bypassed });
+      if (data.siteKey) siteKey = String(data.siteKey).trim();
+      if (!siteKey) {
+        pendingNotice = null;
+        return message('Captcha site key is not configured.', true);
+      }
+
+      const api = await ensureProviderScript();
+      for (const widget of widgets) {
+        const box = widget.querySelector('.captcha-provider-widget');
+        if (!box || thirdPartyWidgetIds.has(box)) continue;
+        const wid = api.render(box, {
+          sitekey: siteKey,
+          callback: (responseToken) => solveThirdParty(responseToken),
+          'expired-callback': () => message('Captcha expired - please complete it again.', true),
+          'error-callback': () => message('Captcha widget failed to load - please try again.', true)
+        });
+        thirdPartyWidgetIds.set(box, wid);
+      }
+      const notice = pendingNotice;
+      pendingNotice = null;
+      message(notice || '', Boolean(notice));
+    } catch (err) {
+      pendingNotice = null;
+      message(err.message || 'Could not load captcha.', true);
+    }
+  };
+
+  const loadWaptcha = async (options = {}) => {
     if (options.notice) pendingNotice = options.notice;
     if (options.focus) pendingFocus = true;
     message('Loading a picture…');
@@ -148,6 +312,14 @@
   };
 
   const ensurePuzzle = (options = {}) => {
+    if (provider !== 'waptcha') {
+      if (loading) return loading;
+      loading = loadThirdParty(options).finally(() => {
+        loading = null;
+      });
+      return loading;
+    }
+
     if (options.notice) pendingNotice = options.notice;
     if (options.focus) pendingFocus = true;
     if (loading) {
@@ -173,7 +345,7 @@
       }
       return Promise.resolve();
     }
-    loading = load(options).finally(() => {
+    loading = loadWaptcha(options).finally(() => {
       loading = null;
     });
     return loading;
@@ -191,6 +363,7 @@
     token = null;
     loadedAt = 0;
     window.captchaSolved = false;
+    resetProviderWidgets();
     for (const widget of widgets) {
       widget.classList.remove('captcha-verified');
       widget.dataset.verified = '0';
@@ -228,7 +401,7 @@
     return syncing;
   };
 
-  const solve = async (answerBox) => {
+  const solveWaptcha = async (answerBox) => {
     const text = String(answerBox?.value || '').trim();
     if (!text) return message('Type the character\'s name first.', true);
 
@@ -246,7 +419,7 @@
         const error = data.error || 'That was not it.';
         pendingNotice = null;
         pendingFocus = false;
-        await load();
+        await loadWaptcha();
         message(error, true);
         return;
       }
@@ -260,19 +433,21 @@
 
   for (const widget of widgets) {
     widget.classList.add('captcha-scripted');
-    const answer = widget.querySelector('.captcha-answer');
     widget.querySelector('.captcha-open')?.addEventListener('click', () => setOpen(true, { focus: true }));
     widget.querySelector('.captcha-hide')?.addEventListener('click', () => setOpen(false));
-    widget.querySelector('.captcha-check')?.addEventListener('click', () => solve(answer));
-    widget.querySelector('.captcha-refresh')?.addEventListener('click', () => {
-      pendingNotice = null;
-      load({ focus: true });
-    });
-    answer?.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter') return;
-      event.preventDefault();
-      solve(answer);
-    });
+    if (provider === 'waptcha') {
+      const answer = widget.querySelector('.captcha-answer');
+      widget.querySelector('.captcha-check')?.addEventListener('click', () => solveWaptcha(answer));
+      widget.querySelector('.captcha-refresh')?.addEventListener('click', () => {
+        pendingNotice = null;
+        loadWaptcha({ focus: true });
+      });
+      answer?.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        solveWaptcha(answer);
+      });
+    }
   }
 
   setOpen(false);

@@ -59,17 +59,41 @@
     }
   });
 
+  const providerSelect = document.getElementById('captcha-provider');
+  const waptchaSections = document.getElementById('waptcha-admin-sections');
+  const syncProviderRows = () => {
+    const provider = providerSelect?.value || 'recaptcha';
+    document.querySelectorAll('[data-provider-row]').forEach((row) => {
+      row.hidden = row.dataset.providerRow !== provider;
+    });
+    if (waptchaSections) waptchaSections.hidden = provider !== 'waptcha';
+  };
+  providerSelect?.addEventListener('change', syncProviderRows);
+  syncProviderRows();
+
   document.getElementById('captcha-settings-form')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = event.target;
+    const fd = new FormData(form);
     try {
-      const data = await post('/mod/api/captcha/settings', {
+      const payload = {
         enabled: checked(form, 'enabled'),
+        provider: String(fd.get('provider') || 'recaptcha'),
         autostart: checked(form, 'autostart'),
         sessionMinutes: number(form, 'sessionMinutes'),
         bypassMinRole: number(form, 'bypassMinRole'),
-        url: new FormData(form).get('url')
-      });
+        recaptchaSiteKey: String(fd.get('recaptchaSiteKey') ?? ''),
+        clearRecaptchaSecretKey: checked(form, 'clearRecaptchaSecretKey'),
+        hcaptchaSiteKey: String(fd.get('hcaptchaSiteKey') ?? ''),
+        clearHcaptchaSecretKey: checked(form, 'clearHcaptchaSecretKey'),
+        url: String(fd.get('url') || '')
+      };
+      const recaptchaSecret = String(fd.get('recaptchaSecretKey') || '').trim();
+      if (recaptchaSecret) payload.recaptchaSecretKey = recaptchaSecret;
+      const hcaptchaSecret = String(fd.get('hcaptchaSecretKey') || '').trim();
+      if (hcaptchaSecret) payload.hcaptchaSecretKey = hcaptchaSecret;
+
+      const data = await post('/mod/api/captcha/settings', payload);
       say('captcha-settings-message', `${data.message} Solving is good for ${data.settings.sessionMinutes} minutes.`);
     } catch (err) {
       say('captcha-settings-message', err.message, false);
