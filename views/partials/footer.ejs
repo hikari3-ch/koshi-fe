@@ -43,6 +43,6 @@ const footerCreditUrl = footerCfg.creditUrl || 'https://github.com/koshi-chan/ko
       </div>
       <% } %>
       <% footerLinks.forEach(function(item, i) { %><a href="<%= item.href %>"><%= item.label %></a><% if (i < footerLinks.length - 1) { %> • <% } %><% }); %><br>
-      - <a href="<%= footerCreditUrl %>"><%= footerCreditLabel %></a><% if (locals.koshiVersion && koshiVersion.displayName) { %> <span class="koshi-version" title="<%= koshiVersion.fullDisplay || koshiVersion.displayName %>"><%= koshiVersion.displayName %></span><% } %> -
+      - <a href="<%= footerCreditUrl %>"><%= footerCreditLabel %></a><% if (locals.koshiVersion && locals.koshiVersion.displayName) { %> <span class="koshi-version" title="<%= locals.koshiVersion.fullDisplay || locals.koshiVersion.displayName %>"><% if (locals.koshiVersion.majorName && locals.koshiVersion.majorUrl && locals.koshiVersion.version) { %>v<%= locals.koshiVersion.version %> "<a class="koshi-major-name" href="<%= locals.koshiVersion.majorUrl %>"><%= locals.koshiVersion.majorName %></a>"<% } else { %><%= locals.koshiVersion.displayName %><% } %></span><% } %> -
     </div>
 </footer>

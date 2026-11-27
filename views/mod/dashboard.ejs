@@ -4,7 +4,7 @@
 <fieldset class="reportFieldset">
 <legend>Status</legend>
 <% if (locals.koshiVersion) { %>
-<p class="mod-version">Koshi <strong><%= koshiVersion.displayName %></strong><% if (koshiVersion.tag) { %> &middot; <code><%= koshiVersion.tag %></code><% } %><% if (koshiVersion.commit && !koshiVersion.isTaggedRelease) { %> (<code><%= koshiVersion.commit %></code>)<% } %></p>
+<p class="mod-version">Koshi <strong><% if (locals.koshiVersion.majorName && locals.koshiVersion.majorUrl && locals.koshiVersion.version) { %>v<%= locals.koshiVersion.version %> "<a class="koshi-major-name" href="<%= locals.koshiVersion.majorUrl %>"><%= locals.koshiVersion.majorName %></a>"<% } else { %><%= locals.koshiVersion.displayName %><% } %></strong><% if (locals.koshiVersion.tag) { %> &middot; <code><%= locals.koshiVersion.tag %></code><% } %><% if (locals.koshiVersion.commit && !locals.koshiVersion.isTaggedRelease) { %> (<code><%= locals.koshiVersion.commit %></code>)<% } %></p>
 <% } %>
 <ul class="mod-stats">
 <li><a href="/mod/reports"><strong><%= openReports %></strong> open reports</a></li>
