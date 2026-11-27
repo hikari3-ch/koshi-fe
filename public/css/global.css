@@ -526,7 +526,7 @@ body.oc-hide-post-form .post-form-toggle-wrap:not(.is-hidden) {
 }
 
 .post-files {
-  align-items: start;
+  align-items: center;
   display: grid;
   gap: 8px 14px;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
