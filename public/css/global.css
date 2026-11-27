@@ -5407,7 +5407,7 @@ table.blotter td,
 
 .post-embed-image-link {
   display: inline-block;
-  max-width: 100%;
+  max-width: 10%;
 }
 
 .post-embed-image {
@@ -5416,7 +5416,6 @@ table.blotter td,
   max-height: 450px;
   width: auto;
   height: auto;
-  border-radius: 2px;
 }
 
 .post-embed-media-multi .post-embed-image {
