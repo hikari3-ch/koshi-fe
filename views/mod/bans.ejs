@@ -6,7 +6,8 @@
 <a href="/mod/bans/appeals<%= boardUri ? '?board=' + boardUri : '' %>">Appeals</a> /
 <a href="/mod/bans/range<%= boardUri ? '?board=' + boardUri : '' %>">Range</a> /
 <a href="/mod/bans/hash<%= boardUri ? '?board=' + boardUri : '' %>">Hash</a> /
-<a href="/mod/bans/asn<%= boardUri ? '?board=' + boardUri : '' %>">ASN</a>
+<a href="/mod/bans/asn<%= boardUri ? '?board=' + boardUri : '' %>">ASN</a><% if (typeof publicBans !== 'undefined' && publicBans && publicBans.enabled) { %> /
+<a href="/bans" target="_blank">Public ban list</a><% } %>
 </p>
 <% if (!boardUri) { %>
 <form method="get" class="mod-inline-form mod-board-filter">
@@ -19,7 +20,7 @@
 <legend>Active Bans</legend>
 <% if (bans.length) { %>
 <table class="mod-table mod-bans">
-<tr><th>Target</th><th>Reason</th><th>Board</th><th>Set by</th><th>Expires</th><th></th></tr>
+<tr><th>Target</th><th>Reason</th><th>Board</th><th>Set by</th><th>Expires</th><th>Seen</th><th></th></tr>
 <% bans.forEach(b => { %>
 <tr<%= b.expired ? ' class="expired"' : '' %>>
 <td>
@@ -31,6 +32,7 @@
 <td><%= b.boardUri ? '/' + b.boardUri + '/' : 'all' %></td>
 <td><%= b.appliedBy || '' %></td>
 <td class="mod-nowrap"><%= b.expiration ? new Date(b.expiration).toLocaleString() : 'never' %><% if (b.expired) { %> <span class="mod-unit">(expired)</span><% } %></td>
+<td class="mod-nowrap"><span class="mod-ban-seen <%= b.seen ? 'mod-ban-seen-yes' : 'mod-ban-seen-no' %>"><%= b.seen ? 'Yes' : 'No' %></span></td>
 <td class="mod-cell-action"><button type="button" class="lift-ban" data-id="<%= b._id %>">Lift</button></td>
 </tr>
 <% }) %>

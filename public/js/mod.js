@@ -673,6 +673,21 @@ document.getElementById('style-panel-global-form')?.addEventListener('submit', a
   }
 });
 
+document.getElementById('public-bans-global-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    await modPost('/mod/api/global/public-bans', {
+      enabled: fd.get('enabled') === 'true',
+      hideMod: fd.get('hideMod') === 'true'
+    });
+    await alert('Saved.');
+    location.reload();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
 document.getElementById('site-announcement-form')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);

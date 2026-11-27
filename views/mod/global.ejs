@@ -83,6 +83,17 @@ Require a captcha before posting (all boards)</label>
 </td></tr>
 </table>
 </form>
+<% const pbCfg = locals.publicBans || {}; %>
+<form id="public-bans-global-form">
+<table class="mod-settings">
+<tr><th>Public Ban List</th><td class="mod-checks">
+<label><input type="checkbox" name="enabled" value="true"<%= pbCfg.enabled ? ' checked' : '' %> /> Enable public ban list at <a href="/bans">/bans</a></label>
+<label><input type="checkbox" name="hideMod" value="true"<%= pbCfg.hideMod ? ' checked' : '' %> /> Hide moderator names on the public ban list</label>
+<p class="mod-hint">IP addresses, ranges, and ASNs are always hidden on the public ban list.</p>
+<div><button type="submit">Save</button></div>
+</td></tr>
+</table>
+</form>
 </fieldset>
 
 <% const mailCfg = locals.mail || {}; %>

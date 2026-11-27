@@ -5301,6 +5301,102 @@ table.blotter td,
   padding-top: 4px;
 }
 
+.mod-ban-seen {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.mod-ban-seen-yes {
+  color: #155724;
+  background: rgba(40, 167, 69, 0.15);
+  border: 1px solid rgba(40, 167, 69, 0.4);
+}
+
+.mod-ban-seen-no {
+  color: var(--text-muted, #666);
+  background: rgba(128, 128, 128, 0.12);
+  border: 1px solid var(--border-color, #ccc);
+}
+
+.public-bans-note {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.public-bans-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.public-bans-active-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.public-bans-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.public-bans-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.92em;
+}
+
+.public-bans-table th,
+.public-bans-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-color, #ccc);
+  text-align: left;
+  vertical-align: top;
+}
+
+.public-bans-table th {
+  white-space: nowrap;
+}
+
+.public-bans-table tr.expired td {
+  opacity: 0.72;
+}
+
+.public-bans-reason {
+  overflow-wrap: anywhere;
+  min-width: 160px;
+}
+
+.public-bans-nowrap {
+  white-space: nowrap;
+}
+
+.ban-status-badge {
+  display: inline-block;
+  font-size: 0.82em;
+  font-weight: bold;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.ban-status-active {
+  color: #842029;
+  background: rgba(220, 53, 69, 0.14);
+  border: 1px solid rgba(220, 53, 69, 0.35);
+}
+
+.ban-status-expired {
+  color: var(--text-muted, #666);
+  background: rgba(128, 128, 128, 0.12);
+  border: 1px solid var(--border-color, #ccc);
+}
+
 @media (max-width: 768px) {
   .home-board-item {
     padding: 8px 10px;
@@ -5321,7 +5417,14 @@ table.blotter td,
   .blotter-footer {
     font-size: 0.85em;
   }
+
+  .public-bans-table th,
+  .public-bans-table td {
+    padding: 5px 6px;
+    font-size: 0.9em;
+  }
 }
+
 
 
 

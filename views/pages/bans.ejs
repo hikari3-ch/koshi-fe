@@ -1,0 +1,58 @@
+<% title = 'Ban List - ' + siteName; %>
+<div class="box-layout public-bans-page">
+  <div class="box-outer top-box">
+    <div class="boxbar"><h2>Ban List</h2></div>
+    <div class="boxcontent">
+      <p class="public-bans-note">Public record of bans issued on <%= siteName %>. IP addresses and network details are hidden.</p>
+      <form method="get" action="/bans" class="public-bans-controls">
+        <label for="public-bans-board">Board:</label>
+        <select id="public-bans-board" name="board">
+          <option value=""<%= !boardFilter ? ' selected' : '' %>>All boards</option>
+          <option value="global"<%= boardFilter === 'global' ? ' selected' : '' %>>Global</option>
+          <% (locals.navBoards || []).forEach((board) => { %>
+          <option value="<%= board.boardUri %>"<%= boardFilter === board.boardUri ? ' selected' : '' %>>/<%= board.boardUri %>/<% if (board.boardName) { %> - <%= board.boardName %><% } %></option>
+          <% }); %>
+        </select>
+        <label class="public-bans-active-label">
+          <input type="checkbox" name="active" value="1"<%= activeOnly ? ' checked' : '' %>> Active only
+        </label>
+        <button type="submit">Filter</button>
+        <% if (boardFilter || activeOnly) { %>
+        <a href="/bans" class="public-bans-reset">Reset</a>
+        <% } %>
+      </form>
+      <% if (Array.isArray(bans) && bans.length > 0) { %>
+      <div class="public-bans-table-wrap">
+        <table class="public-bans-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Board</th>
+              <th>Reason</th>
+              <th>Length</th>
+              <th>Set</th>
+              <th>Expires</th>
+              <% if (!hideMod) { %><th>Staff</th><% } %>
+            </tr>
+          </thead>
+          <tbody>
+            <% bans.forEach((b) => { %>
+            <tr<%= b.expired ? ' class="expired"' : '' %>>
+              <td><span class="ban-status-badge <%= b.expired ? 'ban-status-expired' : 'ban-status-active' %>"><%= b.expired ? 'Expired' : 'Active' %></span></td>
+              <td class="public-bans-board"><% if (b.boardUri) { %><a href="/<%= b.boardUri %>/">/<%= b.boardUri %>/</a><% } else { %>Global<% } %></td>
+              <td class="public-bans-reason"><%= b.reason || 'No reason provided' %></td>
+              <td class="public-bans-nowrap"><%= b.duration || (b.expiration ? '—' : 'Permanent') %></td>
+              <td class="public-bans-nowrap"><%= b.created ? (locals.postTime ? locals.postTime(b.created).text : new Date(b.created).toLocaleString()) : '—' %></td>
+              <td class="public-bans-nowrap"><%= b.expiration ? (locals.postTime ? locals.postTime(b.expiration).text : new Date(b.expiration).toLocaleString()) : 'Permanent' %></td>
+              <% if (!hideMod) { %><td class="public-bans-nowrap"><%= b.appliedBy || '—' %></td><% } %>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <% } else { %>
+      <p>No bans found.</p>
+      <% } %>
+    </div>
+  </div>
+</div>

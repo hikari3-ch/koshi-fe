@@ -6,7 +6,8 @@ const footerLinks = Array.isArray(footerCfg.links) && footerCfg.links.length
       { href: '/faq', label: 'FAQ' },
       { href: '/rules', label: 'Rules' },
       { href: '/news', label: 'News' },
-      { href: '/stats', label: 'Stats' }
+      { href: '/stats', label: 'Stats' },
+      ...(locals.publicBansEnabled ? [{ href: '/bans', label: 'Bans' }] : [])
     ];
 const footerDisclaimer = typeof footerCfg.disclaimerHtml === 'string' && footerCfg.disclaimerHtml
   ? footerCfg.disclaimerHtml

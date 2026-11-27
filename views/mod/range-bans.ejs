@@ -9,13 +9,14 @@
 <button type="submit">Ban</button>
 </form>
 <table class="mod-table">
-<tr><th>Range</th><th>Board</th><th>Reason</th><th>By</th><th></th></tr>
+<tr><th>Range</th><th>Board</th><th>Reason</th><th>By</th><th>Seen</th><th></th></tr>
 <% bans.forEach(b => { %>
 <tr>
 <td><%= b.displayTarget %></td>
 <td><% if (b.boardUri) { %>/<%= b.boardUri %>/<% } else { %>global<% } %></td>
 <td><%= b.reason %></td>
 <td><%= b.appliedBy || '' %></td>
+<td class="mod-nowrap"><span class="mod-ban-seen <%= b.seen ? 'mod-ban-seen-yes' : 'mod-ban-seen-no' %>"><%= b.seen ? 'Yes' : 'No' %></span></td>
 <td><button type="button" class="lift-ban" data-id="<%= b._id %>">Lift</button></td>
 </tr>
 <% }) %>
