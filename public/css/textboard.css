@@ -151,3 +151,17 @@ table .line0,
 table .line1 {
   background: var(--post-color);
 }
+
+@media (max-width: 768px) {
+  .outerbox,
+  .textthread,
+  .page-content {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .outerbox,
+  .textthread {
+    padding: 4px;
+  }
+}
